@@ -447,134 +447,177 @@
   .ctx-item:hover { background: rgba(255,255,255,0.1); }
   .ctx-separator { height: 1px; background: rgba(255,255,255,0.08); margin: 4px 10px; }
 
+  /* ── Module Modal ─────────────────────────────────── */
   #module-modal {
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.6);
+    background: rgba(0,0,0,0.65);
     display: none;
     align-items: center;
     justify-content: center;
     z-index: 30000;
+    backdrop-filter: blur(4px);
   }
-
   #module-modal.show { display: flex; }
 
   #module-modal-content {
-    background: rgba(22, 20, 55, 0.98);
+    background: linear-gradient(160deg, rgba(24,21,60,0.99), rgba(14,11,38,0.99));
     backdrop-filter: blur(30px);
-    border: 1px solid rgba(255,255,255,0.12);
-    border-radius: 18px;
-    padding: 30px;
-    width: 480px;
-    max-width: 90vw;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 22px;
+    padding: 0;
+    width: 540px;
+    max-width: 94vw;
+    max-height: 92vh;
+    overflow-y: auto;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.65), 0 0 0 1px rgba(102,126,234,0.15);
   }
 
-  #module-modal-content h2 { color: #fff; font-size: 18px; margin-bottom: 8px; }
-  #module-modal-content p { color: #999; font-size: 12px; margin-bottom: 20px; }
+  /* Modal header */
+  .mm-header {
+    padding: 24px 28px 0;
+    display: flex; align-items: center; gap: 14px; margin-bottom: 6px;
+  }
+  .mm-header-icon {
+    width: 46px; height: 46px; border-radius: 13px; flex-shrink:0;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    display:flex; align-items:center; justify-content:center;
+    font-size:22px; box-shadow: 0 6px 18px rgba(102,126,234,0.4);
+  }
+  .mm-header-text h2 { color:#fff; font-size:17px; font-weight:700; }
+  .mm-header-text p  { color:#666; font-size:12px; margin-top:2px; }
+
+  .mm-body { padding: 16px 28px 24px; }
 
   #module-modal-content label {
-    color: #bbb;
-    font-size: 12px;
+    color: #888;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .5px;
+    text-transform: uppercase;
     display: block;
     margin-bottom: 6px;
-    margin-top: 14px;
+    margin-top: 16px;
   }
+  #module-modal-content label:first-child { margin-top: 0; }
 
-  #module-modal-content input, #module-modal-content select {
+  #module-modal-content input {
     width: 100%;
+    box-sizing: border-box;
     padding: 10px 14px;
     border-radius: 10px;
-    border: 1px solid rgba(255,255,255,0.12);
-    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.05);
     color: #fff;
     font-size: 13px;
     outline: none;
+    transition: border-color .15s, background .15s;
   }
-
-  #module-modal-content input:focus { border-color: #667eea; }
-
-  .modal-btns {
-    display: flex;
-    gap: 10px;
-    margin-top: 24px;
-    justify-content: flex-end;
+  #module-modal-content input:focus {
+    border-color: #667eea;
+    background: rgba(102,126,234,0.08);
   }
+  #module-modal-content input::placeholder { color: #444; }
 
-  .modal-btn {
-    padding: 10px 22px;
-    border-radius: 10px;
-    border: none;
-    cursor: pointer;
-    font-size: 13px;
-    font-weight: 500;
-    transition: transform 0.1s;
-  }
-
-  .modal-btn:active { transform: scale(0.97); }
-
-  .modal-btn.primary {
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    color: #fff;
-  }
-
-  .modal-btn.secondary {
-    background: rgba(255,255,255,0.1);
-    color: #ddd;
-  }
-
-  /* Favicon preview in module modal */
+  /* URL preview card */
   .url-preview {
     margin-top: 10px;
-    padding: 10px 14px;
-    border-radius: 10px;
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.06);
+    padding: 14px 16px;
+    border-radius: 14px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
     display: flex;
     align-items: center;
-    gap: 10px;
-    min-height: 44px;
+    gap: 14px;
+    min-height: 64px;
+    transition: border-color .2s;
   }
+  .url-preview.loaded { border-color: rgba(102,126,234,0.25); }
 
-  .url-preview img {
-    width: 24px;
-    height: 24px;
-    object-fit: contain;
-    border-radius: 4px;
-  }
-
-  .url-preview .url-preview-text {
-    color: #aaa;
-    font-size: 12px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .url-preview .url-preview-domain {
-    color: #667eea;
-    font-size: 12px;
-    font-weight: 500;
-  }
+  /* Left: favicon + site meta */
+  .up-info { display:flex; align-items:center; gap:12px; flex:1; min-width:0; }
 
   .favicon-big-preview {
-    width: 48px;
-    height: 48px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 24px;
+    width: 56px; height: 56px;
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px; flex-shrink: 0;
     overflow: hidden;
-    margin-right: 4px;
-    flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    transition: background .3s;
   }
-
   .favicon-big-preview img {
-    width: 36px !important;
-    height: 36px !important;
+    width: 40px !important; height: 40px !important;
     object-fit: contain;
   }
+  .url-preview-text  { color:#666; font-size:11px; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .url-preview-domain{ color:#8fa8f5; font-size:13px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .url-preview-desc  { color:#555; font-size:11px; margin-top:3px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; line-height:1.4; }
+
+  /* Right: desktop icon preview */
+  .up-desktop-preview {
+    display: flex; flex-direction: column; align-items: center; gap: 5px;
+    padding: 10px 14px; border-radius: 12px; flex-shrink: 0;
+    background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.05);
+    min-width: 76px;
+  }
+  .updp-label { color:#444; font-size:9px; letter-spacing:.5px; text-transform:uppercase; }
+  .updp-icon  {
+    width: 52px; height: 52px; border-radius: 13px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px; overflow: hidden;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.5);
+    transition: background .3s;
+  }
+  .updp-icon img { width: 36px; height: 36px; object-fit: contain; }
+  .updp-name {
+    color: #ccc; font-size: 9px; font-weight: 600;
+    max-width: 68px; text-align: center;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+
+  /* Color swatches */
+  .mod-color-palette {
+    display: flex; gap: 9px; flex-wrap: wrap; margin-top: 8px;
+  }
+  .mod-color-swatch {
+    width: 30px; height: 30px; border-radius: 50%; cursor: pointer;
+    border: 3px solid transparent;
+    transition: transform .12s, border-color .15s, box-shadow .15s;
+    position: relative; flex-shrink:0;
+  }
+  .mod-color-swatch:hover { transform: scale(1.18); }
+  .mod-color-swatch.active {
+    border-color: rgba(255,255,255,0.75);
+    box-shadow: 0 0 0 2px rgba(255,255,255,0.15);
+    transform: scale(1.1);
+  }
+  .mod-color-swatch.active::after {
+    content: '✓'; position: absolute; top:50%; left:50%;
+    transform: translate(-50%,-50%);
+    color: rgba(255,255,255,0.9); font-size: 11px; font-weight: 800;
+  }
+
+  /* Emoji input row */
+  .mm-emoji-row { display: flex; gap: 10px; align-items: center; margin-top: 6px; }
+  .mm-emoji-input { max-width: 80px !important; text-align: center; font-size: 22px !important; padding: 8px !important; }
+  .mm-emoji-hint { color:#555; font-size:11px; line-height:1.4; flex:1; }
+
+  /* Buttons */
+  .modal-btns {
+    display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end;
+  }
+  .modal-btn {
+    padding: 11px 24px; border-radius: 11px; border: none; cursor: pointer;
+    font-size: 13px; font-weight: 600; transition: opacity .15s, transform .1s;
+  }
+  .modal-btn:hover  { opacity: .88; }
+  .modal-btn:active { transform: scale(0.97); }
+  .modal-btn.primary   { background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; }
+  .modal-btn.secondary { background: rgba(255,255,255,0.08); color: #aaa; }
+
+  /* Favicon preview img */
+  .url-preview img { width: 24px; height: 24px; object-fit: contain; border-radius: 4px; }
 
   .settings-panel { padding: 24px; }
   .settings-panel h3 { color: #fff; font-size: 16px; margin-bottom: 20px; }
@@ -1923,34 +1966,52 @@
 
 <div id="module-modal">
   <div id="module-modal-content">
-    <h2>📦 Ajouter un lien web</h2>
-    <p>L'icône du site sera récupérée automatiquement depuis son favicon.</p>
-    <label>Nom du module</label>
-    <input type="text" id="mod-name" placeholder="Ex: Tableau de bord analytics">
-    <label>URL du site web</label>
-    <input type="text" id="mod-url" placeholder="https://exemple.com" oninput="previewModuleUrl()">
-    <div class="url-preview" id="url-preview" style="display:none;">
-      <div class="favicon-big-preview" id="url-favicon-container" style="background:#667eea">📦</div>
-      <div>
-        <div class="url-preview-domain" id="url-preview-domain"></div>
-        <div class="url-preview-text" id="url-preview-path"></div>
+    <div class="mm-header">
+      <div class="mm-header-icon">📦</div>
+      <div class="mm-header-text">
+        <h2>Ajouter un lien web</h2>
+        <p>L'icône et les infos sont récupérées automatiquement</p>
       </div>
     </div>
-    <label>Icône de secours (emoji — utilisé si le favicon est indisponible)</label>
-    <input type="text" id="mod-icon" placeholder="📊 (laisser vide pour le favicon automatique)" maxlength="2">
-    <label>Couleur d'accent</label>
-    <select id="mod-color">
-      <option value="#667eea">Bleu Indigo</option>
-      <option value="#f5574f">Rouge</option>
-      <option value="#44d17a">Vert</option>
-      <option value="#f5c542">Jaune</option>
-      <option value="#a855f7">Violet</option>
-      <option value="#06b6d4">Cyan</option>
-      <option value="#f97316">Orange</option>
-    </select>
-    <div class="modal-btns">
-      <button class="modal-btn secondary" onclick="closeModuleModal()">Annuler</button>
-      <button class="modal-btn primary" onclick="addModule()">Ajouter</button>
+    <div class="mm-body">
+      <label>URL du site web</label>
+      <input type="text" id="mod-url" placeholder="https://exemple.com"
+        oninput="previewModuleUrl()" onpaste="setTimeout(previewModuleUrl,50)">
+
+      <div class="url-preview" id="url-preview" style="display:none;">
+        <div class="up-info">
+          <div class="favicon-big-preview" id="url-favicon-container" style="background:#667eea">📦</div>
+          <div style="min-width:0;flex:1">
+            <div class="url-preview-domain" id="url-preview-domain"></div>
+            <div class="url-preview-text"   id="url-preview-path"></div>
+            <div class="url-preview-desc"   id="url-preview-desc"></div>
+          </div>
+        </div>
+        <div class="up-desktop-preview">
+          <div class="updp-label">Bureau</div>
+          <div class="updp-icon" id="updp-icon" style="background:#667eea">📦</div>
+          <div class="updp-name" id="updp-name">Module</div>
+        </div>
+      </div>
+
+      <label>Nom du module</label>
+      <input type="text" id="mod-name" placeholder="Ex: Tableau de bord analytics">
+
+      <label>Couleur d'accent</label>
+      <div class="mod-color-palette" id="mod-color-palette"></div>
+      <input type="hidden" id="mod-color" value="#667eea">
+
+      <label>Icône de secours</label>
+      <div class="mm-emoji-row">
+        <input type="text" id="mod-icon" class="mm-emoji-input"
+          placeholder="📦" maxlength="2">
+        <span class="mm-emoji-hint">Emoji affiché si le favicon du site ne se charge pas. Laissez vide pour utiliser le favicon automatique.</span>
+      </div>
+
+      <div class="modal-btns">
+        <button class="modal-btn secondary" onclick="closeModuleModal()">Annuler</button>
+        <button class="modal-btn primary"   onclick="addModule()">➕ Ajouter au bureau</button>
+      </div>
     </div>
   </div>
 </div>
@@ -3186,20 +3247,36 @@
     if (!domain) return;
 
     // Afficher l'état de chargement immédiatement
+    const colorVal = document.getElementById('mod-color')?.value || '#667eea';
     preview.style.display = 'flex';
-    const colorSel = document.getElementById('mod-color');
-    fav.style.background = colorSel ? colorSel.value : '#667eea';
-    fav.innerHTML = '<span class="mod-loading-spinner">⟳</span>';
-    preview.innerHTML = `
-      <div id="url-favicon-container" class="favicon-big-preview" style="background:${colorSel ? colorSel.value : '#667eea'}">
-        <span class="mod-loading-spinner">⟳</span>
-      </div>
-      <div class="url-preview-meta">
-        <div class="upm-title">Récupération des informations…</div>
-        <div class="upm-domain">${domain}</div>
-        <div class="upm-desc">${fullUrl}</div>
-      </div>
-    `;
+    preview.classList.remove('loaded');
+    // Rebuild the preview structure if it was wiped
+    if (!document.getElementById('url-favicon-container')) {
+      preview.innerHTML = `
+        <div class="up-info">
+          <div class="favicon-big-preview" id="url-favicon-container" style="background:${colorVal}">
+            <span class="mod-loading-spinner">⟳</span>
+          </div>
+          <div style="min-width:0;flex:1">
+            <div class="url-preview-domain" id="url-preview-domain">${domain}</div>
+            <div class="url-preview-text"   id="url-preview-path">Récupération…</div>
+            <div class="url-preview-desc"   id="url-preview-desc"></div>
+          </div>
+        </div>
+        <div class="up-desktop-preview">
+          <div class="updp-label">Bureau</div>
+          <div class="updp-icon" id="updp-icon" style="background:${colorVal}"><span class="mod-loading-spinner">⟳</span></div>
+          <div class="updp-name" id="updp-name">${domain.split('.')[0]}</div>
+        </div>`;
+    } else {
+      document.getElementById('url-favicon-container').style.background = colorVal;
+      document.getElementById('url-favicon-container').innerHTML = '<span class="mod-loading-spinner">⟳</span>';
+      document.getElementById('url-preview-domain').textContent = domain;
+      document.getElementById('url-preview-path').textContent   = 'Récupération…';
+      document.getElementById('url-preview-desc').textContent   = '';
+      const updp = document.getElementById('updp-icon');
+      if (updp) { updp.style.background = colorVal; updp.innerHTML = '<span class="mod-loading-spinner">⟳</span>'; }
+    }
 
     // Appel API après délai
     previewDebounceTimer = setTimeout(() => fetchSiteInfo(fullUrl), 700);
@@ -3373,24 +3450,41 @@
 
     // ── Stratégie 3 : convertir le favicon en base64 pour stockage permanent ──
     // Affichage provisoire pendant le fetch du favicon
+    // Auto-fill name
     if (nameInput && !nameInput.value) {
       if (siteTitle) nameInput.value = siteTitle;
       else { const raw = domain.replace('www.','').split('.')[0]; nameInput.value = raw.charAt(0).toUpperCase() + raw.slice(1); }
     }
+
+    // Rebuild preview with new two-column layout
+    const displayName = siteTitle || siteDomain;
+    const iconImgHtml = `<img id="prev-fav-img" src="${logoUrl}" alt=""
+      onerror="this.src='${googleFav}';this.onerror=null;"
+      style="width:40px;height:40px;object-fit:contain;border-radius:6px;">`;
+
     if (preview) {
       preview.innerHTML = `
-        <div id="url-favicon-container" class="favicon-big-preview" style="background:${bgColor}">
-          <img id="prev-fav-img" src="${logoUrl}" alt=""
-               onerror="this.src='${googleFav}';this.onerror=null;"
-               style="width:36px;height:36px;object-fit:contain;border-radius:6px;">
+        <div class="up-info">
+          <div class="favicon-big-preview" id="url-favicon-container" style="background:${bgColor}">
+            ${iconImgHtml}
+          </div>
+          <div style="min-width:0;flex:1">
+            <div class="url-preview-domain" id="url-preview-domain">${escHtml(displayName)}</div>
+            <div class="url-preview-text"   id="url-preview-path">🌐 ${siteDomain}</div>
+            ${siteDesc ? `<div class="url-preview-desc" id="url-preview-desc">${escHtml(siteDesc)}</div>` : '<div id="url-preview-desc"></div>'}
+          </div>
         </div>
-        <div class="url-preview-meta">
-          <div class="upm-title">${escHtml(siteTitle || siteDomain)}</div>
-          <div class="upm-domain">🌐 ${siteDomain}</div>
-          ${siteDesc ? `<div class="upm-desc">${escHtml(siteDesc)}</div>` : ''}
-        </div>
-      `;
-      preview.style.display = '';
+        <div class="up-desktop-preview">
+          <div class="updp-label">Bureau</div>
+          <div class="updp-icon" id="updp-icon" style="background:${bgColor}">
+            <img id="updp-fav-img" src="${logoUrl}" alt=""
+              onerror="this.style.display='none'"
+              style="width:36px;height:36px;object-fit:contain;border-radius:6px;">
+          </div>
+          <div class="updp-name" id="updp-name">${escHtml(displayName.slice(0, 16))}</div>
+        </div>`;
+      preview.style.display = 'flex';
+      preview.classList.add('loaded');
     }
 
     // Tentative de récupération base64 (favicon embarqué = pas de dépendance réseau future)
@@ -3398,9 +3492,10 @@
       const b64 = await fetchFaviconBase64(logoUrl);
       if (b64) {
         logoUrl = b64;
-        // Mettre à jour l'aperçu si la modale est encore ouverte
-        const img = document.getElementById('prev-fav-img');
-        if (img) img.src = b64;
+        const img1 = document.getElementById('prev-fav-img');
+        const img2 = document.getElementById('updp-fav-img');
+        if (img1) img1.src = b64;
+        if (img2) img2.src = b64;
       }
     }
 
@@ -3408,10 +3503,76 @@
     fetchedSiteName   = siteTitle;
   }
 
+  // ── Accent colour palette data ────────────────────────
+  const MOD_COLORS = [
+    { value: '#667eea', label: 'Indigo'    },
+    { value: '#764ba2', label: 'Violet'    },
+    { value: '#ec4899', label: 'Rose'      },
+    { value: '#f5574f', label: 'Rouge'     },
+    { value: '#f97316', label: 'Orange'    },
+    { value: '#f5c542', label: 'Ambre'     },
+    { value: '#44d17a', label: 'Vert'      },
+    { value: '#10b981', label: 'Émeraude'  },
+    { value: '#06b6d4', label: 'Cyan'      },
+    { value: '#3b82f6', label: 'Bleu'      },
+    { value: '#64748b', label: 'Ardoise'   },
+    { value: '#a16207', label: 'Brun'      },
+  ];
+
+  function initModColorPalette() {
+    const container = document.getElementById('mod-color-palette');
+    if (!container) return;
+    container.innerHTML = '';
+    const currentVal = document.getElementById('mod-color')?.value || '#667eea';
+    MOD_COLORS.forEach(c => {
+      const div = document.createElement('div');
+      div.className = 'mod-color-swatch' + (c.value === currentVal ? ' active' : '');
+      div.style.background = c.value;
+      div.title = c.label;
+      div.onclick = () => selectModColor(c.value);
+      container.appendChild(div);
+    });
+  }
+
+  function selectModColor(color) {
+    const inp = document.getElementById('mod-color');
+    if (inp) inp.value = color;
+    // Update swatch selection
+    document.querySelectorAll('.mod-color-swatch').forEach(s => {
+      s.classList.toggle('active', s.style.background === color ||
+        s.style.backgroundColor === color ||
+        colorToHex(s.style.backgroundColor) === color);
+    });
+    // Update favicon bg + desktop preview bg
+    const fav  = document.getElementById('url-favicon-container');
+    const prev = document.getElementById('updp-icon');
+    if (fav)  fav.style.background  = color;
+    if (prev) prev.style.background = color;
+  }
+
+  function colorToHex(rgb) {
+    // rgb(r,g,b) → #rrggbb
+    const m = rgb.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
+    if (!m) return rgb;
+    return '#' + [m[1],m[2],m[3]].map(n => parseInt(n).toString(16).padStart(2,'0')).join('');
+  }
+
+  function modUpdateDesktopPreview(iconHtml, name) {
+    const icon = document.getElementById('updp-icon');
+    const nm   = document.getElementById('updp-name');
+    if (icon && iconHtml !== undefined) icon.innerHTML = iconHtml;
+    if (nm   && name     !== undefined) nm.textContent  = name.slice(0, 20);
+  }
+
   function openModuleModal() {
     document.getElementById('module-modal').classList.add('show');
     closeContextMenu();
     if (startMenuOpen) toggleStartMenu();
+    // Reset & init swatches after DOM paint
+    setTimeout(() => {
+      document.getElementById('mod-color').value = '#667eea';
+      initModColorPalette();
+    }, 0);
   }
 
   function closeModuleModal() {
@@ -3421,7 +3582,7 @@
     document.getElementById('mod-icon').value = '';
     document.getElementById('url-preview').style.display = 'none';
     const favc = document.getElementById('url-favicon-container');
-    if (favc) favc.innerHTML = '📦';
+    if (favc) { favc.innerHTML = '📦'; favc.style.background = '#667eea'; }
     clearTimeout(previewDebounceTimer);
     fetchedFaviconUrl = null;
     fetchedSiteName   = null;
@@ -4949,21 +5110,57 @@
     }
     ghSetPanelStatus('🔍 Détection du compte GitHub…', 'inf');
     try {
-      const user = await ghApiGet('/user');
+      // Raw fetch to capture OAuth scopes header
+      const res = await fetch('https://api.github.com/user', {
+        headers: {
+          'Authorization': 'Bearer ' + ghConfig.token,
+          'Accept': 'application/vnd.github+json',
+          'X-GitHub-Api-Version': '2022-11-28'
+        }
+      });
+      const user = await res.json();
+      if (!res.ok) throw new Error(user.message || 'HTTP ' + res.status);
+
+      // Auto-fill owner
       ghConfig.owner = user.login;
       const ownerEl = document.getElementById('gh-owner');
       if (ownerEl) ownerEl.value = user.login;
       ghSaveConfig();
-      ghSetPanelStatus(
-        '✅ Compte détecté : <strong>' + user.login + '</strong>' +
-        (user.name ? ' (' + user.name + ')' : '') +
-        ' — Entrez maintenant le nom du dépôt et cliquez Tester.',
-        'ok'
-      );
+
+      // Check scopes (empty = fine-grained token, string = classic token)
+      const scopeHeader = res.headers.get('x-oauth-scopes') || '';
+      const scopes = scopeHeader.split(',').map(s => s.trim()).filter(Boolean);
+      const hasRepo = scopes.length === 0 || scopes.includes('repo') || scopes.includes('repo:status');
+
+      if (scopes.length > 0 && !hasRepo) {
+        // Classic token without repo scope
+        ghSetPanelStatus(
+          '⚠️ Compte : <strong>' + user.login + '</strong> — mais le token n\'a pas le scope <code>repo</code>.<br>' +
+          'Scopes actuels : <em>' + (scopeHeader || 'aucun') + '</em><br>' +
+          '👉 <a href="https://github.com/settings/tokens/new?scopes=repo&description=Bureau+Virtuel+Pro" ' +
+          'target="_blank" style="color:#8fa8f5;text-decoration:underline">Créez un nouveau token avec "repo" coché ↗</a>',
+          'err'
+        );
+      } else {
+        const scopeNote = scopes.length === 0
+          ? ' (token fine-grained — assurez-vous d\'avoir coché les permissions <em>Contents: Read &amp; Write</em>)'
+          : '';
+        ghSetPanelStatus(
+          '✅ Compte : <strong>' + user.login + '</strong>' +
+          (user.name ? ' (' + user.name + ')' : '') + scopeNote +
+          ' — Entrez le nom du dépôt et cliquez <strong>Tester la connexion</strong>.',
+          'ok'
+        );
+      }
     } catch(e) {
       const m = e.message.toLowerCase();
       if (m.includes('bad credentials') || m.includes('401') || m.includes('unauthorized')) {
-        ghSetPanelStatus('❌ Token invalide — vérifiez qu\'il commence par "ghp_" et a bien le scope "repo".', 'err');
+        ghSetPanelStatus(
+          '❌ Token invalide.<br>' +
+          '👉 <a href="https://github.com/settings/tokens/new?scopes=repo&description=Bureau+Virtuel+Pro" ' +
+          'target="_blank" style="color:#8fa8f5;text-decoration:underline">Créer un token valide avec le scope "repo" ↗</a>',
+          'err'
+        );
       } else {
         ghSetPanelStatus('❌ ' + e.message, 'err');
       }
@@ -5062,7 +5259,28 @@
         'ok'
       );
     } catch(e) {
-      ghSetPanelStatus('❌ Création impossible : ' + e.message, 'err');
+      if (e.message === 'Not Found' || e.message.includes('404')) {
+        ghSetPanelStatus(
+          '❌ Impossible de créer le dépôt — le token n\'a pas le scope <code>repo</code>.<br><br>' +
+          '<strong>Solution 1 (recommandée) :</strong> Créez un nouveau token Classic avec "repo" coché :<br>' +
+          '👉 <a href="https://github.com/settings/tokens/new?scopes=repo&description=Bureau+Virtuel+Pro" ' +
+          'target="_blank" style="color:#8fa8f5;text-decoration:underline">github.com → Settings → Developer settings → Tokens (classic) ↗</a><br><br>' +
+          '<strong>Solution 2 :</strong> Créez le dépôt manuellement, puis revenez sauvegarder :<br>' +
+          '👉 <a href="https://github.com/new" target="_blank" style="color:#8fa8f5;text-decoration:underline">Créer le dépôt sur github.com ↗</a> ' +
+          '(nom : <strong>' + (ghConfig.repo || 'bureau') + '</strong>, privé ou public)',
+          'err'
+        );
+      } else if (e.message.includes('already exists') || e.message.includes('name already')) {
+        // Repo already exists — just use it
+        const createBtn = document.getElementById('gh-create-repo-btn');
+        if (createBtn) createBtn.style.display = 'none';
+        ghSetPanelStatus(
+          '✅ Le dépôt "' + ghConfig.repo + '" existe déjà — vous pouvez maintenant sauvegarder !',
+          'ok'
+        );
+      } else {
+        ghSetPanelStatus('❌ ' + e.message, 'err');
+      }
     }
   }
 
