@@ -1040,212 +1040,195 @@
   /* ====================================================
      NOTES APP v2 — Dossiers + Notes + Éditeur
      ==================================================== */
-  .notes-app {
-    display: flex;
-    height: 100%;
-    overflow: hidden;
-  }
+  /* ══════════════════════════════
+     NOTES APP — Redesign v2
+  ══════════════════════════════ */
+  .notes-app { display: flex; height: 100%; overflow: hidden; }
 
-  /* Colonne gauche : dossiers */
+  /* ── Left: Folders ─────────────── */
   .notes-folders {
-    width: 162px;
-    border-right: 1px solid rgba(255,255,255,0.07);
-    display: flex;
-    flex-direction: column;
-    background: rgba(0,0,0,0.15);
-    flex-shrink: 0;
+    width: 178px; flex-shrink: 0;
+    border-right: 1px solid rgba(255,255,255,0.06);
+    display: flex; flex-direction: column;
+    background: rgba(0,0,0,0.18);
   }
 
   .notes-panel-hdr {
-    padding: 10px 12px 7px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+    padding: 12px 12px 9px;
+    display: flex; align-items: center; justify-content: space-between;
     border-bottom: 1px solid rgba(255,255,255,0.05);
     flex-shrink: 0;
   }
-
   .notes-panel-hdr-label {
-    color: #666;
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: .08em;
-    font-weight: 700;
+    color: #555; font-size: 10px; text-transform: uppercase;
+    letter-spacing: .08em; font-weight: 700;
   }
-
   .notes-add-btn {
-    width: 22px;
-    height: 22px;
-    border-radius: 6px;
-    border: none;
-    background: rgba(102,126,234,0.2);
-    color: #667eea;
-    font-size: 15px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    line-height: 1;
+    width: 24px; height: 24px; border-radius: 7px; border: none;
+    background: rgba(102,126,234,0.18); color: #667eea;
+    font-size: 16px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
     transition: background .15s;
   }
+  .notes-add-btn:hover { background: rgba(102,126,234,0.36); }
 
-  .notes-add-btn:hover { background: rgba(102,126,234,0.4); }
+  .notes-folder-scroll { flex:1; overflow-y:auto; padding: 6px 8px; }
 
-  .notes-folder-scroll { flex: 1; overflow-y: auto; padding: 5px 6px; }
-
+  /* Folder item */
   .notes-folder-item {
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    padding: 7px 10px;
-    border-radius: 8px;
-    cursor: pointer;
-    color: #999;
-    font-size: 12px;
-    transition: background .15s, color .15s;
-    position: relative;
-    padding-right: 46px;
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 10px; border-radius: 9px; cursor: pointer;
+    color: #666; font-size: 12px; font-weight: 500;
+    transition: background .12s, color .12s;
+    position: relative; padding-right: 44px; margin-bottom: 2px;
+  }
+  .notes-folder-item:hover { background: rgba(255,255,255,0.06); color: #bbb; }
+  .notes-folder-item.active {
+    background: linear-gradient(90deg, rgba(102,126,234,0.22), rgba(102,126,234,0.08));
+    color: #c5d0ff;
+    border-left: 3px solid #667eea;
+    padding-left: 7px;
   }
 
-  .notes-folder-item:hover { background: rgba(255,255,255,0.07); color: #ddd; }
-  .notes-folder-item.active { background: rgba(102,126,234,0.2); color: #fff; }
+  /* Folder icon badge */
+  .notes-fld-ico {
+    width: 26px; height: 26px; border-radius: 7px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; background: rgba(255,255,255,0.06);
+  }
+  .notes-folder-item.active .notes-fld-ico { background: rgba(102,126,234,0.3); }
 
-  .notes-folder-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .notes-folder-name { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 
   .notes-folder-count {
-    font-size: 10px;
-    color: #555;
-    background: rgba(255,255,255,0.05);
-    padding: 1px 5px;
-    border-radius: 8px;
-    flex-shrink: 0;
+    font-size: 10px; color: #444;
+    background: rgba(255,255,255,0.04);
+    padding: 2px 6px; border-radius: 10px; flex-shrink: 0;
+    min-width: 18px; text-align: center;
   }
-
-  .notes-folder-item.active .notes-folder-count { color: #9898c8; }
+  .notes-folder-item.active .notes-folder-count { color: #667eea; background: rgba(102,126,234,0.2); }
 
   .notes-folder-actions {
-    position: absolute;
-    right: 5px;
-    display: none;
-    gap: 2px;
-    align-items: center;
+    position: absolute; right: 5px; display: none; gap: 3px; align-items: center;
   }
-
   .notes-folder-item:hover .notes-folder-actions { display: flex; }
-
   .notes-fld-btn {
-    width: 17px;
-    height: 17px;
-    border-radius: 4px;
-    border: none;
-    font-size: 9px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background .1s;
+    width: 18px; height: 18px; border-radius: 5px; border: none;
+    font-size: 9px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; transition: background .1s;
   }
-
   .notes-fld-btn.rename { background: rgba(102,126,234,0.2); color: #8898ee; }
   .notes-fld-btn.rename:hover { background: rgba(102,126,234,0.4); }
-  .notes-fld-btn.delete { background: rgba(245,87,79,0.2); color: #f5574f; }
-  .notes-fld-btn.delete:hover { background: rgba(245,87,79,0.4); }
+  .notes-fld-btn.delete { background: rgba(245,87,79,0.15); color: #f5574f; }
+  .notes-fld-btn.delete:hover { background: rgba(245,87,79,0.35); }
 
-  /* Colonne centrale : liste de notes */
+  /* ── Centre: Note list ──────────── */
   .notes-list-panel {
-    width: 200px;
-    border-right: 1px solid rgba(255,255,255,0.07);
-    display: flex;
-    flex-direction: column;
-    flex-shrink: 0;
-    overflow: hidden;
+    width: 224px; flex-shrink: 0; overflow: hidden;
+    border-right: 1px solid rgba(255,255,255,0.06);
+    display: flex; flex-direction: column;
   }
 
-  .notes-list-scroll { flex: 1; overflow-y: auto; padding: 5px 6px; }
+  /* Search bar */
+  .notes-search-wrap {
+    padding: 7px 9px; border-bottom: 1px solid rgba(255,255,255,0.05); flex-shrink: 0;
+  }
+  .notes-search-inp {
+    width: 100%; box-sizing: border-box;
+    padding: 6px 10px 6px 28px; border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.04);
+    color: #ccc; font-size: 11px; outline: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23556' stroke-width='2.5'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: 9px center;
+    transition: border-color .15s;
+  }
+  .notes-search-inp:focus { border-color: rgba(102,126,234,0.5); }
+  .notes-search-inp::placeholder { color: #3a3a5a; }
 
+  .notes-list-scroll { flex:1; overflow-y:auto; padding: 6px 8px; }
+
+  /* Note card */
   .notes-note-item {
-    padding: 9px 12px;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: background .15s;
-    margin-bottom: 2px;
-    border: 1px solid transparent;
-    position: relative;
-    padding-right: 28px;
+    padding: 10px 12px; border-radius: 10px; cursor: pointer;
+    margin-bottom: 4px; border: 1px solid rgba(255,255,255,0.04);
+    position: relative; overflow: hidden;
+    transition: background .12s, border-color .12s;
+    background: rgba(255,255,255,0.02);
   }
-
-  .notes-note-item:hover { background: rgba(255,255,255,0.06); }
-  .notes-note-item.active { background: rgba(102,126,234,0.15); border-color: rgba(102,126,234,0.3); }
-
-  .notes-note-ttl {
-    color: #ddd;
-    font-size: 12px;
-    font-weight: 500;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    margin-bottom: 2px;
+  .notes-note-item::before {
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+    width: 3px; background: rgba(102,126,234,0.4); opacity: 0;
+    border-radius: 10px 0 0 10px; transition: opacity .15s;
   }
+  .notes-note-item:hover { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.08); }
+  .notes-note-item:hover::before { opacity: .5; }
+  .notes-note-item.active {
+    background: rgba(102,126,234,0.13);
+    border-color: rgba(102,126,234,0.3);
+  }
+  .notes-note-item.active::before { opacity: 1; }
 
-  .notes-note-prv { color: #666; font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .notes-note-dt { color: #505050; font-size: 10px; margin-top: 3px; }
-  .notes-note-item.active .notes-note-ttl { color: #fff; }
+  .notes-note-hdr { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:4px; }
+  .notes-note-ttl { color:#ddd; font-size:12px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; }
+  .notes-note-dt  { color:#3d3d5a; font-size:9px; flex-shrink:0; margin-left:6px; }
+  .notes-note-item.active .notes-note-ttl { color:#c5d0ff; }
+  .notes-note-item.active .notes-note-dt  { color:#667eea; }
+
+  .notes-note-prv {
+    color: #4a4a6a; font-size: 11px;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    overflow: hidden; line-height: 1.45;
+  }
+  .notes-note-item.active .notes-note-prv { color: #6a6a9a; }
 
   .notes-note-del {
-    position: absolute;
-    top: 6px;
-    right: 5px;
-    opacity: 0;
-    width: 17px;
-    height: 17px;
-    border-radius: 4px;
-    border: none;
-    background: rgba(245,87,79,0.2);
-    color: #f5574f;
-    font-size: 10px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: opacity .15s;
+    position: absolute; top: 7px; right: 6px; opacity: 0;
+    width: 18px; height: 18px; border-radius: 5px; border: none;
+    background: rgba(245,87,79,0.18); color: #f5574f;
+    font-size: 11px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; transition: opacity .12s;
   }
-
   .notes-note-item:hover .notes-note-del { opacity: 1; }
 
+  /* Empty states */
   .notes-empty-state {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 24px 12px;
-    color: #444;
-    font-size: 11px;
-    gap: 6px;
-    text-align: center;
-    line-height: 1.5;
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; padding: 28px 14px;
+    color: #3a3a5a; font-size: 11px; gap: 8px;
+    text-align: center; line-height: 1.5;
   }
+  .notes-empty-state .nes-icon { font-size: 32px; opacity: .5; }
+  .notes-empty-state .nes-title { color: #555; font-size: 12px; font-weight:600; }
+  .notes-empty-state .nes-sub { color: #3a3a5a; font-size: 11px; }
+  .notes-empty-state button {
+    margin-top: 4px; padding: 6px 14px; border-radius: 8px; border: none;
+    background: rgba(102,126,234,0.2); color: #8fa8f5;
+    font-size: 11px; cursor: pointer; transition: background .15s;
+  }
+  .notes-empty-state button:hover { background: rgba(102,126,234,0.35); }
 
-  /* Colonne droite : éditeur */
-  .notes-editor-panel {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    min-width: 0;
-  }
+  /* ── Right: Editor ──────────────── */
+  .notes-editor-panel { flex:1; display:flex; flex-direction:column; overflow:hidden; min-width:0; }
 
   .notes-editor-placeholder {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-    color: #3a3a5a;
-    font-size: 13px;
-    gap: 12px;
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; height: 100%;
+    color: #3a3a5a; font-size: 13px; gap: 10px; text-align: center; padding: 24px;
   }
-
-  .notes-editor-placeholder .ep-icon { font-size: 38px; }
+  .notes-editor-placeholder .ep-icon {
+    font-size: 52px; opacity: .25;
+    filter: grayscale(1);
+  }
+  .notes-editor-placeholder .ep-title { color: #4a4a6a; font-size: 15px; font-weight: 600; }
+  .notes-editor-placeholder .ep-sub   { color: #2a2a4a; font-size: 12px; margin-top: 2px; }
+  .notes-editor-placeholder button {
+    margin-top: 6px; padding: 9px 22px; border-radius: 10px; border: none;
+    background: linear-gradient(135deg, rgba(102,126,234,0.3), rgba(118,75,162,0.3));
+    border: 1px solid rgba(102,126,234,0.3);
+    color: #8fa8f5; font-size: 13px; cursor: pointer; transition: opacity .15s;
+  }
+  .notes-editor-placeholder button:hover { opacity: .8; }
 
   .notes-title-inp {
     width: 100%;
@@ -2667,7 +2650,7 @@
         return `<div class="notes-app">
           <div class="notes-folders">
             <div class="notes-panel-hdr">
-              <span class="notes-panel-hdr-label">Dossiers</span>
+              <span class="notes-panel-hdr-label">📂 Dossiers</span>
               <button class="notes-add-btn" onclick="createFolder()" title="Nouveau dossier">+</button>
             </div>
             <div class="notes-folder-scroll" id="notes-folder-list"></div>
@@ -2677,13 +2660,19 @@
               <span class="notes-panel-hdr-label" id="notes-list-label">Notes</span>
               <button class="notes-add-btn" onclick="createNote()" title="Nouvelle note" id="notes-new-btn">+</button>
             </div>
+            <div class="notes-search-wrap">
+              <input class="notes-search-inp" id="notes-search-inp"
+                placeholder="Rechercher une note…"
+                oninput="notesSearchFilter(this.value)">
+            </div>
             <div class="notes-list-scroll" id="notes-list"></div>
           </div>
           <div class="notes-editor-panel" id="notes-editor-panel">
             <div class="notes-editor-placeholder">
               <span class="ep-icon">📝</span>
-              Sélectionnez une note<br>
-              <span style="color:#2a2a4a;font-size:11px">ou créez-en une nouvelle avec +</span>
+              <span class="ep-title">Aucune note sélectionnée</span>
+              <span class="ep-sub">Choisissez une note ou créez-en une nouvelle</span>
+              <button onclick="createNote()">✏️ Nouvelle note</button>
             </div>
           </div>
         </div>`;
@@ -2934,14 +2923,22 @@
       } else {
         list.innerHTML = modules.map(m => {
           const favicon = m.faviconUrl || getFaviconUrl(m.url);
-          return `<a class="module-link-card" href="${m.url}" target="_blank">
-            <img src="${favicon}" alt="" onerror="this.outerHTML='<span style=font-size:24px>${m.icon||'📦'}</span>'">
-            <div class="mlc-info">
-              <div class="mlc-name">${m.name}</div>
-              <div class="mlc-url">${m.url}</div>
+          return `<div class="module-link-card" style="display:flex;align-items:center;gap:10px;">
+            <div style="width:36px;height:36px;border-radius:8px;background:${m.color||'#667eea'};display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;">
+              <img src="${favicon}" alt="" style="width:22px;height:22px;object-fit:contain;border-radius:4px;"
+                onerror="this.outerHTML='<span style=font-size:18px>${m.icon||'📦'}</span>'">
             </div>
-            <div class="mlc-arrow">↗</div>
-          </a>`;
+            <div class="mlc-info" style="flex:1;min-width:0;cursor:pointer;" onclick="openApp('${m.id}')" title="Ouvrir">
+              <div class="mlc-name">${escHtml(m.name)}</div>
+              <div class="mlc-url">${escHtml(getDomain(m.url))}</div>
+            </div>
+            <div style="display:flex;gap:6px;flex-shrink:0;">
+              <button onclick="openEditModuleModal('${m.id}')" title="Modifier"
+                style="padding:5px 10px;border-radius:7px;border:1px solid rgba(102,126,234,0.35);background:rgba(102,126,234,0.12);color:#a0aeff;cursor:pointer;font-size:12px;">✏️</button>
+              <button onclick="deleteSingleModule('${m.id}')" title="Supprimer"
+                style="padding:5px 10px;border-radius:7px;border:1px solid rgba(245,87,79,0.3);background:rgba(245,87,79,0.1);color:#f5574f;cursor:pointer;font-size:12px;">🗑️</button>
+            </div>
+          </div>`;
         }).join('');
       }
     }
@@ -3564,11 +3561,62 @@
     if (nm   && name     !== undefined) nm.textContent  = name.slice(0, 20);
   }
 
+  let modEditingId = null; // null = add mode, string = edit mode
+
   function openModuleModal() {
+    modEditingId = null;
+    _openModuleModalInternal();
+  }
+
+  function openEditModuleModal(id) {
+    const mod = apps.find(a => a.id === id);
+    if (!mod) return;
+    modEditingId = id;
+    _openModuleModalInternal();
+    // Pre-fill after DOM settles
+    setTimeout(() => {
+      document.getElementById('mod-url').value  = mod.url  || '';
+      document.getElementById('mod-name').value = mod.name || '';
+      document.getElementById('mod-icon').value = mod.icon || '';
+      const color = mod.color || '#667eea';
+      document.getElementById('mod-color').value = color;
+      initModColorPalette();
+      // Show preview panel with stored favicon
+      if (mod.faviconUrl || mod.url) {
+        const favc = document.getElementById('url-favicon-container');
+        const prev = document.getElementById('updp-icon');
+        const ico  = mod.faviconUrl
+          ? `<img src="${mod.faviconUrl}" style="width:100%;height:100%;object-fit:contain;border-radius:6px;" onerror="this.outerHTML='<span style=font-size:28px>${mod.icon||'📦'}</span>'">`
+          : `<span style="font-size:28px">${mod.icon || '📦'}</span>`;
+        if (favc) { favc.innerHTML = ico; favc.style.background = color; }
+        if (prev) { prev.innerHTML = ico; prev.style.background = color; }
+        document.getElementById('url-preview').style.display = 'flex';
+        const domEl = document.getElementById('url-preview-domain');
+        if (domEl) domEl.textContent = getDomain(mod.url) || mod.url;
+        modUpdateDesktopPreview(undefined, mod.name);
+        fetchedFaviconUrl = mod.faviconUrl || null;
+      }
+      // Update modal header for edit mode
+      const h2 = document.querySelector('#module-modal-content .mm-header-text h2');
+      const p  = document.querySelector('#module-modal-content .mm-header-text p');
+      const btn= document.querySelector('#module-modal-content .modal-btn.primary');
+      if (h2)  h2.textContent = 'Modifier le module';
+      if (p)   p.textContent  = 'Modifiez les informations de votre module';
+      if (btn) btn.innerHTML  = '💾 Enregistrer les modifications';
+    }, 0);
+  }
+
+  function _openModuleModalInternal() {
+    // Reset header + button to "add" defaults first
+    const h2 = document.querySelector('#module-modal-content .mm-header-text h2');
+    const p  = document.querySelector('#module-modal-content .mm-header-text p');
+    const btn= document.querySelector('#module-modal-content .modal-btn.primary');
+    if (h2)  h2.textContent = 'Ajouter un lien web';
+    if (p)   p.textContent  = 'L\'icône et les infos sont récupérées automatiquement';
+    if (btn) btn.innerHTML  = '➕ Ajouter au bureau';
     document.getElementById('module-modal').classList.add('show');
     closeContextMenu();
     if (startMenuOpen) toggleStartMenu();
-    // Reset & init swatches after DOM paint
     setTimeout(() => {
       document.getElementById('mod-color').value = '#667eea';
       initModColorPalette();
@@ -3576,6 +3624,7 @@
   }
 
   function closeModuleModal() {
+    modEditingId = null;
     document.getElementById('module-modal').classList.remove('show');
     document.getElementById('mod-name').value = '';
     document.getElementById('mod-url').value  = '';
@@ -3598,8 +3647,35 @@
     if (!url.startsWith('http')) url = 'https://' + url;
 
     const storedFavicon = fetchedFaviconUrl;
-    const id = 'mod-' + Date.now();
 
+    // ── EDIT MODE ──────────────────────────────────────────
+    if (modEditingId) {
+      const idx = apps.findIndex(a => a.id === modEditingId);
+      if (idx === -1) { notify('⚠️ Module introuvable'); return; }
+      const existing = apps[idx];
+      confirmDialog(
+        'Modifier le module',
+        `Enregistrer les modifications de "${name}" ?`,
+        () => {
+          apps[idx] = { ...existing, name, url, icon, color,
+            faviconUrl: storedFavicon !== null ? storedFavicon : existing.faviconUrl };
+          fetchedFaviconUrl = null; fetchedSiteName = null;
+          saveModules();
+          renderDesktopIcons();
+          renderStartMenu();
+          closeModuleModal();
+          notify(`✅ Module "${name}" mis à jour`);
+          // Refresh settings panel if open
+          const sl = document.getElementById('settings-module-list');
+          if (sl) openApp('settings');
+        },
+        '✏️', 'Enregistrer', 'success'
+      );
+      return;
+    }
+
+    // ── ADD MODE ───────────────────────────────────────────
+    const id = 'mod-' + Date.now();
     confirmDialog(
       'Ajouter le module',
       `Ajouter "${name}" (${getDomain(url)}) à votre bureau ?`,
@@ -3631,8 +3707,28 @@
         renderDesktopIcons();
         renderStartMenu();
         notify('🗑️ Tous les modules supprimés');
+        openApp('settings');
       },
       '⚠️', 'Supprimer tout'
+    );
+  }
+
+  function deleteSingleModule(id) {
+    const mod = apps.find(a => a.id === id);
+    if (!mod) return;
+    confirmDialog(
+      'Supprimer ce module',
+      `Supprimer "${escHtml(mod.name)}" de votre bureau ?`,
+      () => {
+        if (openWindows[id]) closeWindow(id);
+        apps = apps.filter(a => a.id !== id);
+        saveModules();
+        renderDesktopIcons();
+        renderStartMenu();
+        notify(`🗑️ Module "${mod.name}" supprimé`);
+        openApp('settings');
+      },
+      '🗑️', 'Supprimer'
     );
   }
 
@@ -3691,26 +3787,38 @@
     renderNoteEditor();
   }
 
+  // Folder icon colors (cycles through palette)
+  const FOLDER_COLORS = ['#667eea','#ec4899','#f97316','#44d17a','#06b6d4','#f5c542','#a855f7','#f5574f'];
+  let notesSearchQuery = '';
+
   function renderFolderList() {
     const container = document.getElementById('notes-folder-list');
     if (!container) return;
     container.innerHTML = '';
-    notesData.folders.forEach(folder => {
-      const count = notesData.notes.filter(n => n.folderId === folder.id).length;
+    notesData.folders.forEach((folder, idx) => {
+      const count   = notesData.notes.filter(n => n.folderId === folder.id).length;
+      const fcolor  = FOLDER_COLORS[idx % FOLDER_COLORS.length];
+      const isActive = folder.id === currentFolderId;
       const el = document.createElement('div');
-      el.className = 'notes-folder-item' + (folder.id === currentFolderId ? ' active' : '');
+      el.className = 'notes-folder-item' + (isActive ? ' active' : '');
       el.onclick = () => selectFolder(folder.id);
       el.innerHTML = `
-        <span>${folder.icon}</span>
+        <div class="notes-fld-ico" style="background:${isActive ? fcolor+'33' : 'rgba(255,255,255,0.06)'}">
+          <span style="filter:${isActive ? 'none' : 'grayscale(.5) opacity(.7)'}">${folder.icon}</span>
+        </div>
         <span class="notes-folder-name">${escHtml(folder.name)}</span>
-        <span class="notes-folder-count">${count}</span>
+        <span class="notes-folder-count">${count || ''}</span>
         <span class="notes-folder-actions">
           <button class="notes-fld-btn rename" onclick="renameFolder('${folder.id}',event)" title="Renommer">✏</button>
           <button class="notes-fld-btn delete" onclick="deleteFolder('${folder.id}',event)" title="Supprimer">×</button>
-        </span>
-      `;
+        </span>`;
       container.appendChild(el);
     });
+  }
+
+  function notesSearchFilter(q) {
+    notesSearchQuery = q.toLowerCase().trim();
+    renderNoteList();
   }
 
   function renderNoteList() {
@@ -3719,19 +3827,29 @@
     if (!container) return;
 
     const folder = notesData.folders.find(f => f.id === currentFolderId);
-    if (label && folder) label.textContent = folder.name;
+    if (label && folder) label.textContent = folder.name.toUpperCase();
 
-    const notes = notesData.notes
+    let notes = notesData.notes
       .filter(n => n.folderId === currentFolderId)
-      .sort((a,b) => b.updatedAt - a.updatedAt);
+      .sort((a, b) => b.updatedAt - a.updatedAt);
+
+    // Apply search filter
+    if (notesSearchQuery) {
+      notes = notes.filter(n =>
+        (n.title  || '').toLowerCase().includes(notesSearchQuery) ||
+        (n.content|| '').toLowerCase().includes(notesSearchQuery)
+      );
+    }
 
     container.innerHTML = '';
 
     if (!notes.length) {
+      const isSearch = !!notesSearchQuery;
       container.innerHTML = `<div class="notes-empty-state">
-        <span style="font-size:22px">📄</span>
-        Aucune note dans ce dossier<br>
-        <span style="color:#3a3a5a">Cliquez + pour créer</span>
+        <span class="nes-icon">${isSearch ? '🔍' : '📄'}</span>
+        <span class="nes-title">${isSearch ? 'Aucun résultat' : 'Ce dossier est vide'}</span>
+        <span class="nes-sub">${isSearch ? 'Essayez un autre mot-clé' : 'Commencez à écrire votre première note'}</span>
+        ${!isSearch ? `<button onclick="createNote()">✏️ Créer une note</button>` : ''}
       </div>`;
       return;
     }
@@ -3739,17 +3857,29 @@
     notes.forEach(note => {
       const el = document.createElement('div');
       el.className = 'notes-note-item' + (note.id === currentNoteId ? ' active' : '');
-      el.onclick = () => selectNote(note.id);
+      el.onclick   = () => selectNote(note.id);
 
-      const date    = new Date(note.updatedAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
-      const preview = (note.content || '').replace(/\n/g,' ').slice(0, 55) || '—';
+      const now  = Date.now();
+      const diff = now - note.updatedAt;
+      let dateStr;
+      if (diff < 60000)           dateStr = 'À l\'instant';
+      else if (diff < 3600000)    dateStr = Math.floor(diff/60000) + ' min';
+      else if (diff < 86400000)   dateStr = Math.floor(diff/3600000) + 'h';
+      else dateStr = new Date(note.updatedAt).toLocaleDateString('fr-FR', { day:'numeric', month:'short' });
+
+      const preview = (note.content || '')
+        .replace(/[*_`~#]/g, '')
+        .replace(/\n+/g, ' ')
+        .trim()
+        .slice(0, 80) || 'Note vide…';
 
       el.innerHTML = `
-        <div class="notes-note-ttl">${escHtml(note.title || 'Sans titre')}</div>
+        <div class="notes-note-hdr">
+          <span class="notes-note-ttl">${escHtml(note.title || 'Sans titre')}</span>
+          <span class="notes-note-dt">${dateStr}</span>
+        </div>
         <div class="notes-note-prv">${escHtml(preview)}</div>
-        <div class="notes-note-dt">${date}</div>
-        <button class="notes-note-del" onclick="deleteNote('${note.id}',event)" title="Supprimer">×</button>
-      `;
+        <button class="notes-note-del" onclick="deleteNote('${note.id}',event)" title="Supprimer">×</button>`;
       container.appendChild(el);
     });
   }
