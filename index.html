@@ -2697,13 +2697,17 @@
 
           <div class="gh-settings-block">
             <label>🐙 Intégration GitHub — Sauvegarde automatique</label>
-            <div class="gh-row">
-              <input type="password" id="gh-token" class="gh-inp gh-inp-full"
+            <div class="gh-row" style="align-items:center;">
+              <input type="password" id="gh-token" class="gh-inp"
                 placeholder="Personal Access Token (ghp_...)" autocomplete="off">
+              <button class="gh-btn gh-btn-test" style="white-space:nowrap;flex-shrink:0;padding:8px 14px"
+                onclick="ghDetectUser()" title="Détecter automatiquement votre nom d'utilisateur depuis le token">
+                🔍 Détecter l'utilisateur
+              </button>
             </div>
             <div class="gh-row">
-              <input type="text" id="gh-owner" class="gh-inp" placeholder="Propriétaire (ex: octocat)">
-              <input type="text" id="gh-repo"  class="gh-inp" placeholder="Dépôt (ex: mon-bureau)">
+              <input type="text" id="gh-owner" class="gh-inp" placeholder="Nom d'utilisateur GitHub (auto-détecté)">
+              <input type="text" id="gh-repo"  class="gh-inp" placeholder="Nom du dépôt (ex: mon-bureau)">
               <input type="text" id="gh-branch" class="gh-inp" placeholder="Branche (ex: main)" style="max-width:110px">
             </div>
             <div class="gh-row" style="align-items:center;">
@@ -2723,12 +2727,16 @@
               <button class="gh-btn gh-btn-sync" onclick="ghSyncNow()">⬆️ Sauvegarder maintenant</button>
               <button class="gh-btn gh-btn-pull" onclick="ghPullFromGitHub()">⬇️ Restaurer depuis GitHub</button>
             </div>
+            <div class="gh-btn-row" style="margin-top:6px">
+              <button id="gh-create-repo-btn" class="gh-btn" style="display:none;background:rgba(68,209,122,0.15);color:#44d17a;border:1px solid rgba(68,209,122,0.3)"
+                onclick="ghCreateRepo()">➕ Créer le dépôt sur GitHub</button>
+            </div>
             <div id="gh-settings-status" class="gh-status"></div>
             <div id="gh-last-sync-info" class="gh-last-sync"></div>
             <div class="gh-hint">
               Le token doit avoir le scope <code>repo</code>.<br>
-              Créez-en un sur GitHub → Settings → Developer settings → Personal access tokens → Tokens (classic).<br>
-              Toutes vos données (modules, fichiers, notes, agenda) sont sauvegardées dans un seul fichier JSON chiffré en base64.
+              GitHub → Settings → Developer settings → Personal access tokens → Tokens (classic) → Generate new token.<br>
+              Cliquez sur <strong>🔍 Détecter l'utilisateur</strong> après avoir collé votre token — votre nom sera rempli automatiquement.
             </div>
           </div>
         </div>`;
@@ -4815,7 +4823,7 @@
     // type: 'ok' | 'err' | 'inf'
     const el = document.getElementById('gh-settings-status');
     if (!el) return;
-    el.textContent = msg;
+    el.innerHTML = msg;
     el.className = 'gh-status ' + (type || 'inf');
   }
   function ghUpdateLastSyncLabel() {
@@ -4915,19 +4923,146 @@
     return data;
   }
 
-  // ── Test connection ───────────────────────────────────
-  async function ghTestConnection() {
-    ghReadForm();
-    if (!ghConfig.token || !ghConfig.owner || !ghConfig.repo) {
-      ghSetPanelStatus('⚠️ Renseignez le token, le propriétaire et le dépôt.', 'err');
+  async function ghApiPost(path, body) {
+    const res = await fetch('https://api.github.com' + path, {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + ghConfig.token,
+        'Accept': 'application/vnd.github+json',
+        'X-GitHub-Api-Version': '2022-11-28',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'HTTP ' + res.status);
+    return data;
+  }
+
+  // ── Auto-detect GitHub username from token ────────────
+  async function ghDetectUser() {
+    const tok = document.getElementById('gh-token');
+    if (tok) ghConfig.token = tok.value.trim();
+    if (!ghConfig.token) {
+      ghSetPanelStatus('⚠️ Collez d\'abord votre Personal Access Token dans le champ.', 'err');
       return;
     }
-    ghSetPanelStatus('🔌 Test en cours…', 'inf');
+    ghSetPanelStatus('🔍 Détection du compte GitHub…', 'inf');
+    try {
+      const user = await ghApiGet('/user');
+      ghConfig.owner = user.login;
+      const ownerEl = document.getElementById('gh-owner');
+      if (ownerEl) ownerEl.value = user.login;
+      ghSaveConfig();
+      ghSetPanelStatus(
+        '✅ Compte détecté : <strong>' + user.login + '</strong>' +
+        (user.name ? ' (' + user.name + ')' : '') +
+        ' — Entrez maintenant le nom du dépôt et cliquez Tester.',
+        'ok'
+      );
+    } catch(e) {
+      const m = e.message.toLowerCase();
+      if (m.includes('bad credentials') || m.includes('401') || m.includes('unauthorized')) {
+        ghSetPanelStatus('❌ Token invalide — vérifiez qu\'il commence par "ghp_" et a bien le scope "repo".', 'err');
+      } else {
+        ghSetPanelStatus('❌ ' + e.message, 'err');
+      }
+    }
+  }
+
+  // ── Test connection (multi-step with clear feedback) ──
+  async function ghTestConnection() {
+    ghReadForm();
+
+    if (!ghConfig.token) {
+      ghSetPanelStatus('⚠️ Collez votre Personal Access Token (ghp_...) dans le premier champ.', 'err');
+      return;
+    }
+
+    // Step 1 — verify token & auto-fill owner
+    ghSetPanelStatus('🔌 Vérification du token…', 'inf');
+    let user;
+    try {
+      user = await ghApiGet('/user');
+      if (!ghConfig.owner) {
+        ghConfig.owner = user.login;
+        const ownerEl = document.getElementById('gh-owner');
+        if (ownerEl) ownerEl.value = user.login;
+        ghSaveConfig();
+      }
+    } catch(e) {
+      const m = e.message.toLowerCase();
+      if (m.includes('bad credentials') || m.includes('401') || m.includes('unauthorized')) {
+        ghSetPanelStatus('❌ Token invalide. Vérifiez qu\'il commence par "ghp_" et a le scope "repo" coché.', 'err');
+      } else {
+        ghSetPanelStatus('❌ Erreur de connexion : ' + e.message, 'err');
+      }
+      return;
+    }
+
+    if (!ghConfig.repo) {
+      ghSetPanelStatus('✅ Token valide — connecté en tant que <strong>' + user.login + '</strong>. Entrez maintenant le nom du dépôt.', 'ok');
+      return;
+    }
+
+    // Step 2 — check repo exists
+    ghSetPanelStatus('🔌 Vérification du dépôt "' + ghConfig.owner + '/' + ghConfig.repo + '"…', 'inf');
+    const createBtn = document.getElementById('gh-create-repo-btn');
     try {
       const info = await ghApiGet('/repos/' + ghConfig.owner + '/' + ghConfig.repo);
-      ghSetPanelStatus('✅ Connecté : ' + info.full_name + ' (' + (info.private ? '🔒 privé' : '🌐 public') + ')', 'ok');
+      if (createBtn) createBtn.style.display = 'none';
+      ghSetPanelStatus(
+        '✅ Tout est prêt ! Connecté à <strong>' + info.full_name + '</strong> ' +
+        (info.private ? '(🔒 privé)' : '(🌐 public)') +
+        ' — vous pouvez maintenant sauvegarder.',
+        'ok'
+      );
     } catch(e) {
-      ghSetPanelStatus('❌ Erreur : ' + e.message, 'err');
+      if (e.message === 'Not Found') {
+        if (createBtn) {
+          createBtn.style.display = 'flex';
+          createBtn.textContent = '➕ Créer le dépôt "' + ghConfig.repo + '" sur GitHub';
+        }
+        ghSetPanelStatus(
+          '⚠️ Le dépôt <strong>' + ghConfig.owner + '/' + ghConfig.repo + '</strong> n\'existe pas encore. ' +
+          'Cliquez sur le bouton vert ci-dessous pour le créer automatiquement.',
+          'err'
+        );
+      } else {
+        ghSetPanelStatus('❌ Erreur dépôt : ' + e.message, 'err');
+      }
+    }
+  }
+
+  // ── Create repository on GitHub ───────────────────────
+  async function ghCreateRepo() {
+    ghReadForm();
+    if (!ghConfig.token || !ghConfig.repo) {
+      ghSetPanelStatus('⚠️ Token et nom du dépôt requis.', 'err');
+      return;
+    }
+    ghSetPanelStatus('🔨 Création du dépôt "' + ghConfig.repo + '"…', 'inf');
+    try {
+      const result = await ghApiPost('/user/repos', {
+        name: ghConfig.repo,
+        description: '🖥️ Bureau Virtuel Professionnel — Sauvegarde automatique',
+        private: true,
+        auto_init: true
+      });
+      ghConfig.owner   = result.owner.login;
+      ghConfig.lastSha = null; // reset — file not created yet
+      ghSaveConfig();
+      const ownerEl = document.getElementById('gh-owner');
+      if (ownerEl) ownerEl.value = result.owner.login;
+      const createBtn = document.getElementById('gh-create-repo-btn');
+      if (createBtn) createBtn.style.display = 'none';
+      ghSetPanelStatus(
+        '✅ Dépôt <strong>' + result.full_name + '</strong> créé (🔒 privé) ! ' +
+        'Cliquez sur "Sauvegarder maintenant" pour envoyer vos données.',
+        'ok'
+      );
+    } catch(e) {
+      ghSetPanelStatus('❌ Création impossible : ' + e.message, 'err');
     }
   }
 
