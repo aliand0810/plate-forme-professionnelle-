@@ -1875,6 +1875,44 @@
     box-shadow: 0 4px 16px rgba(68,209,122,0.3);
   }
   .cf-btn.success:hover { transform:translateY(-1px); box-shadow:0 6px 22px rgba(68,209,122,0.5); }
+  .cf-btn.primary {
+    background: linear-gradient(135deg,#667eea,#5a3fd4); color:#fff;
+    box-shadow: 0 4px 16px rgba(102,126,234,0.35);
+  }
+  .cf-btn.primary:hover { transform:translateY(-1px); box-shadow:0 6px 22px rgba(102,126,234,0.55); }
+  /* ── Input Modal ── */
+  #input-modal {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(10px);
+    z-index: 99901;
+    display: none; align-items: center; justify-content: center;
+  }
+  #input-modal.show { display: flex; animation: cfIn 0.18s ease; }
+  .im-input {
+    width: 100%; padding: 10px 14px;
+    border-radius: 10px; border: 1px solid rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.07);
+    color: #fff; font-size: 14px; font-family: inherit;
+    outline: none; box-sizing: border-box; margin-top: 4px;
+    transition: border-color .15s, background .15s;
+  }
+  .im-input:focus { border-color: rgba(102,126,234,0.6); background: rgba(255,255,255,0.10); }
+  /* ── Bouton quitter plein écran ── */
+  #fs-exit-btn {
+    position: fixed; top: 10px; right: 54px;
+    z-index: 99992; display: none;
+    align-items: center; gap: 6px;
+    background: rgba(20,15,50,0.78); backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.14); color: rgba(255,255,255,0.6);
+    padding: 5px 13px 5px 10px; border-radius: 8px;
+    font-size: 12px; font-weight: 500; font-family: inherit; cursor: pointer;
+    transition: background .15s, color .15s, border-color .15s;
+  }
+  #fs-exit-btn:hover {
+    background: rgba(200,40,40,0.45); color: #fff;
+    border-color: rgba(255,90,90,0.4);
+  }
 
   /* ====================================================
      AGENDA v2 — Calendrier + Événements
@@ -2677,6 +2715,21 @@
   </div>
 </div>
 
+<button id="fs-exit-btn" onclick="fsExitByUser()">⊠ Quitter</button>
+
+<div id="input-modal">
+  <div class="cf-card" style="min-width:340px;">
+    <div class="cf-icon" id="im-icon">📝</div>
+    <div class="cf-title" id="im-title">Nom</div>
+    <input type="text" id="im-input" class="im-input"
+      onkeydown="if(event.key==='Enter')inputOk();else if(event.key==='Escape')inputCancel();" />
+    <div class="cf-btns">
+      <button class="cf-btn cancel" onclick="inputCancel()">Annuler</button>
+      <button class="cf-btn primary" onclick="inputOk()">OK</button>
+    </div>
+  </div>
+</div>
+
 <!-- ===== PROFILE SELECTOR SCREEN ===== -->
 <div id="profile-screen">
   <div class="psc-logo">⬡</div>
@@ -2924,10 +2977,39 @@
     confirmCallback = null;
   }
 
+  // ====== INPUT DIALOG ======
+  let inputCallback = null;
+  function inputDialog(title, defaultValue, icon, onOk) {
+    document.getElementById('im-title').textContent = title        || 'Nom';
+    document.getElementById('im-icon').textContent  = icon         || '📝';
+    const inp = document.getElementById('im-input');
+    inp.value = defaultValue || '';
+    inputCallback = onOk || null;
+    document.getElementById('input-modal').classList.add('show');
+    setTimeout(() => { inp.focus(); inp.select(); }, 60);
+  }
+  function inputOk() {
+    const val = document.getElementById('im-input').value.trim();
+    if (!val) return;
+    document.getElementById('input-modal').classList.remove('show');
+    if (inputCallback) { const cb = inputCallback; inputCallback = null; cb(val); }
+  }
+  function inputCancel() {
+    document.getElementById('input-modal').classList.remove('show');
+    inputCallback = null;
+  }
+
   // ====== FAVICON UTILITY ======
   function getFaviconUrl(url) {
     try {
       const u = new URL(url.startsWith('http') ? url : 'https://' + url);
+      // Pour les sites sous-chemin (ex: GitHub Pages user.github.io/projet/),
+      // utiliser le favicon.ico du sous-chemin plutôt que le service Google
+      // qui ne connaît que le domaine racine (souvent vide pour ce type de sites)
+      const segs = u.pathname.replace(/\/$/, '').split('/').filter(Boolean);
+      if (segs.length === 1 && u.pathname.endsWith('/')) {
+        return `${u.origin}/${segs[0]}/favicon.ico`;
+      }
       return `https://www.google.com/s2/favicons?domain=${u.hostname}&sz=64`;
     } catch(e) { return null; }
   }
@@ -4042,7 +4124,7 @@
   // Parse le HTML source via proxy CORS pour extraire les meta tags
   async function fetchHtmlMetadata(url) {
     const proxies = [
-      { endpoint: `https://corsproxy.io/?${encodeURIComponent(url)}`, json: false },
+      { endpoint: `https://corsproxy.io/?url=${encodeURIComponent(url)}`, json: false },
       { endpoint: `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`, json: true }
     ];
     for (const proxy of proxies) {
@@ -4094,8 +4176,10 @@
           const el = doc.querySelector(sel);
           if (el) { faviconHref = el.getAttribute('href') || ''; if (faviconHref) break; }
         }
-        // Fallback standard : /favicon.ico existe sur la majorité des serveurs
-        if (!faviconHref) faviconHref = '/favicon.ico';
+        // Fallback : favicon.ico relatif au chemin courant (PAS root-relatif /favicon.ico)
+        // Permet aux sites hébergés sous un sous-chemin (ex: GitHub Pages /projet/)
+        // de trouver leur favicon à /projet/favicon.ico au lieu de /favicon.ico
+        if (!faviconHref) faviconHref = 'favicon.ico';
 
         // Résolution des URLs relatives en absolues
         const toAbs = (href) => {
@@ -4141,7 +4225,7 @@
 
     // 2. Via proxy CORS (sites avec restrictions)
     const proxies = [
-      `https://corsproxy.io/?${encodeURIComponent(faviconUrl)}`,
+      `https://corsproxy.io/?url=${encodeURIComponent(faviconUrl)}`,
       `https://api.allorigins.win/raw?url=${encodeURIComponent(faviconUrl)}`,
     ];
     for (const proxy of proxies) {
@@ -6837,21 +6921,24 @@
 
   // ── Opérations fichiers ──
   function fmNewFolder() {
-    const name=prompt('Nom du dossier :','Nouveau dossier'); if(!name) return;
-    const id=fmUid(), now=new Date().toISOString();
-    fmFs[id]={id,name,type:'folder',parent:fmCwd,children:[],created:now};
-    fmFs[fmCwd].children.push(id); fmSave(); fmRender(); notify('📁 "'+name+'" créé');
+    inputDialog('Nouveau dossier', 'Nouveau dossier', '📁', name => {
+      const id=fmUid(), now=new Date().toISOString();
+      fmFs[id]={id,name,type:'folder',parent:fmCwd,children:[],created:now};
+      fmFs[fmCwd].children.push(id); fmSave(); fmRender(); notify('📁 "'+name+'" créé');
+    });
   }
 
   function fmNewFile(type) {
     const def={text:'Nouveau document.txt',spreadsheet:'Nouveau tableau.xlsx'};
-    const name=prompt('Nom du fichier :',def[type]||'Fichier'); if(!name) return;
-    const id=fmUid(), now=new Date().toISOString();
-    const content=type==='spreadsheet'?{cols:10,rows:25,cells:{}}:'';
-    fmFs[id]={id,name,type,parent:fmCwd,content,created:now,modified:now};
-    fmFs[fmCwd].children.push(id); fmSave();
-    if(type==='spreadsheet') fmOpenSpreadsheet(id); else fmRender();
-    notify('📄 "'+name+'" créé');
+    const icons={text:'📄',spreadsheet:'📊'};
+    inputDialog('Nom du fichier', def[type]||'Fichier', icons[type]||'📄', name => {
+      const id=fmUid(), now=new Date().toISOString();
+      const content=type==='spreadsheet'?{cols:10,rows:25,cells:{}}:'';
+      fmFs[id]={id,name,type,parent:fmCwd,content,created:now,modified:now};
+      fmFs[fmCwd].children.push(id); fmSave();
+      if(type==='spreadsheet') fmOpenSpreadsheet(id); else fmRender();
+      notify('📄 "'+name+'" créé');
+    });
   }
 
   function fmUploadImage() { document.getElementById('fm2-img-input').click(); }
@@ -6909,7 +6996,9 @@
 
   function fmRename(id) {
     const it=fmFs[id]; if(!it) return;
-    const n=prompt('Renommer :',it.name); if(n&&n!==it.name){it.name=n;fmSave();fmRender();}
+    inputDialog('Renommer', it.name, '✏️', n => {
+      if(n && n!==it.name){it.name=n;fmSave();fmRender();}
+    });
   }
 
   function fmPinToDesktop(id) {
@@ -7297,8 +7386,9 @@
     localStorage.setItem(ACTIVE_PROFILE_KEY, id);
     loadProfileData(id);
     closeProfileScreen();
-    // Reload state
-    apps = loadModules();
+    // Reload state — reset to built-ins then reload saved modules for this profile
+    apps = apps.filter(a => a.type === 'builtin');
+    loadModules();
     renderDesktopIcons();
     renderStartMenu();
     notesData = loadNotesData();
@@ -7450,10 +7540,33 @@
   // ====================================================
 
   const FS_PREF_KEY = 'vd_fullscreen_default';
+  let fsPrefActive    = false; // préférence plein écran activée
+  let fsExitingByUser = false; // sortie intentionnelle via le bouton ⊠
+
+  // Bloque Échap et F11 en phase capture quand le plein écran forcé est actif
+  function blockFsKeys(e) {
+    if (!fsPrefActive || !document.fullscreenElement) return;
+    if (e.key === 'Escape' || e.key === 'F11') {
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+    }
+  }
+
+  // Seul point d'entrée autorisé pour quitter le plein écran
+  function fsExitByUser() {
+    fsExitingByUser = true;
+    document.exitFullscreen();
+  }
+
+  function updateFsExitBtn() {
+    const btn = document.getElementById('fs-exit-btn');
+    if (btn) btn.style.display = (fsPrefActive && !!document.fullscreenElement) ? 'flex' : 'none';
+  }
 
   function toggleFullscreen() {
     if (document.fullscreenElement) {
-      document.exitFullscreen();
+      fsExitByUser();
     } else {
       document.documentElement.requestFullscreen().catch(e => {
         notify('⚠️ Plein écran non disponible : ' + e.message);
@@ -7463,46 +7576,84 @@
 
   function setFullscreenDefault(enabled) {
     localStorage.setItem(FS_PREF_KEY, enabled ? '1' : '0');
+    fsPrefActive = enabled;
     if (enabled) {
-      document.documentElement.requestFullscreen().catch(e => {
+      document.documentElement.requestFullscreen().catch(() => {
         notify('⚠️ Plein écran non disponible dans ce navigateur');
       });
     } else {
-      if (document.fullscreenElement) document.exitFullscreen();
+      if (document.fullscreenElement) {
+        fsExitingByUser = true;
+        document.exitFullscreen();
+      }
     }
     updateFsUi();
   }
 
   function updateFsUi() {
-    const inFs    = !!document.fullscreenElement;
-    const pref    = localStorage.getItem(FS_PREF_KEY) === '1';
-    const toggle  = document.getElementById('fs-default-toggle');
-    const btn     = document.getElementById('tb-fs-btn');
+    const inFs   = !!document.fullscreenElement;
+    const pref   = localStorage.getItem(FS_PREF_KEY) === '1';
+    const toggle = document.getElementById('fs-default-toggle');
+    const btn    = document.getElementById('tb-fs-btn');
     if (toggle) toggle.checked = pref;
     if (btn) {
-      btn.title = inFs ? 'Quitter le plein écran (F11)' : 'Plein écran (F11)';
+      btn.title = inFs ? 'Quitter le plein écran' : 'Plein écran';
       btn.classList.toggle('active', inFs);
     }
+    updateFsExitBtn();
   }
 
   function initFullscreenPref() {
-    const pref = localStorage.getItem(FS_PREF_KEY) === '1';
-    // Sync toggle if settings is already open
+    fsPrefActive = localStorage.getItem(FS_PREF_KEY) === '1';
     updateFsUi();
-    // Listen for fullscreen changes (F11, Esc, etc.)
-    document.addEventListener('fullscreenchange', updateFsUi);
-    if (pref) {
-      // Attempt auto-fullscreen — requires user gesture on most browsers.
-      // If it fails, listen for the first click and try again.
+
+    // Bloquer Échap / F11 en phase de capture (avant que le navigateur les traite)
+    document.addEventListener('keydown', blockFsKeys, true);
+
+    // Si le navigateur sort quand même du plein écran → retour immédiat et silencieux
+    document.addEventListener('fullscreenchange', () => {
+      updateFsUi();
+      const inFs = !!document.fullscreenElement;
+      if (fsPrefActive && !inFs) {
+        if (fsExitingByUser) {
+          fsExitingByUser = false; // sortie autorisée via ⊠
+        } else {
+          // Sortie non autorisée — retour automatique sans overlay ni message
+          setTimeout(() => {
+            if (!document.fullscreenElement) {
+              document.documentElement.requestFullscreen().catch(() => {});
+            }
+          }, 50);
+        }
+      }
+    });
+
+    if (fsPrefActive) {
+      // Tentative auto au chargement — échoue sans geste utilisateur
       document.documentElement.requestFullscreen().catch(() => {
-        let attempted = false;
-        const tryFs = () => {
-          if (attempted) return;
-          attempted = true;
+        // Seul cas où un overlay est affiché : premier chargement de la page
+        const overlay = document.createElement('div');
+        overlay.id = 'fs-prompt-overlay';
+        overlay.style.cssText = [
+          'position:fixed', 'inset:0', 'z-index:99999',
+          'display:flex', 'align-items:center', 'justify-content:center',
+          'background:rgba(0,0,0,0.82)', 'cursor:pointer'
+        ].join(';');
+        overlay.innerHTML = `
+          <div style="text-align:center;color:#fff;font-family:sans-serif;pointer-events:none;user-select:none;">
+            <div style="font-size:3.5rem;margin-bottom:0.75rem;">⛶</div>
+            <div style="font-size:1.5rem;font-weight:600;margin-bottom:0.4rem;">Cliquez pour activer le plein écran</div>
+            <div style="font-size:0.9rem;opacity:0.65;">ou appuyez sur une touche</div>
+          </div>`;
+        document.body.appendChild(overlay);
+        const enterFs = () => {
           document.documentElement.requestFullscreen().catch(() => {});
+          overlay.remove();
         };
-        document.addEventListener('click', tryFs, { once: true });
-        document.addEventListener('keydown', tryFs, { once: true });
+        overlay.addEventListener('click', enterFs, { once: true });
+        document.addEventListener('keydown', (e) => {
+          if (e.key !== 'Escape' && e.key !== 'F11') enterFs();
+        }, { once: true });
       });
     }
   }
