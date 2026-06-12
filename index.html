@@ -2240,6 +2240,43 @@
   .gh-hint { color:#555; font-size:10px; margin-top:6px; line-height:1.5; }
   .gh-last-sync { color:#667eea; font-size:10px; margin-top:6px; }
 
+  /* ===== TOGGLE SWITCH ===== */
+  .setting-toggle-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 14px; background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07); border-radius: 12px;
+    margin-bottom: 8px; transition: background 0.2s;
+  }
+  .setting-toggle-row:hover { background: rgba(255,255,255,0.05); }
+  .setting-toggle-label { display: flex; flex-direction: column; gap: 2px; }
+  .setting-toggle-label span { color: #ddd; font-size: 13px; font-weight: 500; }
+  .setting-toggle-label small { color: #555; font-size: 11px; }
+  .toggle-switch { position: relative; width: 44px; height: 24px; flex-shrink: 0; }
+  .toggle-switch input { opacity: 0; width: 0; height: 0; }
+  .toggle-track {
+    position: absolute; inset: 0; border-radius: 12px;
+    background: rgba(255,255,255,0.1); cursor: pointer;
+    transition: background 0.25s; border: 1px solid rgba(255,255,255,0.1);
+  }
+  .toggle-track::after {
+    content: ''; position: absolute; left: 3px; top: 50%;
+    transform: translateY(-50%);
+    width: 18px; height: 18px; border-radius: 50%;
+    background: #888; transition: all 0.25s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  .toggle-switch input:checked + .toggle-track { background: rgba(102,126,234,0.5); border-color: #667eea; }
+  .toggle-switch input:checked + .toggle-track::after { left: calc(100% - 21px); background: #fff; box-shadow: 0 0 8px #667eea88; }
+
+  /* ===== FULLSCREEN BUTTON (taskbar) ===== */
+  #tb-fs-btn {
+    width: 32px; height: 32px; border-radius: 8px; border: none;
+    background: rgba(255,255,255,0.05); color: #888; font-size: 14px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: background 0.2s, color 0.2s; flex-shrink: 0;
+  }
+  #tb-fs-btn:hover { background: rgba(255,255,255,0.12); color: #fff; }
+  #tb-fs-btn.active { color: #667eea; background: rgba(102,126,234,0.15); }
+
   /* ===== REFRESH BUTTON (taskbar) ===== */
   #tb-refresh-btn {
     width: 32px; height: 32px; border-radius: 8px; border: none;
@@ -2419,6 +2456,7 @@
   <button id="start-btn" onclick="toggleStartMenu()">⬡</button>
   <div id="taskbar-apps"></div>
   <div id="taskbar-right">
+    <button id="tb-fs-btn" onclick="toggleFullscreen()" title="Plein écran (F11)">⛶</button>
     <button id="tb-refresh-btn" onclick="location.reload()" title="Recharger la page (Ctrl+R)">↺</button>
     <button id="tb-install-btn" onclick="pwaInstall()" title="Installer Bureau Virtuel sur cet ordinateur">
       📲 Installer
@@ -3409,6 +3447,19 @@
             <label>Taille des icônes du bureau</label>
             <input type="range" min="60" max="120" value="90" oninput="setIconSize(this.value)">
           </div>
+          <div class="setting-group" style="margin-top:20px;">
+            <label>Affichage</label>
+            <div class="setting-toggle-row">
+              <div class="setting-toggle-label">
+                <span>⛶ Plein écran par défaut</span>
+                <small>Entre automatiquement en plein écran au chargement de la page</small>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="fs-default-toggle" onchange="setFullscreenDefault(this.checked)">
+                <span class="toggle-track"></span>
+              </label>
+            </div>
+          </div>
           <div class="setting-group" style="margin-top:24px;">
             <label>Modules installés</label>
             <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
@@ -3639,6 +3690,9 @@
     ghFillForm();
     // Populate profile list
     renderSettingsProfiles();
+    // Sync fullscreen toggle
+    const fsToggle = document.getElementById('fs-default-toggle');
+    if (fsToggle) fsToggle.checked = localStorage.getItem(FS_PREF_KEY) === '1';
   }
 
   function setTaskbarOpacity(val) {
@@ -5394,7 +5448,8 @@
       // ── Nouvelles données ──
       agenda:       (() => { try { return JSON.parse(localStorage.getItem('vd_agenda') || '[]'); } catch(e){ return []; } })(),
       filesystem:   (() => { try { return JSON.parse(localStorage.getItem('vd_filesystem') || 'null'); } catch(e){ return null; } })(),
-      iconPositions:(() => { try { return JSON.parse(localStorage.getItem('vd_icon_positions') || 'null'); } catch(e){ return null; } })(),
+      iconPositions:    (() => { try { return JSON.parse(localStorage.getItem('vd_icon_positions') || 'null'); } catch(e){ return null; } })(),
+      fullscreenDefault: localStorage.getItem(FS_PREF_KEY) === '1',
       // ── Profils ──
       profiles: {
         list:         profiles || [],
@@ -5464,6 +5519,11 @@
           // ── Positions des icônes ──
           if (data.iconPositions && typeof data.iconPositions === 'object') {
             localStorage.setItem('vd_icon_positions', JSON.stringify(data.iconPositions));
+          }
+
+          // ── Plein écran par défaut ──
+          if (typeof data.fullscreenDefault === 'boolean') {
+            localStorage.setItem(FS_PREF_KEY, data.fullscreenDefault ? '1' : '0');
           }
 
           // ── Profils ──
@@ -6105,7 +6165,8 @@
       notes:    JSON.parse(localStorage.getItem('vd_notes_v2')      || '{}'),
       agenda:   JSON.parse(localStorage.getItem('vd_agenda')        || '[]'),
       filesystem:    JSON.parse(localStorage.getItem('vd_filesystem')      || '{}'),
-      iconPositions: JSON.parse(localStorage.getItem('vd_icon_positions')  || '{}'),
+      iconPositions:     JSON.parse(localStorage.getItem('vd_icon_positions')  || '{}'),
+      fullscreenDefault: localStorage.getItem(FS_PREF_KEY) === '1',
       profiles: {
         list:         profiles || [],
         activeId:     activeProfileId || null,
@@ -6120,7 +6181,8 @@
     if (obj.notes)         localStorage.setItem('vd_notes_v2',       JSON.stringify(obj.notes));
     if (obj.agenda)        localStorage.setItem('vd_agenda',         JSON.stringify(obj.agenda));
     if (obj.filesystem)    localStorage.setItem('vd_filesystem',     JSON.stringify(obj.filesystem));
-    if (obj.iconPositions) localStorage.setItem('vd_icon_positions', JSON.stringify(obj.iconPositions));
+    if (obj.iconPositions)         localStorage.setItem('vd_icon_positions', JSON.stringify(obj.iconPositions));
+    if (typeof obj.fullscreenDefault === 'boolean') localStorage.setItem(FS_PREF_KEY, obj.fullscreenDefault ? '1' : '0');
     // Restore profiles
     if (obj.profiles && obj.profiles.list) {
       localStorage.setItem(PROFILES_KEY, JSON.stringify(obj.profiles.list));
@@ -7383,6 +7445,72 @@
   //  END PROFILE SYSTEM
   // ====================================================
 
+  // ====================================================
+  //  PLEIN ÉCRAN
+  // ====================================================
+
+  const FS_PREF_KEY = 'vd_fullscreen_default';
+
+  function toggleFullscreen() {
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
+    } else {
+      document.documentElement.requestFullscreen().catch(e => {
+        notify('⚠️ Plein écran non disponible : ' + e.message);
+      });
+    }
+  }
+
+  function setFullscreenDefault(enabled) {
+    localStorage.setItem(FS_PREF_KEY, enabled ? '1' : '0');
+    if (enabled) {
+      document.documentElement.requestFullscreen().catch(e => {
+        notify('⚠️ Plein écran non disponible dans ce navigateur');
+      });
+    } else {
+      if (document.fullscreenElement) document.exitFullscreen();
+    }
+    updateFsUi();
+  }
+
+  function updateFsUi() {
+    const inFs    = !!document.fullscreenElement;
+    const pref    = localStorage.getItem(FS_PREF_KEY) === '1';
+    const toggle  = document.getElementById('fs-default-toggle');
+    const btn     = document.getElementById('tb-fs-btn');
+    if (toggle) toggle.checked = pref;
+    if (btn) {
+      btn.title = inFs ? 'Quitter le plein écran (F11)' : 'Plein écran (F11)';
+      btn.classList.toggle('active', inFs);
+    }
+  }
+
+  function initFullscreenPref() {
+    const pref = localStorage.getItem(FS_PREF_KEY) === '1';
+    // Sync toggle if settings is already open
+    updateFsUi();
+    // Listen for fullscreen changes (F11, Esc, etc.)
+    document.addEventListener('fullscreenchange', updateFsUi);
+    if (pref) {
+      // Attempt auto-fullscreen — requires user gesture on most browsers.
+      // If it fails, listen for the first click and try again.
+      document.documentElement.requestFullscreen().catch(() => {
+        let attempted = false;
+        const tryFs = () => {
+          if (attempted) return;
+          attempted = true;
+          document.documentElement.requestFullscreen().catch(() => {});
+        };
+        document.addEventListener('click', tryFs, { once: true });
+        document.addEventListener('keydown', tryFs, { once: true });
+      });
+    }
+  }
+
+  // ====================================================
+  //  END PLEIN ÉCRAN
+  // ====================================================
+
   // ====== INIT ======
   loadModules();
   loadNotesData();
@@ -7396,8 +7524,9 @@
   ghLoadConfig();
   ghStartAutoSync();
   initProfiles();
+  initFullscreenPref();
 
-  // ── Ctrl+S / Ctrl+R ───────────────────────────────────────────────────
+  // ── Ctrl+S / Ctrl+R / F11 ─────────────────────────────────────────────
   document.addEventListener('keydown', e => {
     if (e.ctrlKey && e.key === 's') {
       e.preventDefault();
@@ -7410,6 +7539,10 @@
     if (e.ctrlKey && e.key === 'r') {
       e.preventDefault();
       location.reload();
+    }
+    if (e.key === 'F11') {
+      e.preventDefault();
+      toggleFullscreen();
     }
   });
 
