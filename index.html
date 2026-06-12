@@ -194,18 +194,96 @@
   }
 
   /* ── Indicateur réseau ── */
-  #tb-network { display:flex; align-items:center; gap:5px; cursor:default; }
+  #tb-network {
+    display:flex; align-items:center; gap:5px;
+    padding:3px 7px; border-radius:7px; transition:background .15s;
+  }
+  #tb-network:hover { background:rgba(255,255,255,0.09); }
   .tb-bars { display:flex; align-items:flex-end; gap:2px; height:16px; }
-  .tb-bar { width:4px; border-radius:1px 1px 0 0; background:rgba(255,255,255,0.18); transition:background 0.4s; }
+  .tb-bar { width:4px; border-radius:2px 2px 0 0; background:rgba(255,255,255,0.14); transition:background .4s, box-shadow .4s; }
   .tb-bar[data-bar="1"] { height:4px; }
   .tb-bar[data-bar="2"] { height:7px; }
   .tb-bar[data-bar="3"] { height:11px; }
   .tb-bar[data-bar="4"] { height:15px; }
-  .tb-bar.sig-good   { background:#44d17a; }
-  .tb-bar.sig-fair   { background:#f5c542; }
-  .tb-bar.sig-poor   { background:#f97316; }
-  .tb-bar.sig-off    { background:#ef4444; }
-  #tb-net-label { font-size:10px; color:#bbb; min-width:22px; letter-spacing:.3px; }
+  .tb-bar.sig-excellent { background:#44d17a; box-shadow:0 0 4px rgba(68,209,122,.5); }
+  .tb-bar.sig-good      { background:#06b6d4; box-shadow:0 0 4px rgba(6,182,212,.4); }
+  .tb-bar.sig-fair      { background:#f5c542; }
+  .tb-bar.sig-poor      { background:#f97316; }
+  .tb-bar.sig-off       { background:#ef4444; }
+
+  /* ── Network Panel ─────────────── */
+  #net-panel {
+    display:none; position:fixed;
+    bottom:42px; right:110px;
+    width:286px;
+    background:linear-gradient(160deg,rgba(18,14,44,.98),rgba(10,8,28,.99));
+    border:1px solid rgba(140,160,255,.18); border-radius:14px;
+    box-shadow:0 16px 48px rgba(0,0,0,.7),0 0 0 1px rgba(255,255,255,.04),
+               0 0 32px rgba(6,182,212,.08);
+    z-index:9800; overflow:hidden;
+    animation:nepSlide .2s cubic-bezier(.25,.8,.25,1);
+  }
+  #net-panel.show { display:block; }
+  @keyframes nepSlide {
+    from { opacity:0; transform:translateY(10px) scale(.97); }
+    to   { opacity:1; transform:translateY(0)    scale(1);   }
+  }
+
+  .nep-header {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:12px 14px 10px;
+    border-bottom:1px solid rgba(255,255,255,.06);
+    background:rgba(255,255,255,.02);
+  }
+  .nep-title { color:#c8d0f0; font-size:12.5px; font-weight:700; }
+  .nep-close {
+    width:20px; height:20px; border-radius:6px; border:none;
+    background:rgba(255,255,255,.07); color:#666; font-size:14px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; transition:all .12s;
+  }
+  .nep-close:hover { background:rgba(245,87,79,.2); color:#f5574f; }
+
+  .nep-quality-block { padding:14px 14px 10px; border-bottom:1px solid rgba(255,255,255,.05); }
+  .nep-quality-badge {
+    font-size:18px; font-weight:800; margin-bottom:8px;
+    letter-spacing:.01em;
+  }
+  .nep-quality-badge.q-excellent { color:#44d17a; text-shadow:0 0 10px rgba(68,209,122,.4); }
+  .nep-quality-badge.q-good      { color:#06b6d4; text-shadow:0 0 10px rgba(6,182,212,.4); }
+  .nep-quality-badge.q-fair      { color:#f5c542; }
+  .nep-quality-badge.q-poor      { color:#f97316; }
+  .nep-quality-badge.q-offline   { color:#ef4444; }
+
+  .nep-quality-bar-wrap { height:4px; border-radius:3px; background:rgba(255,255,255,.07); overflow:hidden; }
+  .nep-quality-bar {
+    height:100%; border-radius:3px; width:0%;
+    transition:width .6s cubic-bezier(.25,.8,.25,1), background .4s;
+  }
+
+  .nep-rows { padding:8px 6px; border-bottom:1px solid rgba(255,255,255,.05); }
+  .nep-row {
+    display:flex; align-items:center; gap:8px;
+    padding:7px 8px; border-radius:8px; transition:background .1s;
+  }
+  .nep-row:hover { background:rgba(255,255,255,.03); }
+  .nep-row-icon  { font-size:13px; width:18px; text-align:center; flex-shrink:0; }
+  .nep-row-label { flex:1; color:#4a5070; font-size:11px; }
+  .nep-row-val   { color:#a0aacc; font-size:11.5px; font-weight:600; font-variant-numeric:tabular-nums; }
+
+  .nep-test-wrap { padding:10px 14px 12px; }
+  .nep-test-btn {
+    width:100%; padding:9px 14px; border-radius:10px; border:none; cursor:pointer;
+    background:linear-gradient(135deg,rgba(6,182,212,.18),rgba(102,126,234,.14));
+    border:1px solid rgba(6,182,212,.25); color:#60d8f0; font-size:12px; font-weight:600;
+    display:flex; align-items:center; justify-content:center; gap:7px; font-family:inherit;
+    transition:all .18s; box-shadow:0 2px 10px rgba(6,182,212,.08);
+  }
+  .nep-test-btn:hover {
+    background:linear-gradient(135deg,rgba(6,182,212,.3),rgba(102,126,234,.22));
+    box-shadow:0 4px 16px rgba(6,182,212,.2); transform:translateY(-1px);
+  }
+  .nep-test-btn:disabled { opacity:.5; cursor:default; transform:none; }
+  .nep-test-status { color:#3a4060; font-size:10px; text-align:center; margin-top:6px; min-height:14px; }
 
   /* ── Indicateur batterie ── */
   #tb-battery { display:flex; align-items:center; gap:5px; cursor:default; }
@@ -1047,166 +1125,221 @@
 
   /* ── Left: Folders ─────────────── */
   .notes-folders {
-    width: 178px; flex-shrink: 0;
+    width: 188px; flex-shrink: 0;
     border-right: 1px solid rgba(255,255,255,0.06);
     display: flex; flex-direction: column;
-    background: rgba(0,0,0,0.18);
+    background: linear-gradient(180deg, rgba(10,7,32,0.9) 0%, rgba(8,5,24,0.95) 100%);
   }
 
+  /* Panel header with gradient accent bar */
   .notes-panel-hdr {
-    padding: 12px 12px 9px;
+    padding: 13px 12px 12px;
     display: flex; align-items: center; justify-content: space-between;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-    flex-shrink: 0;
+    flex-shrink: 0; position: relative;
+  }
+  .notes-panel-hdr::after {
+    content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, rgba(102,126,234,0.7), rgba(167,139,250,0.4), transparent 70%);
   }
   .notes-panel-hdr-label {
-    color: #555; font-size: 10px; text-transform: uppercase;
-    letter-spacing: .08em; font-weight: 700;
+    font-size: 9.5px; text-transform: uppercase; letter-spacing: .18em; font-weight: 800;
+    background: linear-gradient(90deg, #8fa4f8, #b48bf8);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
   }
   .notes-add-btn {
-    width: 24px; height: 24px; border-radius: 7px; border: none;
-    background: rgba(102,126,234,0.18); color: #667eea;
-    font-size: 16px; cursor: pointer;
+    width: 22px; height: 22px; border-radius: 7px;
+    border: 1px solid rgba(102,126,234,0.3);
+    background: linear-gradient(135deg, rgba(102,126,234,0.18), rgba(118,75,162,0.14));
+    color: #a0b0ff; font-size: 15px; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
-    transition: background .15s;
+    transition: all .2s; box-shadow: 0 0 8px rgba(102,126,234,0.12);
   }
-  .notes-add-btn:hover { background: rgba(102,126,234,0.36); }
+  .notes-add-btn:hover {
+    background: linear-gradient(135deg, rgba(102,126,234,0.38), rgba(118,75,162,0.28));
+    border-color: rgba(140,160,255,0.5); color: #c8d4ff;
+    box-shadow: 0 0 14px rgba(102,126,234,0.3); transform: scale(1.12);
+  }
 
-  .notes-folder-scroll { flex:1; overflow-y:auto; padding: 6px 8px; }
+  .notes-folder-scroll { flex:1; overflow-y:auto; padding: 8px 7px; }
 
   /* Folder item */
   .notes-folder-item {
     display: flex; align-items: center; gap: 8px;
-    padding: 8px 10px; border-radius: 9px; cursor: pointer;
-    color: #666; font-size: 12px; font-weight: 500;
-    transition: background .12s, color .12s;
-    position: relative; padding-right: 44px; margin-bottom: 2px;
+    padding: 8px 9px; border-radius: 10px; cursor: pointer;
+    color: #484f6a; font-size: 12px; font-weight: 500;
+    transition: all .2s cubic-bezier(.25,.8,.25,1);
+    position: relative; padding-right: 40px; margin-bottom: 2px;
   }
-  .notes-folder-item:hover { background: rgba(255,255,255,0.06); color: #bbb; }
+  .notes-folder-item:hover {
+    background: rgba(102,126,234,0.1); color: #9aaacf;
+    transform: translateX(2px);
+  }
   .notes-folder-item.active {
-    background: linear-gradient(90deg, rgba(102,126,234,0.22), rgba(102,126,234,0.08));
-    color: #c5d0ff;
-    border-left: 3px solid #667eea;
-    padding-left: 7px;
+    background: linear-gradient(120deg, rgba(102,126,234,0.24), rgba(118,75,162,0.12));
+    color: #d0daff;
+    box-shadow: 0 3px 14px rgba(102,126,234,0.15), inset 0 0 0 1px rgba(140,160,255,0.18);
   }
 
   /* Folder icon badge */
   .notes-fld-ico {
-    width: 26px; height: 26px; border-radius: 7px; flex-shrink: 0;
+    width: 28px; height: 28px; border-radius: 9px; flex-shrink: 0;
     display: flex; align-items: center; justify-content: center;
-    font-size: 13px; background: rgba(255,255,255,0.06);
+    font-size: 14px; background: rgba(255,255,255,0.04);
+    transition: all .2s;
   }
-  .notes-folder-item.active .notes-fld-ico { background: rgba(102,126,234,0.3); }
+  .notes-folder-item.active .notes-fld-ico {
+    background: linear-gradient(135deg, rgba(102,126,234,0.38), rgba(118,75,162,0.28));
+    box-shadow: 0 0 10px rgba(102,126,234,0.2);
+  }
+  .notes-folder-item:hover:not(.active) .notes-fld-ico { background: rgba(102,126,234,0.1); }
 
   .notes-folder-name { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 
   .notes-folder-count {
-    font-size: 10px; color: #444;
-    background: rgba(255,255,255,0.04);
-    padding: 2px 6px; border-radius: 10px; flex-shrink: 0;
-    min-width: 18px; text-align: center;
+    font-size: 9px; background: rgba(102,126,234,0.15); color: #6878c0;
+    padding: 0 6px; border-radius: 20px; flex-shrink: 0;
+    height: 16px; display: flex; align-items: center; justify-content: center; min-width: 16px;
   }
-  .notes-folder-item.active .notes-folder-count { color: #667eea; background: rgba(102,126,234,0.2); }
+  .notes-folder-item.active .notes-folder-count {
+    background: rgba(140,160,255,0.2); color: #a0b4ff;
+  }
 
   .notes-folder-actions {
-    position: absolute; right: 5px; display: none; gap: 3px; align-items: center;
+    position: absolute; right: 4px; display: none; gap: 2px; align-items: center;
   }
   .notes-folder-item:hover .notes-folder-actions { display: flex; }
   .notes-fld-btn {
     width: 18px; height: 18px; border-radius: 5px; border: none;
     font-size: 9px; cursor: pointer;
-    display: flex; align-items: center; justify-content: center; transition: background .1s;
+    display: flex; align-items: center; justify-content: center; transition: all .1s;
   }
-  .notes-fld-btn.rename { background: rgba(102,126,234,0.2); color: #8898ee; }
-  .notes-fld-btn.rename:hover { background: rgba(102,126,234,0.4); }
-  .notes-fld-btn.delete { background: rgba(245,87,79,0.15); color: #f5574f; }
-  .notes-fld-btn.delete:hover { background: rgba(245,87,79,0.35); }
+  .notes-fld-btn.rename { background: rgba(102,126,234,0.18); color: #8898ee; }
+  .notes-fld-btn.rename:hover { background: rgba(102,126,234,0.38); }
+  .notes-fld-btn.delete { background: rgba(245,87,79,0.12); color: #f5574f; }
+  .notes-fld-btn.delete:hover { background: rgba(245,87,79,0.3); }
 
   /* ── Centre: Note list ──────────── */
   .notes-list-panel {
-    width: 224px; flex-shrink: 0; overflow: hidden;
+    width: 234px; flex-shrink: 0; overflow: hidden;
     border-right: 1px solid rgba(255,255,255,0.06);
     display: flex; flex-direction: column;
+    background: rgba(11,8,28,0.7);
   }
 
-  /* Search bar */
+  /* Search bar — pill style */
   .notes-search-wrap {
-    padding: 7px 9px; border-bottom: 1px solid rgba(255,255,255,0.05); flex-shrink: 0;
+    padding: 9px 10px 8px; flex-shrink: 0; position: relative;
+  }
+  .notes-search-wrap::after {
+    content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, rgba(102,126,234,0.5), transparent 60%);
   }
   .notes-search-inp {
     width: 100%; box-sizing: border-box;
-    padding: 6px 10px 6px 28px; border-radius: 8px;
-    border: 1px solid rgba(255,255,255,0.08);
+    padding: 7px 12px 7px 30px; border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.07);
     background: rgba(255,255,255,0.04);
-    color: #ccc; font-size: 11px; outline: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23556' stroke-width='2.5'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");
-    background-repeat: no-repeat; background-position: 9px center;
-    transition: border-color .15s;
+    color: #c0c8e0; font-size: 11px; outline: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%23556090' stroke-width='2.5'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: 10px center;
+    transition: all .2s;
   }
-  .notes-search-inp:focus { border-color: rgba(102,126,234,0.5); }
-  .notes-search-inp::placeholder { color: #3a3a5a; }
+  .notes-search-inp:focus {
+    border-color: rgba(102,126,234,0.5);
+    background: rgba(102,126,234,0.07);
+    box-shadow: 0 0 0 3px rgba(102,126,234,0.1), 0 0 12px rgba(102,126,234,0.08);
+  }
+  .notes-search-inp::placeholder { color: #2e3050; }
 
-  .notes-list-scroll { flex:1; overflow-y:auto; padding: 6px 8px; }
+  .notes-list-scroll { flex:1; overflow-y:auto; padding: 8px 8px; }
 
-  /* Note card */
+  /* Note card — dynamic slide + glow */
   .notes-note-item {
-    padding: 10px 12px; border-radius: 10px; cursor: pointer;
+    padding: 10px 12px; border-radius: 11px; cursor: pointer;
     margin-bottom: 4px; border: 1px solid rgba(255,255,255,0.04);
     position: relative; overflow: hidden;
-    transition: background .12s, border-color .12s;
-    background: rgba(255,255,255,0.02);
+    transition: all .2s cubic-bezier(.25,.8,.25,1);
+    background: rgba(255,255,255,0.018);
   }
   .notes-note-item::before {
     content: ''; position: absolute; left: 0; top: 0; bottom: 0;
-    width: 3px; background: rgba(102,126,234,0.4); opacity: 0;
-    border-radius: 10px 0 0 10px; transition: opacity .15s;
+    width: 3px;
+    background: linear-gradient(180deg, #8fa4f8, #b48bf8);
+    opacity: 0; border-radius: 11px 0 0 11px; transition: opacity .2s;
   }
-  .notes-note-item:hover { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.08); }
-  .notes-note-item:hover::before { opacity: .5; }
+  .notes-note-item:hover {
+    background: rgba(102,126,234,0.08);
+    border-color: rgba(102,126,234,0.18);
+    transform: translateX(4px);
+    box-shadow: -4px 0 16px rgba(102,126,234,0.06);
+  }
+  .notes-note-item:hover::before { opacity: .55; }
   .notes-note-item.active {
-    background: rgba(102,126,234,0.13);
-    border-color: rgba(102,126,234,0.3);
+    background: linear-gradient(120deg, rgba(102,126,234,0.18), rgba(118,75,162,0.08));
+    border-color: rgba(140,160,255,0.28);
+    box-shadow: 0 4px 20px rgba(102,126,234,0.12), -2px 0 12px rgba(102,126,234,0.08);
+    transform: translateX(2px);
   }
   .notes-note-item.active::before { opacity: 1; }
 
-  .notes-note-hdr { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:4px; }
-  .notes-note-ttl { color:#ddd; font-size:12px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; }
-  .notes-note-dt  { color:#3d3d5a; font-size:9px; flex-shrink:0; margin-left:6px; }
-  .notes-note-item.active .notes-note-ttl { color:#c5d0ff; }
-  .notes-note-item.active .notes-note-dt  { color:#667eea; }
+  .notes-note-hdr { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:3px; }
+  .notes-note-ttl { color:#b0bcd8; font-size:12px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; }
+  .notes-note-dt  { color:#32364e; font-size:9px; flex-shrink:0; margin-left:8px; }
+  .notes-note-item:hover .notes-note-ttl { color:#c8d4f0; }
+  .notes-note-item:hover .notes-note-dt  { color:#5060a0; }
+  .notes-note-item.active .notes-note-ttl { color:#d0daff; font-weight:700; }
+  .notes-note-item.active .notes-note-dt  { color:#7888d0; }
 
   .notes-note-prv {
-    color: #4a4a6a; font-size: 11px;
+    color: #363860; font-size: 11px;
     display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
-    overflow: hidden; line-height: 1.45;
+    overflow: hidden; line-height: 1.5;
   }
-  .notes-note-item.active .notes-note-prv { color: #6a6a9a; }
+  .notes-note-item:hover .notes-note-prv { color: #505488; }
+  .notes-note-item.active .notes-note-prv { color: #606498; }
 
   .notes-note-del {
-    position: absolute; top: 7px; right: 6px; opacity: 0;
-    width: 18px; height: 18px; border-radius: 5px; border: none;
-    background: rgba(245,87,79,0.18); color: #f5574f;
-    font-size: 11px; cursor: pointer;
-    display: flex; align-items: center; justify-content: center; transition: opacity .12s;
+    position: absolute; top: 8px; right: 7px; opacity: 0;
+    width: 18px; height: 18px; border-radius: 6px; border: none;
+    background: rgba(245,87,79,0.15); color: #f5574f;
+    font-size: 10px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: opacity .15s, background .1s;
   }
+  .notes-note-del:hover { background: rgba(245,87,79,0.32); }
   .notes-note-item:hover .notes-note-del { opacity: 1; }
 
   /* Empty states */
   .notes-empty-state {
     display: flex; flex-direction: column; align-items: center;
-    justify-content: center; padding: 28px 14px;
-    color: #3a3a5a; font-size: 11px; gap: 8px;
-    text-align: center; line-height: 1.5;
+    justify-content: center; padding: 30px 16px;
+    gap: 7px; text-align: center;
   }
-  .notes-empty-state .nes-icon { font-size: 32px; opacity: .5; }
-  .notes-empty-state .nes-title { color: #555; font-size: 12px; font-weight:600; }
-  .notes-empty-state .nes-sub { color: #3a3a5a; font-size: 11px; }
+  .notes-empty-state .nes-icon {
+    font-size: 30px; margin-bottom: 4px;
+    opacity: .18; filter: grayscale(.3);
+  }
+  .notes-empty-state .nes-title {
+    font-size: 12px; font-weight: 700; letter-spacing: .03em;
+    background: linear-gradient(90deg, #6070a8, #8070c0);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+  .notes-empty-state .nes-sub {
+    color: #2e3050; font-size: 10.5px; line-height: 1.55; max-width: 155px;
+  }
   .notes-empty-state button {
-    margin-top: 4px; padding: 6px 14px; border-radius: 8px; border: none;
-    background: rgba(102,126,234,0.2); color: #8fa8f5;
-    font-size: 11px; cursor: pointer; transition: background .15s;
+    margin-top: 8px; padding: 7px 18px; border-radius: 20px;
+    border: 1px solid rgba(102,126,234,0.3);
+    background: linear-gradient(135deg, rgba(102,126,234,0.18), rgba(118,75,162,0.14));
+    color: #9aacf5; font-size: 11px; cursor: pointer;
+    transition: all .2s; font-family: inherit;
+    box-shadow: 0 0 10px rgba(102,126,234,0.08);
   }
-  .notes-empty-state button:hover { background: rgba(102,126,234,0.35); }
+  .notes-empty-state button:hover {
+    background: linear-gradient(135deg, rgba(102,126,234,0.3), rgba(118,75,162,0.24));
+    border-color: rgba(140,160,255,0.5); color: #c0d0ff;
+    box-shadow: 0 0 16px rgba(102,126,234,0.2); transform: translateY(-1px);
+  }
 
   /* ── Right: Editor ──────────────── */
   .notes-editor-panel { flex:1; display:flex; flex-direction:column; overflow:hidden; min-width:0; }
@@ -1214,21 +1347,34 @@
   .notes-editor-placeholder {
     display: flex; flex-direction: column; align-items: center;
     justify-content: center; height: 100%;
-    color: #3a3a5a; font-size: 13px; gap: 10px; text-align: center; padding: 24px;
+    gap: 10px; text-align: center; padding: 32px;
   }
   .notes-editor-placeholder .ep-icon {
-    font-size: 52px; opacity: .25;
-    filter: grayscale(1);
+    font-size: 52px; opacity: .08;
+    filter: grayscale(1); margin-bottom: 4px;
+    transform: rotate(-5deg);
   }
-  .notes-editor-placeholder .ep-title { color: #4a4a6a; font-size: 15px; font-weight: 600; }
-  .notes-editor-placeholder .ep-sub   { color: #2a2a4a; font-size: 12px; margin-top: 2px; }
+  .notes-editor-placeholder .ep-title {
+    font-size: 15px; font-weight: 700; letter-spacing: .01em;
+    background: linear-gradient(135deg, #5060a0, #7060c0);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+  .notes-editor-placeholder .ep-sub {
+    color: #252840; font-size: 11.5px; margin-top: 2px; line-height: 1.6;
+  }
   .notes-editor-placeholder button {
-    margin-top: 6px; padding: 9px 22px; border-radius: 10px; border: none;
-    background: linear-gradient(135deg, rgba(102,126,234,0.3), rgba(118,75,162,0.3));
-    border: 1px solid rgba(102,126,234,0.3);
-    color: #8fa8f5; font-size: 13px; cursor: pointer; transition: opacity .15s;
+    margin-top: 12px; padding: 10px 28px; border-radius: 24px;
+    background: linear-gradient(135deg, rgba(102,126,234,0.22), rgba(118,75,162,0.22));
+    border: 1px solid rgba(140,160,255,0.25); color: #8fa4f5;
+    font-size: 12.5px; cursor: pointer; font-family: inherit;
+    transition: all .22s;
+    box-shadow: 0 4px 20px rgba(102,126,234,0.1);
   }
-  .notes-editor-placeholder button:hover { opacity: .8; }
+  .notes-editor-placeholder button:hover {
+    background: linear-gradient(135deg, rgba(102,126,234,0.35), rgba(118,75,162,0.32));
+    border-color: rgba(160,180,255,0.4); color: #c0d0ff;
+    box-shadow: 0 6px 24px rgba(102,126,234,0.22); transform: translateY(-2px);
+  }
 
   .notes-title-inp {
     width: 100%;
@@ -1315,6 +1461,104 @@
   }
 
   .notes-footer-del-btn:hover { background: rgba(245,87,79,0.28); }
+
+  /* ====================================================
+     FOLDER NAME MODAL
+     ==================================================== */
+  #folder-name-modal {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.6); backdrop-filter: blur(6px);
+    z-index: 9999; align-items: center; justify-content: center;
+    animation: fnmFadeIn .18s ease;
+  }
+  #folder-name-modal.show { display: flex; }
+  @keyframes fnmFadeIn { from { opacity:0; } to { opacity:1; } }
+
+  .fnm-card {
+    background: linear-gradient(160deg, rgba(20,16,50,0.98), rgba(12,9,32,0.99));
+    border: 1px solid rgba(140,160,255,0.18);
+    border-radius: 18px; padding: 24px 24px 20px;
+    width: 340px; max-width: 90vw;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04),
+                0 0 40px rgba(102,126,234,0.1);
+    animation: fnmSlideIn .22s cubic-bezier(.25,.8,.25,1);
+  }
+  @keyframes fnmSlideIn {
+    from { transform: translateY(-12px) scale(.97); opacity:0; }
+    to   { transform: translateY(0)     scale(1);   opacity:1; }
+  }
+
+  .fnm-header {
+    display: flex; align-items: center; gap: 14px; margin-bottom: 18px;
+  }
+  .fnm-icon-preview {
+    width: 46px; height: 46px; border-radius: 12px; flex-shrink: 0;
+    background: linear-gradient(135deg, rgba(102,126,234,0.25), rgba(118,75,162,0.2));
+    border: 1px solid rgba(140,160,255,0.2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    box-shadow: 0 0 16px rgba(102,126,234,0.15);
+  }
+  .fnm-title { color: #d8e0ff; font-size: 15px; font-weight: 700; }
+  .fnm-sub   { color: #4a5080; font-size: 11px; margin-top: 2px; }
+
+  /* Emoji picker grid */
+  .fnm-emoji-grid {
+    display: flex; flex-wrap: wrap; gap: 5px;
+    margin-bottom: 14px; padding: 10px;
+    background: rgba(255,255,255,0.025); border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+  .fnm-emoji-btn {
+    width: 32px; height: 32px; border-radius: 8px; border: 1px solid transparent;
+    background: transparent; font-size: 17px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all .15s;
+  }
+  .fnm-emoji-btn:hover { background: rgba(102,126,234,0.15); border-color: rgba(102,126,234,0.25); transform: scale(1.15); }
+  .fnm-emoji-btn.active {
+    background: linear-gradient(135deg, rgba(102,126,234,0.3), rgba(118,75,162,0.2));
+    border-color: rgba(140,160,255,0.4);
+    box-shadow: 0 0 10px rgba(102,126,234,0.2);
+  }
+
+  .fnm-input {
+    width: 100%; box-sizing: border-box;
+    padding: 11px 14px; border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.04);
+    color: #e0e8ff; font-size: 13px; outline: none;
+    font-family: inherit; margin-bottom: 16px;
+    transition: all .2s;
+  }
+  .fnm-input:focus {
+    border-color: rgba(102,126,234,0.55);
+    background: rgba(102,126,234,0.07);
+    box-shadow: 0 0 0 3px rgba(102,126,234,0.12);
+  }
+  .fnm-input::placeholder { color: #2e3260; }
+
+  .fnm-btns { display: flex; gap: 8px; justify-content: flex-end; }
+  .fnm-btn {
+    padding: 9px 20px; border-radius: 10px; border: none;
+    font-size: 12.5px; font-weight: 600; cursor: pointer;
+    font-family: inherit; transition: all .18s;
+  }
+  .fnm-btn.cancel {
+    background: rgba(255,255,255,0.06); color: #6a7290;
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+  .fnm-btn.cancel:hover { background: rgba(255,255,255,0.1); color: #a0a8c0; }
+  .fnm-btn.confirm {
+    background: linear-gradient(135deg, rgba(102,126,234,0.8), rgba(118,75,162,0.8));
+    color: #fff; letter-spacing: .02em;
+    box-shadow: 0 4px 14px rgba(102,126,234,0.3);
+  }
+  .fnm-btn.confirm:hover {
+    background: linear-gradient(135deg, #7a90f0, #9060d0);
+    box-shadow: 0 6px 20px rgba(102,126,234,0.4);
+    transform: translateY(-1px);
+  }
 
   /* ====================================================
      IMPORT / EXPORT
@@ -1824,19 +2068,134 @@
 
   /* ── GitHub Sync Taskbar Indicator ── */
   #tb-github {
-    display:flex; align-items:center; gap:5px; cursor:pointer;
-    padding:2px 6px; border-radius:6px; transition:background .15s;
+    display:flex; align-items:center; gap:6px; cursor:pointer;
+    padding:3px 8px; border-radius:7px; transition:background .15s;
+    min-width: 78px;
   }
-  #tb-github:hover { background:rgba(255,255,255,0.08); }
+  #tb-github:hover { background:rgba(255,255,255,0.09); }
   #tb-gh-dot {
-    width:8px; height:8px; border-radius:50%;
-    background:#555; transition:background .3s;
-    flex-shrink:0;
+    width:7px; height:7px; border-radius:50%;
+    background:#555; transition:background .3s; flex-shrink:0;
   }
-  #tb-gh-dot.synced   { background:#44d17a; }
-  #tb-gh-dot.syncing  { background:#f5c542; animation:ghpulse .8s ease-in-out infinite; }
-  #tb-gh-dot.error    { background:#f5574f; }
-  #tb-gh-dot.off      { background:#555; }
+  #tb-gh-dot.synced  { background:#44d17a; box-shadow:0 0 5px rgba(68,209,122,.5); }
+  #tb-gh-dot.syncing { background:#f5c542; animation:ghpulse .8s ease-in-out infinite; }
+  #tb-gh-dot.error   { background:#f5574f; box-shadow:0 0 5px rgba(245,87,79,.5); }
+  #tb-gh-dot.off     { background:#444; }
+
+  .tb-gh-info { display:flex; flex-direction:column; gap:3px; }
+  #tb-gh-label { font-size:10px; color:#777; line-height:1; }
+
+  .tb-gh-bar-wrap {
+    width:56px; height:2.5px; border-radius:2px;
+    background:rgba(255,255,255,0.07); overflow:hidden;
+  }
+  .tb-gh-bar-fill {
+    height:100%; width:0%; border-radius:2px;
+    background:linear-gradient(90deg,#44d17a,#06b6d4);
+    transition:width 1s linear;
+  }
+  .tb-gh-bar-fill.warn { background:linear-gradient(90deg,#f5c542,#f97316); }
+  .tb-gh-bar-fill.hot  { background:linear-gradient(90deg,#f5574f,#ec4899); }
+
+  /* ── GitHub History Panel ─────────────── */
+  #gh-history-panel {
+    display: none; position: fixed;
+    bottom: 42px; right: 12px;
+    width: 300px;
+    background: linear-gradient(160deg, rgba(18,14,44,0.98), rgba(10,8,28,0.99));
+    border: 1px solid rgba(140,160,255,0.18);
+    border-radius: 14px;
+    box-shadow: 0 16px 48px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.04),
+                0 0 32px rgba(102,126,234,0.12);
+    z-index: 9800;
+    overflow: hidden;
+    animation: ghpSlideUp .2s cubic-bezier(.25,.8,.25,1);
+  }
+  #gh-history-panel.show { display: block; }
+  @keyframes ghpSlideUp {
+    from { opacity:0; transform:translateY(10px) scale(.97); }
+    to   { opacity:1; transform:translateY(0)    scale(1);   }
+  }
+
+  .ghp-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 14px 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    background: rgba(255,255,255,0.02);
+  }
+  .ghp-title { display:flex; align-items:center; gap:7px; color:#c8d0f0; font-size:12.5px; font-weight:700; }
+  .ghp-title-icon { font-size:15px; }
+  .ghp-close {
+    width:20px; height:20px; border-radius:6px; border:none;
+    background:rgba(255,255,255,0.07); color:#666; font-size:14px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; line-height:1;
+    transition:background .12s, color .12s;
+  }
+  .ghp-close:hover { background:rgba(245,87,79,0.2); color:#f5574f; }
+
+  .ghp-countdown-block {
+    padding: 12px 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+  .ghp-cd-label { color:#484e70; font-size:10px; text-transform:uppercase; letter-spacing:.1em; margin-bottom:5px; }
+  .ghp-cd-value { color:#8898ee; font-size:22px; font-weight:700; font-variant-numeric:tabular-nums; margin-bottom:8px; }
+  .ghp-cd-bar-wrap {
+    height:4px; border-radius:3px; background:rgba(255,255,255,0.07); overflow:hidden;
+  }
+  .ghp-cd-bar-fill {
+    height:100%; width:0%; border-radius:3px;
+    background:linear-gradient(90deg,#44d17a,#06b6d4);
+    transition:width 1s linear;
+  }
+  .ghp-cd-bar-fill.warn { background:linear-gradient(90deg,#f5c542,#f97316); }
+  .ghp-cd-bar-fill.hot  { background:linear-gradient(90deg,#f5574f,#ec4899); }
+
+  .ghp-save-now { padding:10px 14px; border-bottom:1px solid rgba(255,255,255,0.05); }
+  .ghp-save-now button {
+    width:100%; padding:9px 14px; border-radius:10px; border:none; cursor:pointer;
+    background:linear-gradient(135deg,rgba(102,126,234,0.22),rgba(118,75,162,0.18));
+    border:1px solid rgba(140,160,255,0.22); color:#a0b4ff; font-size:12px; font-weight:600;
+    display:flex; align-items:center; gap:8px; font-family:inherit;
+    transition:all .18s; box-shadow:0 2px 10px rgba(102,126,234,0.1);
+  }
+  .ghp-save-now button:hover {
+    background:linear-gradient(135deg,rgba(102,126,234,0.35),rgba(118,75,162,0.28));
+    border-color:rgba(160,180,255,0.4); color:#c8d8ff;
+    box-shadow:0 4px 16px rgba(102,126,234,0.22); transform:translateY(-1px);
+  }
+  .ghp-save-icon { font-size:14px; }
+  .ghp-save-now button kbd {
+    margin-left:auto; font-size:9px; padding:2px 5px; border-radius:4px;
+    background:rgba(255,255,255,0.08); color:#556; border:1px solid rgba(255,255,255,0.1);
+    font-family:inherit;
+  }
+
+  .ghp-history-label {
+    padding:8px 14px 4px;
+    color:#3a4060; font-size:9.5px; text-transform:uppercase; letter-spacing:.12em; font-weight:700;
+  }
+  .ghp-list { max-height:180px; overflow-y:auto; padding:0 8px 6px; }
+  .ghp-empty { color:#2e3050; font-size:11px; text-align:center; padding:16px; }
+  .ghp-entry {
+    display:flex; align-items:center; gap:8px; padding:7px 8px; border-radius:8px;
+    margin-bottom:2px; transition:background .1s;
+  }
+  .ghp-entry:hover { background:rgba(255,255,255,0.03); }
+  .ghp-entry-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+  .ghp-entry-dot.ok  { background:#44d17a; }
+  .ghp-entry-dot.err { background:#f5574f; }
+  .ghp-entry-info { flex:1; min-width:0; }
+  .ghp-entry-ts  { color:#666; font-size:10.5px; }
+  .ghp-entry-msg { color:#3a3e58; font-size:9.5px; margin-top:1px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+  .ghp-footer {
+    padding:8px 14px 10px; border-top:1px solid rgba(255,255,255,0.05);
+  }
+  .ghp-settings-link {
+    background:none; border:none; color:#3a4060; font-size:10.5px; cursor:pointer;
+    padding:0; font-family:inherit; transition:color .12s;
+  }
+  .ghp-settings-link:hover { color:#7080b0; }
   @keyframes ghpulse {
     0%,100% { opacity:1; transform:scale(1); }
     50%     { opacity:.4; transform:scale(.6); }
@@ -1880,6 +2239,174 @@
   .gh-status.inf { background:rgba(102,126,234,0.1);color:#8fa8f5; display:block; }
   .gh-hint { color:#555; font-size:10px; margin-top:6px; line-height:1.5; }
   .gh-last-sync { color:#667eea; font-size:10px; margin-top:6px; }
+
+  /* ===== REFRESH BUTTON (taskbar) ===== */
+  #tb-refresh-btn {
+    width: 32px; height: 32px; border-radius: 8px; border: none;
+    background: rgba(255,255,255,0.05); color: #888; font-size: 15px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: background 0.2s, color 0.2s, transform 0.35s;
+    flex-shrink: 0;
+  }
+  #tb-refresh-btn:hover { background: rgba(255,255,255,0.12); color: #fff; transform: rotate(180deg); }
+
+  /* ===== PROFILE SYSTEM ===== */
+  #profile-screen {
+    position: fixed; inset: 0; z-index: 99998;
+    background: linear-gradient(135deg, #07051a 0%, #0d0a2e 60%, #0a0318 100%);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.3s;
+  }
+  #profile-screen.visible { opacity: 1; pointer-events: all; }
+  .psc-logo { font-size: 52px; margin-bottom: 8px; filter: drop-shadow(0 0 20px #667eea88); }
+  .psc-title {
+    font-size: 24px; font-weight: 800;
+    background: linear-gradient(135deg, #667eea, #ec4899);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    margin-bottom: 4px;
+  }
+  .psc-sub { color: #555; font-size: 13px; margin-bottom: 44px; letter-spacing: 0.3px; }
+  .psc-cards { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; margin-bottom: 28px; max-width: 700px; }
+  .psc-card {
+    width: 115px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 20px; padding: 22px 12px 16px;
+    cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 10px;
+    transition: all 0.25s cubic-bezier(0.34,1.56,0.64,1); position: relative;
+  }
+  .psc-card:hover { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.14); transform: translateY(-5px) scale(1.04); box-shadow: 0 14px 36px rgba(0,0,0,0.5); }
+  .psc-card.selected { border-color: var(--psc-color,#667eea); background: rgba(102,126,234,0.1); box-shadow: 0 0 0 2px var(--psc-color,#667eea), 0 12px 32px rgba(0,0,0,0.4); }
+  .psc-avatar {
+    width: 62px; height: 62px; border-radius: 50%;
+    background: var(--psc-color-bg, rgba(102,126,234,0.18));
+    border: 2px solid var(--psc-color,#667eea);
+    display: flex; align-items: center; justify-content: center; font-size: 28px;
+    transition: transform 0.2s;
+  }
+  .psc-card:hover .psc-avatar { transform: scale(1.1); }
+  .psc-name { font-size: 12px; color: #ccc; font-weight: 500; text-align: center; word-break: break-word; }
+  .psc-lock { position: absolute; top: 9px; right: 9px; font-size: 11px; opacity: 0.65; }
+  .psc-add-card {
+    width: 115px; background: transparent; border: 2px dashed rgba(255,255,255,0.1);
+    border-radius: 20px; padding: 22px 12px 16px; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+    transition: all 0.2s; color: #444;
+  }
+  .psc-add-card:hover { border-color: rgba(255,255,255,0.22); color: #777; transform: translateY(-3px); }
+  .psc-add-icon { width: 62px; height: 62px; border-radius: 50%; border: 2px dashed rgba(255,255,255,0.12); display: flex; align-items: center; justify-content: center; font-size: 26px; }
+  .psc-add-lbl { font-size: 12px; text-align: center; }
+  .psc-pw-block { display: none; flex-direction: column; align-items: center; gap: 10px; margin-bottom: 16px; }
+  .psc-pw-block.show { display: flex; }
+  .psc-pw-label { color: #888; font-size: 13px; }
+  .psc-pw-row { display: flex; gap: 8px; align-items: center; }
+  .psc-pw-input {
+    padding: 10px 16px; border-radius: 12px;
+    background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12);
+    color: #fff; font-size: 14px; outline: none; width: 220px; transition: border-color 0.2s;
+  }
+  .psc-pw-input:focus { border-color: #667eea; }
+  .psc-pw-input.error { border-color: #f5574f; animation: pscShake 0.35s; }
+  @keyframes pscShake {
+    0%,100%{transform:translateX(0)} 20%{transform:translateX(-8px)}
+    40%{transform:translateX(8px)} 60%{transform:translateX(-5px)} 80%{transform:translateX(5px)}
+  }
+  .psc-pw-submit {
+    padding: 10px 18px; border-radius: 12px;
+    background: linear-gradient(135deg,#667eea,#764ba2); border: none;
+    color: #fff; cursor: pointer; font-size: 14px; font-weight: 600; transition: all 0.2s;
+  }
+  .psc-pw-submit:hover { transform: scale(1.05); }
+  .psc-pw-error { color: #f5574f; font-size: 12px; min-height: 16px; }
+  .psc-bottom { color: #3a3a55; font-size: 11px; margin-top: 14px; }
+
+  /* Profile create modal */
+  #profile-create-modal {
+    position: fixed; inset: 0; z-index: 99999;
+    background: rgba(0,0,0,0.65); backdrop-filter: blur(8px);
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none; transition: opacity 0.2s;
+  }
+  #profile-create-modal.show { opacity: 1; pointer-events: all; }
+  .pcm-card {
+    width: 390px; background: rgba(18,15,45,0.99);
+    border: 1px solid rgba(255,255,255,0.1); border-radius: 22px; padding: 28px 24px 22px;
+    transform: scale(0.93) translateY(10px);
+    transition: transform 0.28s cubic-bezier(0.34,1.56,0.64,1); box-shadow: 0 30px 80px rgba(0,0,0,0.6);
+  }
+  #profile-create-modal.show .pcm-card { transform: scale(1) translateY(0); }
+  .pcm-title { font-size: 17px; font-weight: 700; color: #fff; margin-bottom: 18px; }
+  .pcm-preview { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; padding: 12px; background: rgba(255,255,255,0.03); border-radius: 14px; }
+  .pcm-avatar-preview {
+    width: 52px; height: 52px; border-radius: 50%;
+    background: rgba(102,126,234,0.18); border: 2px solid #667eea;
+    display: flex; align-items: center; justify-content: center; font-size: 24px;
+    transition: all 0.2s; flex-shrink: 0;
+  }
+  .pcm-name-preview { color: #bbb; font-size: 14px; font-weight: 600; }
+  .pcm-section { margin-bottom: 14px; }
+  .pcm-label { color: #666; font-size: 10px; font-weight: 700; letter-spacing: 0.7px; text-transform: uppercase; margin-bottom: 6px; }
+  .pcm-input {
+    width: 100%; padding: 9px 13px; background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.09); border-radius: 10px;
+    color: #fff; font-size: 13px; outline: none; box-sizing: border-box; transition: border-color 0.2s;
+  }
+  .pcm-input:focus { border-color: #667eea; }
+  .pcm-emoji-grid { display: flex; flex-wrap: wrap; gap: 4px; max-height: 80px; overflow-y: auto; scrollbar-width: thin; }
+  .pcm-emoji-btn {
+    width: 30px; height: 30px; border-radius: 7px; border: 1px solid transparent;
+    background: rgba(255,255,255,0.04); cursor: pointer; font-size: 15px;
+    display: flex; align-items: center; justify-content: center; transition: all 0.15s;
+  }
+  .pcm-emoji-btn:hover { background: rgba(255,255,255,0.1); }
+  .pcm-emoji-btn.active { border-color: #667eea; background: rgba(102,126,234,0.2); }
+  .pcm-color-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .pcm-color-dot { width: 22px; height: 22px; border-radius: 50%; cursor: pointer; transition: all 0.15s; border: 2px solid transparent; }
+  .pcm-color-dot:hover { transform: scale(1.18); }
+  .pcm-color-dot.active { border-color: #fff; transform: scale(1.18); box-shadow: 0 0 8px currentColor; }
+  .pcm-pw-row { display: flex; gap: 7px; }
+  .pcm-pw-row .pcm-input { flex: 1; }
+  .pcm-pw-hint { color: #444; font-size: 10px; margin-top: 4px; line-height: 1.4; }
+  .pcm-btns { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+  .pcm-btn { padding: 9px 20px; border-radius: 11px; border: none; cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.2s; }
+  .pcm-btn.cancel { background: rgba(255,255,255,0.07); color: #aaa; }
+  .pcm-btn.cancel:hover { background: rgba(255,255,255,0.12); }
+  .pcm-btn.confirm { background: linear-gradient(135deg,#667eea,#764ba2); color: #fff; }
+  .pcm-btn.confirm:hover { transform: scale(1.04); }
+
+  /* Start-menu profile badge */
+  .sm-profile-badge {
+    display: flex; align-items: center; gap: 9px; padding: 9px 12px;
+    background: rgba(255,255,255,0.04); border-radius: 13px; margin-bottom: 8px;
+    cursor: pointer; transition: background 0.2s; border: 1px solid rgba(255,255,255,0.06);
+    user-select: none;
+  }
+  .sm-profile-badge:hover { background: rgba(255,255,255,0.08); }
+  .sm-profile-avatar { font-size: 22px; line-height: 1; }
+  .sm-profile-info { flex: 1; min-width: 0; }
+  .sm-profile-name { color: #ddd; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sm-profile-sub { color: #555; font-size: 10px; margin-top: 1px; }
+  .sm-profile-switch { color: #667eea; font-size: 11px; flex-shrink: 0; font-weight: 500; }
+
+  /* Settings profiles section */
+  .profiles-section { margin-top: 24px; border-top: 1px solid rgba(255,255,255,0.07); padding-top: 20px; }
+  .profile-list-item {
+    display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+    background: rgba(255,255,255,0.03); border-radius: 13px; margin-bottom: 8px;
+    border: 1px solid rgba(255,255,255,0.06); transition: background 0.15s;
+  }
+  .profile-list-item:hover { background: rgba(255,255,255,0.05); }
+  .profile-list-avatar { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+  .profile-list-info { flex: 1; min-width: 0; }
+  .profile-list-name { color: #eee; font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .profile-list-sub { color: #555; font-size: 11px; margin-top: 1px; }
+  .profile-list-actions { display: flex; gap: 6px; flex-shrink: 0; }
+  .profile-list-btn { padding: 5px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: transparent; color: #aaa; cursor: pointer; font-size: 12px; transition: all 0.15s; }
+  .profile-list-btn:hover { background: rgba(255,255,255,0.08); color: #fff; }
+  .profile-list-btn.active-tag { background: rgba(102,126,234,0.18); color: #8fa8f5; border-color: rgba(102,126,234,0.35); cursor: default; }
+  .profile-list-btn:disabled { opacity: 0.3; cursor: not-allowed; }
 </style>
 </head>
 <body>
@@ -1892,21 +2419,26 @@
   <button id="start-btn" onclick="toggleStartMenu()">⬡</button>
   <div id="taskbar-apps"></div>
   <div id="taskbar-right">
+    <button id="tb-refresh-btn" onclick="location.reload()" title="Recharger la page (Ctrl+R)">↺</button>
     <button id="tb-install-btn" onclick="pwaInstall()" title="Installer Bureau Virtuel sur cet ordinateur">
       📲 Installer
     </button>
-    <div id="tb-github" title="GitHub Sync" onclick="openApp('settings')">
+    <div id="tb-github" title="Historique des sauvegardes (Ctrl+S pour sauvegarder)" onclick="ghOpenHistoryPanel()">
       <div id="tb-gh-dot" class="off"></div>
-      <span id="tb-gh-label">GitHub</span>
+      <div class="tb-gh-info">
+        <span id="tb-gh-label">GitHub</span>
+        <div class="tb-gh-bar-wrap">
+          <div class="tb-gh-bar-fill" id="tb-gh-bar"></div>
+        </div>
+      </div>
     </div>
-    <div id="tb-network" title="Réseau">
+    <div id="tb-network" title="Cliquez pour tester la connexion" onclick="netOpenPanel()" style="cursor:pointer;">
       <div class="tb-bars">
         <div class="tb-bar" data-bar="1"></div>
         <div class="tb-bar" data-bar="2"></div>
         <div class="tb-bar" data-bar="3"></div>
         <div class="tb-bar" data-bar="4"></div>
       </div>
-      <span id="tb-net-label"></span>
     </div>
     <div id="tb-battery" title="Batterie">
       <div class="tb-bat-wrap">
@@ -1927,6 +2459,14 @@
     <h3>⬡ Bureau Virtuel Pro</h3>
     <p>v3.0 — Votre espace de travail</p>
   </div>
+  <div class="sm-profile-badge" id="sm-profile-badge" onclick="openProfileScreen()">
+    <div class="sm-profile-avatar">👤</div>
+    <div class="sm-profile-info">
+      <div class="sm-profile-name">Mon Bureau</div>
+      <div class="sm-profile-sub">Chargement…</div>
+    </div>
+    <div class="sm-profile-switch">Changer</div>
+  </div>
   <input type="text" id="start-menu-search" placeholder="🔍 Rechercher une application..." oninput="filterStartMenu(this.value)">
   <div id="start-menu-apps"></div>
 </div>
@@ -1937,6 +2477,8 @@
   <div class="ctx-separator"></div>
   <div class="ctx-item" onclick="openApp('sysmonitor')">📊 Moniteur système</div>
   <div class="ctx-item" onclick="refreshDesktop()">🔄 Rafraîchir le bureau</div>
+  <div class="ctx-item" onclick="location.reload();closeContextMenu()">↺ Recharger la page <span style="color:#555;font-size:11px">Ctrl+R</span></div>
+  <div class="ctx-item" onclick="openProfileScreen();closeContextMenu()">👤 Changer de profil</div>
   <div class="ctx-separator"></div>
   <div class="ctx-item" onclick="alignIconsToGrid()">⊞ Aligner sur la grille</div>
   <div class="ctx-item" onclick="autoArrangeIcons()">🔃 Réorganisation automatique</div>
@@ -1999,6 +2541,91 @@
   </div>
 </div>
 
+<!-- Network Panel -->
+<div id="net-panel">
+  <div class="nep-header">
+    <div class="nep-title">🌐 État du réseau</div>
+    <button class="nep-close" onclick="netClosePanel()">×</button>
+  </div>
+
+  <div class="nep-quality-block" id="nep-quality-block">
+    <div class="nep-quality-badge" id="nep-quality-badge">—</div>
+    <div class="nep-quality-bar-wrap"><div class="nep-quality-bar" id="nep-quality-bar"></div></div>
+  </div>
+
+  <div class="nep-rows" id="nep-rows">
+    <div class="nep-row"><span class="nep-row-icon">📶</span><span class="nep-row-label">Type de connexion</span><span class="nep-row-val" id="nep-type">—</span></div>
+    <div class="nep-row"><span class="nep-row-icon">⬇️</span><span class="nep-row-label">Débit estimé</span><span class="nep-row-val" id="nep-dl">—</span></div>
+    <div class="nep-row"><span class="nep-row-icon">📡</span><span class="nep-row-label">Débit mesuré</span><span class="nep-row-val" id="nep-speed">—</span></div>
+    <div class="nep-row"><span class="nep-row-icon">⏱️</span><span class="nep-row-label">Latence (ping)</span><span class="nep-row-val" id="nep-ping">—</span></div>
+  </div>
+
+  <div class="nep-test-wrap">
+    <button class="nep-test-btn" id="nep-test-btn" onclick="netRunTest()">
+      <span id="nep-test-ico">🔄</span> Tester la connexion
+    </button>
+    <div class="nep-test-status" id="nep-test-status"></div>
+  </div>
+</div>
+
+<!-- GitHub History Panel -->
+<div id="gh-history-panel">
+  <div class="ghp-header">
+    <div class="ghp-title">
+      <span class="ghp-title-icon" id="ghp-status-icon">☁️</span>
+      <span>Sauvegardes GitHub</span>
+    </div>
+    <button class="ghp-close" onclick="ghCloseHistoryPanel()">×</button>
+  </div>
+
+  <div class="ghp-countdown-block" id="ghp-countdown-block">
+    <div class="ghp-cd-label">Prochaine sauvegarde dans</div>
+    <div class="ghp-cd-value" id="ghp-cd-value">—</div>
+    <div class="ghp-cd-bar-wrap">
+      <div class="ghp-cd-bar-fill" id="ghp-cd-bar"></div>
+    </div>
+  </div>
+
+  <div class="ghp-save-now">
+    <button onclick="ghManualSave()" id="ghp-save-btn">
+      <span class="ghp-save-icon">💾</span>
+      Sauvegarder maintenant
+      <kbd>Ctrl+S</kbd>
+    </button>
+  </div>
+
+  <div class="ghp-history-label">Historique</div>
+  <div class="ghp-list" id="ghp-list">
+    <div class="ghp-empty">Aucune sauvegarde enregistrée</div>
+  </div>
+
+  <div class="ghp-footer">
+    <button class="ghp-settings-link" onclick="ghCloseHistoryPanel();openApp('settings')">⚙️ Configurer GitHub</button>
+  </div>
+</div>
+
+<!-- Folder Name Modal -->
+<div id="folder-name-modal">
+  <div class="fnm-card">
+    <div class="fnm-header">
+      <div class="fnm-icon-preview" id="fnm-icon-preview">📁</div>
+      <div class="fnm-title-wrap">
+        <div class="fnm-title" id="fnm-title">Nouveau dossier</div>
+        <div class="fnm-sub" id="fnm-sub">Choisissez un nom et une icône</div>
+      </div>
+    </div>
+    <div class="fnm-emoji-grid" id="fnm-emoji-grid"></div>
+    <input type="text" class="fnm-input" id="fnm-input" placeholder="Nom du dossier…"
+      onkeydown="if(event.key==='Enter')fnmConfirm();if(event.key==='Escape')fnmClose();"
+      oninput="document.getElementById('fnm-icon-preview').textContent=document.getElementById('fnm-sel-icon').value+' ';document.getElementById('fnm-icon-preview').textContent=document.getElementById('fnm-sel-icon').value">
+    <input type="hidden" id="fnm-sel-icon" value="📁">
+    <div class="fnm-btns">
+      <button class="fnm-btn cancel" onclick="fnmClose()">Annuler</button>
+      <button class="fnm-btn confirm" onclick="fnmConfirm()">✓ Confirmer</button>
+    </div>
+  </div>
+</div>
+
 <!-- Confirm Dialog -->
 <div id="confirm-modal">
   <div class="cf-card">
@@ -2008,6 +2635,63 @@
     <div class="cf-btns">
       <button class="cf-btn cancel"  onclick="confirmCancel()">Annuler</button>
       <button class="cf-btn danger"  id="cf-ok-btn" onclick="confirmOk()">Confirmer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PROFILE SELECTOR SCREEN ===== -->
+<div id="profile-screen">
+  <div class="psc-logo">⬡</div>
+  <div class="psc-title">Bureau Virtuel Pro</div>
+  <div class="psc-sub">Choisissez votre profil</div>
+  <div class="psc-cards" id="psc-cards"></div>
+  <div class="psc-pw-block" id="psc-pw-block">
+    <div class="psc-pw-label" id="psc-pw-label">🔒 Mot de passe requis</div>
+    <div class="psc-pw-row">
+      <input type="password" class="psc-pw-input" id="psc-pw-input" placeholder="Mot de passe…"
+        onkeydown="if(event.key==='Enter')pscSubmitPassword()">
+      <button class="psc-pw-submit" onclick="pscSubmitPassword()">→</button>
+    </div>
+    <div class="psc-pw-error" id="psc-pw-error"></div>
+  </div>
+  <div class="psc-bottom">Cliquez sur un profil pour vous connecter</div>
+</div>
+
+<!-- ===== PROFILE CREATE MODAL ===== -->
+<div id="profile-create-modal">
+  <div class="pcm-card">
+    <div class="pcm-title" id="pcm-title">👤 Nouveau profil</div>
+    <div class="pcm-preview">
+      <div class="pcm-avatar-preview" id="pcm-avatar-preview">👤</div>
+      <div class="pcm-name-preview" id="pcm-name-preview">Nouveau profil</div>
+    </div>
+    <div class="pcm-section">
+      <div class="pcm-label">Nom du profil</div>
+      <input type="text" class="pcm-input" id="pcm-name" placeholder="Ex : Mon Bureau, Travail…"
+        oninput="document.getElementById('pcm-name-preview').textContent=this.value||'Nouveau profil'"
+        onkeydown="if(event.key==='Enter')pcmConfirm()">
+    </div>
+    <div class="pcm-section">
+      <div class="pcm-label">Avatar</div>
+      <div class="pcm-emoji-grid" id="pcm-emoji-grid"></div>
+      <input type="hidden" id="pcm-avatar-val" value="👤">
+    </div>
+    <div class="pcm-section">
+      <div class="pcm-label">Couleur d'accent</div>
+      <div class="pcm-color-row" id="pcm-color-row"></div>
+      <input type="hidden" id="pcm-color-val" value="#667eea">
+    </div>
+    <div class="pcm-section">
+      <div class="pcm-label">Mot de passe (optionnel)</div>
+      <div class="pcm-pw-row">
+        <input type="password" class="pcm-input" id="pcm-password"  placeholder="Nouveau mot de passe">
+        <input type="password" class="pcm-input" id="pcm-password2" placeholder="Confirmer">
+      </div>
+      <div class="pcm-pw-hint">Si défini, sera demandé à chaque changement de profil.</div>
+    </div>
+    <div class="pcm-btns">
+      <button class="pcm-btn cancel"  onclick="closePcm()">Annuler</button>
+      <button class="pcm-btn confirm" id="pcm-confirm-btn" onclick="pcmConfirm()">✓ Créer le profil</button>
     </div>
   </div>
 </div>
@@ -2789,6 +3473,15 @@
               Cliquez sur <strong>🔍 Détecter l'utilisateur</strong> après avoir collé votre token — votre nom sera rempli automatiquement.
             </div>
           </div>
+
+          <div class="profiles-section">
+            <label>👤 Profils de bureau</label>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+              <button onclick="openPcm()" style="padding:10px 18px;border-radius:10px;border:none;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;cursor:pointer;font-size:13px;">➕ Nouveau profil</button>
+              <button onclick="openProfileScreen()" style="padding:10px 18px;border-radius:10px;border:1px solid rgba(255,255,255,0.12);background:transparent;color:#ccc;cursor:pointer;font-size:13px;">🔀 Changer de profil</button>
+            </div>
+            <div id="settings-profiles-list"></div>
+          </div>
         </div>`;
 
       case 'agenda':
@@ -2944,6 +3637,8 @@
     }
     // Populate GitHub settings form
     ghFillForm();
+    // Populate profile list
+    renderSettingsProfiles();
   }
 
   function setTaskbarOpacity(val) {
@@ -4005,18 +4700,68 @@
     openNoteEditor(noteId);
   }
 
+  // ── Folder Name Modal ─────────────────────────────
+  const FNM_ICONS = ['📁','💼','🎯','🚀','💡','📚','🔬','🎨','🏠','⭐','🔖','📌','🗂️','📂','🧩','🎵','🌍','💎','🔧','📷'];
+  let fnmCallback = null;
+
+  function showFolderModal(title, sub, defaultName, defaultIcon, callback) {
+    fnmCallback = callback;
+    document.getElementById('fnm-title').textContent = title;
+    document.getElementById('fnm-sub').textContent   = sub;
+    const inp  = document.getElementById('fnm-input');
+    inp.value  = defaultName || '';
+    // Emoji grid
+    const grid = document.getElementById('fnm-emoji-grid');
+    grid.innerHTML = '';
+    const selIcon = defaultIcon || FNM_ICONS[0];
+    document.getElementById('fnm-sel-icon').value = selIcon;
+    document.getElementById('fnm-icon-preview').textContent = selIcon;
+    FNM_ICONS.forEach(ico => {
+      const btn = document.createElement('button');
+      btn.className = 'fnm-emoji-btn' + (ico === selIcon ? ' active' : '');
+      btn.textContent = ico;
+      btn.onclick = () => {
+        document.querySelectorAll('.fnm-emoji-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('fnm-sel-icon').value = ico;
+        document.getElementById('fnm-icon-preview').textContent = ico;
+      };
+      grid.appendChild(btn);
+    });
+    document.getElementById('folder-name-modal').classList.add('show');
+    setTimeout(() => { inp.focus(); inp.select(); }, 80);
+  }
+
+  function fnmClose() {
+    document.getElementById('folder-name-modal').classList.remove('show');
+    fnmCallback = null;
+  }
+
+  function fnmConfirm() {
+    const name = document.getElementById('fnm-input').value.trim();
+    const icon = document.getElementById('fnm-sel-icon').value;
+    if (!name) { document.getElementById('fnm-input').focus(); return; }
+    fnmClose();
+    if (fnmCallback) fnmCallback(name, icon);
+  }
+  // ──────────────────────────────────────────────────
+
   function createFolder() {
-    const folderIcons = ['📁','💼','🎯','🚀','💡','📚','🔬','🎨','🏠','⭐','🔖','📌','🗂️','📂'];
-    const icon = folderIcons[notesData.folders.length % folderIcons.length];
-    const folder = { id: 'folder-' + Date.now(), name: 'Nouveau dossier', icon };
-    notesData.folders.push(folder);
-    saveNotesData();
-    currentFolderId = folder.id;
-    currentNoteId   = null;
-    renderFolderList();
-    renderNoteList();
-    renderNoteEditor();
-    renameFolder(folder.id, null);
+    const defaultIcon = FNM_ICONS[notesData.folders.length % FNM_ICONS.length];
+    showFolderModal(
+      'Nouveau dossier', 'Choisissez un nom et une icône', 'Nouveau dossier', defaultIcon,
+      (name, icon) => {
+        const folder = { id: 'folder-' + Date.now(), name, icon };
+        notesData.folders.push(folder);
+        saveNotesData();
+        currentFolderId = folder.id;
+        currentNoteId   = null;
+        renderFolderList();
+        renderNoteList();
+        renderNoteEditor();
+        notify(`📁 Dossier "${name}" créé`);
+      }
+    );
   }
 
   function createNote() {
@@ -4080,14 +4825,17 @@
     if (e) e.stopPropagation();
     const folder = notesData.folders.find(f => f.id === folderId);
     if (!folder) return;
-    const newName = prompt('Nom du dossier :', folder.name);
-    if (newName && newName.trim()) {
-      folder.name = newName.trim();
-      saveNotesData();
-      renderFolderList();
-      const label = document.getElementById('notes-list-label');
-      if (label && currentFolderId === folderId) label.textContent = newName.trim();
-    }
+    showFolderModal(
+      'Renommer le dossier', 'Modifiez le nom et l\'icône', folder.name, folder.icon,
+      (name, icon) => {
+        folder.name = name;
+        folder.icon = icon;
+        saveNotesData();
+        renderFolderList();
+        const label = document.getElementById('notes-list-label');
+        if (label && currentFolderId === folderId) label.textContent = name.toUpperCase();
+      }
+    );
   }
 
   function noteFmt(before, after) {
@@ -4625,25 +5373,40 @@
   // ====================================================
   function exportBackup() {
     saveCurrentNote(true);
+    // Snapshot the current profile before exporting
+    saveCurrentProfileData();
+
+    // Collect profile data snapshots
+    const profilesData = {};
+    (profiles || []).forEach(p => {
+      const raw = localStorage.getItem('vd_profile_data_' + p.id);
+      if (raw) { try { profilesData[p.id] = JSON.parse(raw); } catch(e) {} }
+    });
+
     const data = {
-      version:    '3.0',
-      app:        'Bureau Virtuel Pro',
-      exportDate: new Date().toISOString(),
-      modules:    apps.filter(a => a.type === 'module'),
-      notes:      notesData,
-      wallpaper:  document.getElementById('desktop').style.background || ''
+      version:      '3.1',
+      app:          'Bureau Virtuel Pro',
+      exportDate:   new Date().toISOString(),
+      // ── Bureau ──
+      modules:      apps.filter(a => a.type === 'module'),
+      notes:        notesData,
+      wallpaper:    document.getElementById('desktop').style.background || '',
+      // ── Nouvelles données ──
+      agenda:       (() => { try { return JSON.parse(localStorage.getItem('vd_agenda') || '[]'); } catch(e){ return []; } })(),
+      filesystem:   (() => { try { return JSON.parse(localStorage.getItem('vd_filesystem') || 'null'); } catch(e){ return null; } })(),
+      iconPositions:(() => { try { return JSON.parse(localStorage.getItem('vd_icon_positions') || 'null'); } catch(e){ return null; } })(),
+      // ── Profils ──
+      profiles: {
+        list:         profiles || [],
+        activeId:     activeProfileId || null,
+        profilesData: profilesData
+      }
     };
+
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement('a');
-    a.href     = url;
-    a.download = `bureau-virtuel-sauvegarde-${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    downloadBlob(blob, `bureau-virtuel-sauvegarde-${new Date().toISOString().split('T')[0]}.json`);
     closeContextMenu();
-    notify('💾 Sauvegarde exportée avec succès !');
+    notify('💾 Sauvegarde complète exportée !');
   }
 
   function importBackup() {
@@ -4663,43 +5426,87 @@
           }
           const changes = [];
 
-          // Modules
+          // ── Modules ──
           if (data.modules && Array.isArray(data.modules)) {
             data.modules.forEach(m => {
-              if (!apps.find(a => a.id === m.id)) {
-                apps.push(m);
-                changes.push(`module "${m.name}"`);
-              }
+              if (!apps.find(a => a.id === m.id)) { apps.push(m); changes.push(`module "${m.name}"`); }
             });
             saveModules();
           }
 
-          // Notes
+          // ── Notes ──
           if (data.notes) {
             notesData = data.notes;
             if (!notesData.folders) notesData.folders = [];
             if (!notesData.notes)   notesData.notes   = [];
             saveNotesData();
-            changes.push(`${notesData.notes.length} note(s) dans ${notesData.folders.length} dossier(s)`);
+            changes.push(`${notesData.notes.length} note(s) / ${notesData.folders.length} dossier(s)`);
           }
 
-          // Fond d'écran
+          // ── Fond d'écran ──
           if (data.wallpaper) {
             document.getElementById('desktop').style.background = data.wallpaper;
           }
 
+          // ── Agenda ──
+          if (data.agenda && Array.isArray(data.agenda)) {
+            localStorage.setItem('vd_agenda', JSON.stringify(data.agenda));
+            changes.push(`${data.agenda.length} événement(s) agenda`);
+          }
+
+          // ── Filesystem ──
+          if (data.filesystem && typeof data.filesystem === 'object') {
+            localStorage.setItem('vd_filesystem', JSON.stringify(data.filesystem));
+            const count = Object.keys(data.filesystem).length;
+            changes.push(`${count} fichier(s)`);
+          }
+
+          // ── Positions des icônes ──
+          if (data.iconPositions && typeof data.iconPositions === 'object') {
+            localStorage.setItem('vd_icon_positions', JSON.stringify(data.iconPositions));
+          }
+
+          // ── Profils ──
+          if (data.profiles && data.profiles.list && Array.isArray(data.profiles.list)) {
+            const importedProfiles = data.profiles.list;
+            // Merge: add profiles not already present (matched by id)
+            let added = 0;
+            importedProfiles.forEach(p => {
+              if (!profiles.find(x => x.id === p.id)) { profiles.push(p); added++; }
+            });
+            if (added > 0) {
+              saveProfiles();
+              changes.push(`${added} profil(s)`);
+            }
+            // Restore per-profile data snapshots
+            if (data.profiles.profilesData) {
+              Object.entries(data.profiles.profilesData).forEach(([id, snap]) => {
+                localStorage.setItem('vd_profile_data_' + id, JSON.stringify(snap));
+              });
+            }
+            // Restore active profile if none set
+            if (data.profiles.activeId && !activeProfileId) {
+              activeProfileId = data.profiles.activeId;
+              localStorage.setItem(ACTIVE_PROFILE_KEY, activeProfileId);
+            }
+            updateSmProfileBadge();
+            const sl = document.getElementById('settings-profiles-list');
+            if (sl) renderSettingsProfiles();
+          }
+
+          // ── Rechargement UI ──
           renderDesktopIcons();
           renderStartMenu();
+          loadIconPositions();
 
-          // Rafraîchir la fenêtre Notes si ouverte
           if (openWindows['notes']) {
             const body = document.getElementById('winbody-notes');
             if (body) { body.innerHTML = getBuiltinContent('notes'); initNotes(); }
           }
 
-          notify(`✅ Importé : ${changes.join(', ') || 'aucune donnée'}`);
+          notify(`✅ Importé : ${changes.join(' · ') || 'aucune donnée'}`);
         } catch(err) {
-          notify('❌ Erreur lors de l\'import : fichier invalide');
+          notify('❌ Erreur lors de l\'import : ' + (err.message || 'fichier invalide'));
         }
       };
       reader.readAsText(file);
@@ -4793,35 +5600,150 @@
 
   // ====== INDICATEURS RÉSEAU & BATTERIE ======
 
+  // ── Network panel state ────────────────────────────────
+  let netLastResult = null; // cached speed test result
+
+  function netQualityFromMbps(mbps) {
+    if (mbps === null)  return { key:'fair',   label:'Calcul…',    bars:3, color:'#f5c542' };
+    if (mbps >= 25)     return { key:'excellent', label:'⚡ Excellent',  bars:4, color:'#44d17a' };
+    if (mbps >= 5)      return { key:'good',      label:'✓ Bon',         bars:3, color:'#06b6d4' };
+    if (mbps >= 1)      return { key:'fair',      label:'~ Moyen',       bars:2, color:'#f5c542' };
+    return               { key:'poor',      label:'⚠ Faible',       bars:1, color:'#f97316' };
+  }
+
+  function netQualityFromConn(eff) {
+    if (eff === 'slow-2g') return { key:'poor',      label:'⚠ Faible',     bars:1, color:'#f97316', mbps:0.1 };
+    if (eff === '2g')      return { key:'poor',      label:'⚠ Faible',     bars:2, color:'#f97316', mbps:0.5 };
+    if (eff === '3g')      return { key:'fair',      label:'~ Moyen',      bars:3, color:'#f5c542', mbps:3   };
+    return                         { key:'excellent', label:'⚡ Excellent', bars:4, color:'#44d17a', mbps:null };
+  }
+
+  function netConnTypeFr(type) {
+    const map = { wifi:'Wi-Fi', ethernet:'Ethernet', cellular:'Cellulaire',
+                  bluetooth:'Bluetooth', wimax:'WiMAX', other:'Autre', unknown:'Inconnu' };
+    return map[type] || type || 'Inconnu';
+  }
+
   function updateNetworkStatus() {
-    const bars  = document.querySelectorAll('.tb-bar');
-    const label = document.getElementById('tb-net-label');
-    const wrap  = document.getElementById('tb-network');
+    const bars = document.querySelectorAll('.tb-bar');
     if (!bars.length) return;
 
     if (!navigator.onLine) {
-      bars.forEach(b => { b.className = 'tb-bar sig-off'; });
-      if (label) label.textContent = 'Off';
-      if (wrap)  wrap.title = 'Hors ligne';
+      bars.forEach(b => b.className = 'tb-bar sig-off');
+      netUpdatePanelQuality('offline', '✗ Hors ligne', 0, '#ef4444');
       return;
     }
 
     const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
     const eff  = conn ? (conn.effectiveType || '4g') : '4g';
-    const dl   = conn ? conn.downlink : null;
+    const q    = netQualityFromConn(eff);
 
-    let active = 4, cls = 'sig-good';
-    if      (eff === 'slow-2g') { active = 1; cls = 'sig-poor'; }
-    else if (eff === '2g')      { active = 2; cls = 'sig-poor'; }
-    else if (eff === '3g')      { active = 3; cls = 'sig-fair'; }
+    bars.forEach((b, i) => b.className = 'tb-bar' + (i < q.bars ? ' sig-' + q.key : ''));
+    // Update panel if open
+    if (document.getElementById('net-panel')?.classList.contains('show')) {
+      netFillPanelStatic();
+    }
+  }
 
-    bars.forEach((b, i) => { b.className = 'tb-bar' + (i < active ? ' ' + cls : ''); });
-    if (label) label.textContent = eff.toUpperCase();
-    if (wrap)  wrap.title = [
-      'Réseau : ' + eff.toUpperCase(),
-      dl != null ? dl + ' Mbps' : '',
-      conn && conn.type && conn.type !== 'unknown' ? 'Type : ' + conn.type : ''
-    ].filter(Boolean).join(' • ');
+  function netUpdatePanelQuality(key, label, pct, color) {
+    const badge = document.getElementById('nep-quality-badge');
+    const bar   = document.getElementById('nep-quality-bar');
+    if (badge) { badge.textContent = label; badge.className = 'nep-quality-badge q-' + key; }
+    if (bar)   { bar.style.width = pct + '%'; bar.style.background = color; }
+  }
+
+  function netFillPanelStatic() {
+    const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+    if (!navigator.onLine) {
+      netUpdatePanelQuality('offline', '✗ Hors ligne', 0, '#ef4444');
+      netSetRow('nep-type',  '—'); netSetRow('nep-dl', '—');
+      netSetRow('nep-speed', '—'); netSetRow('nep-ping', '—');
+      return;
+    }
+    const eff  = conn ? (conn.effectiveType || '4g') : '4g';
+    const dl   = conn ? conn.downlink  : null;
+    const rtt  = conn ? conn.rtt       : null;
+    const type = conn ? (conn.type || 'unknown') : 'unknown';
+    const q    = netQualityFromConn(eff);
+
+    netUpdatePanelQuality(q.key, q.label, (q.bars / 4) * 100, q.color);
+    netSetRow('nep-type', netConnTypeFr(type));
+    netSetRow('nep-dl',   dl  != null ? dl + ' Mbps' : '—');
+    netSetRow('nep-speed', netLastResult ? netLastResult.speed + ' Mbps' : '—');
+    netSetRow('nep-ping',  netLastResult ? netLastResult.ping + ' ms'
+                         : rtt != null   ? rtt + ' ms' : '—');
+  }
+
+  function netSetRow(id, val) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val;
+  }
+
+  function netOpenPanel() {
+    const panel = document.getElementById('net-panel');
+    if (!panel) return;
+    if (panel.classList.contains('show')) { netClosePanel(); return; }
+    netFillPanelStatic();
+    panel.classList.add('show');
+    setTimeout(() => document.addEventListener('click', netOutsideClick, { once:true }), 10);
+  }
+
+  function netClosePanel() {
+    document.getElementById('net-panel')?.classList.remove('show');
+    document.removeEventListener('click', netOutsideClick);
+  }
+
+  function netOutsideClick(e) {
+    const panel = document.getElementById('net-panel');
+    const btn   = document.getElementById('tb-network');
+    if (panel && !panel.contains(e.target) && btn && !btn.contains(e.target)) netClosePanel();
+  }
+
+  async function netRunTest() {
+    const btn    = document.getElementById('nep-test-btn');
+    const status = document.getElementById('nep-test-status');
+    const ico    = document.getElementById('nep-test-ico');
+    if (btn) { btn.disabled = true; }
+    if (ico) ico.textContent = '⏳';
+
+    // ── Ping test ─────────────────────────────────────────
+    if (status) status.textContent = 'Mesure de la latence…';
+    let ping = null;
+    try {
+      const t0 = performance.now();
+      await fetch('https://www.cloudflare.com/cdn-cgi/trace', { cache:'no-store', mode:'no-cors' });
+      ping = Math.round(performance.now() - t0);
+    } catch(e) { ping = null; }
+    netSetRow('nep-ping', ping != null ? ping + ' ms' : '—');
+
+    // ── Speed test (200KB via Cloudflare) ─────────────────
+    if (status) status.textContent = 'Mesure du débit…';
+    let speed = null;
+    try {
+      const t0 = performance.now();
+      const res = await fetch('https://speed.cloudflare.com/__down?bytes=200000', { cache:'no-store' });
+      await res.arrayBuffer();
+      const elapsed = (performance.now() - t0) / 1000;
+      speed = Math.round((200000 * 8 / elapsed / 1_000_000) * 10) / 10;
+    } catch(e) { speed = null; }
+
+    netLastResult = { ping, speed };
+    netSetRow('nep-speed', speed != null ? speed + ' Mbps' : '—');
+
+    // ── Update quality badge from measured speed ──────────
+    if (speed !== null) {
+      const q = netQualityFromMbps(speed);
+      netUpdatePanelQuality(q.key, q.label, (q.bars / 4) * 100, q.color);
+      // Also update taskbar bars
+      const bars = document.querySelectorAll('.tb-bar');
+      bars.forEach((b, i) => b.className = 'tb-bar' + (i < q.bars ? ' sig-' + q.key : ''));
+    }
+
+    if (status) status.textContent = speed != null
+      ? `Test terminé · ${speed} Mbps · ${ping ?? '—'} ms`
+      : 'Test impossible (accès bloqué ou hors ligne)';
+    if (ico) ico.textContent = '✓';
+    if (btn) { btn.disabled = false; btn.innerHTML = '<span id="nep-test-ico">🔄</span> Tester à nouveau'; }
   }
 
   function updateBatteryStatus(bat) {
@@ -5086,7 +6008,11 @@
     lastSync: null, lastSha: null
   };
   let ghAutoTimer  = null;
+  let ghTickTimer  = null;    // 1-second tick for countdown
+  let ghCountdown  = 0;       // seconds remaining until next auto-sync
+  let ghTotalSecs  = 0;       // total interval in seconds
   let ghDirty      = false;   // true when unsaved changes exist
+  let ghSyncHistory = [];     // [{ts, ok, msg}] — max 30 entries
 
   // ── Persist config ──────────────────────────────────
   function ghLoadConfig() {
@@ -5164,24 +6090,47 @@
 
   // ── Build the full backup payload ────────────────────
   function ghBuildPayload() {
+    // Snapshot current profile first
+    saveCurrentProfileData();
+    // Collect per-profile data
+    const profilesData = {};
+    (profiles || []).forEach(p => {
+      const raw = localStorage.getItem('vd_profile_data_' + p.id);
+      if (raw) { try { profilesData[p.id] = JSON.parse(raw); } catch(e) {} }
+    });
     return JSON.stringify({
-      version: 3,
+      version: '3.1',
       exported: new Date().toISOString(),
-      modules:  JSON.parse(localStorage.getItem('vd_modules')  || '[]'),
-      notes:    JSON.parse(localStorage.getItem('vd_notes_v2') || '{}'),
-      agenda:   JSON.parse(localStorage.getItem('vd_agenda')   || '[]'),
-      filesystem: JSON.parse(localStorage.getItem('vd_filesystem') || '{}'),
-      iconPositions: JSON.parse(localStorage.getItem('vd_icon_positions') || '{}')
+      modules:  JSON.parse(localStorage.getItem('vd_modules')       || '[]'),
+      notes:    JSON.parse(localStorage.getItem('vd_notes_v2')      || '{}'),
+      agenda:   JSON.parse(localStorage.getItem('vd_agenda')        || '[]'),
+      filesystem:    JSON.parse(localStorage.getItem('vd_filesystem')      || '{}'),
+      iconPositions: JSON.parse(localStorage.getItem('vd_icon_positions')  || '{}'),
+      profiles: {
+        list:         profiles || [],
+        activeId:     activeProfileId || null,
+        profilesData: profilesData
+      }
     }, null, 2);
   }
 
   // ── Apply a payload (restore) ────────────────────────
   function ghApplyPayload(obj) {
-    if (obj.modules)       localStorage.setItem('vd_modules',       JSON.stringify(obj.modules));
-    if (obj.notes)         localStorage.setItem('vd_notes_v2',      JSON.stringify(obj.notes));
-    if (obj.agenda)        localStorage.setItem('vd_agenda',        JSON.stringify(obj.agenda));
-    if (obj.filesystem)    localStorage.setItem('vd_filesystem',    JSON.stringify(obj.filesystem));
+    if (obj.modules)       localStorage.setItem('vd_modules',        JSON.stringify(obj.modules));
+    if (obj.notes)         localStorage.setItem('vd_notes_v2',       JSON.stringify(obj.notes));
+    if (obj.agenda)        localStorage.setItem('vd_agenda',         JSON.stringify(obj.agenda));
+    if (obj.filesystem)    localStorage.setItem('vd_filesystem',     JSON.stringify(obj.filesystem));
     if (obj.iconPositions) localStorage.setItem('vd_icon_positions', JSON.stringify(obj.iconPositions));
+    // Restore profiles
+    if (obj.profiles && obj.profiles.list) {
+      localStorage.setItem(PROFILES_KEY, JSON.stringify(obj.profiles.list));
+      if (obj.profiles.activeId) localStorage.setItem(ACTIVE_PROFILE_KEY, obj.profiles.activeId);
+      if (obj.profiles.profilesData) {
+        Object.entries(obj.profiles.profilesData).forEach(([id, snap]) => {
+          localStorage.setItem('vd_profile_data_' + id, JSON.stringify(snap));
+        });
+      }
+    }
   }
 
   // ── GitHub REST helpers ──────────────────────────────
@@ -5446,13 +6395,19 @@
       ghDirty = false;
       ghSaveConfig();
       ghSetStatus('synced', 'Synced');
+      ghAddHistory(true, '✅ Sauvegardé dans ' + ghConfig.owner + '/' + ghConfig.repo);
+      // Reset countdown after a successful sync
+      ghCountdown = ghTotalSecs;
+      ghUpdateProgressBar(0, ghFormatCountdown(ghCountdown));
       if (!silent) {
         ghSetPanelStatus('✅ Sauvegarde envoyée avec succès !', 'ok');
         ghUpdateLastSyncLabel();
+        notify('☁️ Sauvegardé sur GitHub');
       }
       return true;
     } catch(e) {
-      ghSetStatus('error', 'Erreur');
+      ghSetStatus('error', 'Err');
+      ghAddHistory(false, '❌ ' + e.message);
       if (!silent) ghSetPanelStatus('❌ Échec : ' + e.message, 'err');
       return false;
     }
@@ -5498,18 +6453,134 @@
     await ghSyncToGitHub(false);
   }
 
-  // ── Auto-sync timer ───────────────────────────────────
+  // ── Auto-sync timer (tick-based 1s) ──────────────────
   function ghStartAutoSync() {
     if (ghAutoTimer) { clearInterval(ghAutoTimer); ghAutoTimer = null; }
+    if (ghTickTimer) { clearInterval(ghTickTimer); ghTickTimer = null; }
+
     const mins = ghConfig.interval;
     if (!mins || mins <= 0 || !ghConfig.token) {
       if (!ghConfig.token) ghSetStatus('off', 'GitHub');
+      ghUpdateProgressBar(0, '—');
       return;
     }
     ghSetStatus('synced', 'Synced');
-    ghAutoTimer = setInterval(async () => {
-      if (ghDirty) await ghSyncToGitHub(true);
-    }, mins * 60 * 1000);
+    ghTotalSecs  = mins * 60;
+    ghCountdown  = ghTotalSecs;
+    ghUpdateProgressBar(0, ghFormatCountdown(ghCountdown));
+
+    ghTickTimer = setInterval(async () => {
+      ghCountdown = Math.max(0, ghCountdown - 1);
+      const pct = ((ghTotalSecs - ghCountdown) / ghTotalSecs) * 100;
+      ghUpdateProgressBar(pct, ghFormatCountdown(ghCountdown));
+      // Update panel if open
+      ghUpdatePanelCountdown(pct, ghCountdown);
+      if (ghCountdown === 0) {
+        ghCountdown = ghTotalSecs;
+        if (ghDirty) await ghSyncToGitHub(true);
+      }
+    }, 1000);
+  }
+
+  function ghFormatCountdown(secs) {
+    if (secs <= 0) return '0s';
+    const m = Math.floor(secs / 60);
+    const s = secs % 60;
+    return m > 0 ? `${m}m${String(s).padStart(2,'0')}` : `${s}s`;
+  }
+
+  function ghBarClass(pct) {
+    return pct >= 85 ? 'hot' : pct >= 60 ? 'warn' : '';
+  }
+
+  function ghUpdateProgressBar(pct, label) {
+    const bar = document.getElementById('tb-gh-bar');
+    const lbl = document.getElementById('tb-gh-label');
+    if (bar) { bar.style.width = pct + '%'; bar.className = 'tb-gh-bar-fill ' + ghBarClass(pct); }
+    if (lbl) lbl.textContent = label || 'GitHub';
+  }
+
+  function ghUpdatePanelCountdown(pct, secs) {
+    const panel = document.getElementById('gh-history-panel');
+    if (!panel || !panel.classList.contains('show')) return;
+    const val  = document.getElementById('ghp-cd-value');
+    const bar  = document.getElementById('ghp-cd-bar');
+    if (val) val.textContent = ghFormatCountdown(secs);
+    if (bar) { bar.style.width = pct + '%'; bar.className = 'ghp-cd-bar-fill ' + ghBarClass(pct); }
+  }
+
+  // ── History panel ──────────────────────────────────────
+  function ghOpenHistoryPanel() {
+    const panel = document.getElementById('gh-history-panel');
+    if (!panel) return;
+    if (panel.classList.contains('show')) { ghCloseHistoryPanel(); return; }
+    // Sync countdown display
+    const pct = ghTotalSecs > 0 ? ((ghTotalSecs - ghCountdown) / ghTotalSecs) * 100 : 0;
+    const val  = document.getElementById('ghp-cd-value');
+    const bar  = document.getElementById('ghp-cd-bar');
+    const block= document.getElementById('ghp-countdown-block');
+    if (val) val.textContent = ghFormatCountdown(ghCountdown);
+    if (bar) { bar.style.width = pct + '%'; bar.className = 'ghp-cd-bar-fill ' + ghBarClass(pct); }
+    if (block) block.style.display = ghTotalSecs > 0 ? '' : 'none';
+    // Status icon
+    const ico = document.getElementById('ghp-status-icon');
+    if (ico) {
+      const dot = document.getElementById('tb-gh-dot');
+      ico.textContent = dot && dot.classList.contains('error') ? '⚠️' :
+                        dot && dot.classList.contains('synced') ? '✅' : '☁️';
+    }
+    ghRenderHistory();
+    panel.classList.add('show');
+    // Close on outside click
+    setTimeout(() => document.addEventListener('click', ghOutsideClick, { once: true }), 10);
+  }
+
+  function ghCloseHistoryPanel() {
+    const panel = document.getElementById('gh-history-panel');
+    if (panel) panel.classList.remove('show');
+    document.removeEventListener('click', ghOutsideClick);
+  }
+
+  function ghOutsideClick(e) {
+    const panel = document.getElementById('gh-history-panel');
+    const btn   = document.getElementById('tb-github');
+    if (panel && !panel.contains(e.target) && btn && !btn.contains(e.target)) {
+      ghCloseHistoryPanel();
+    }
+  }
+
+  function ghRenderHistory() {
+    const list = document.getElementById('ghp-list');
+    if (!list) return;
+    if (!ghSyncHistory.length) {
+      list.innerHTML = '<div class="ghp-empty">Aucune sauvegarde enregistrée</div>';
+      return;
+    }
+    list.innerHTML = ghSyncHistory.slice().reverse().map(h => {
+      const d = new Date(h.ts);
+      const time = d.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+      const date = d.toLocaleDateString('fr-FR', { day:'numeric', month:'short' });
+      return `<div class="ghp-entry">
+        <div class="ghp-entry-dot ${h.ok ? 'ok' : 'err'}"></div>
+        <div class="ghp-entry-info">
+          <div class="ghp-entry-ts">${date} à ${time}</div>
+          <div class="ghp-entry-msg">${escHtml(h.msg)}</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  function ghAddHistory(ok, msg) {
+    ghSyncHistory.push({ ts: Date.now(), ok, msg });
+    if (ghSyncHistory.length > 30) ghSyncHistory.shift();
+  }
+
+  async function ghManualSave() {
+    const btn = document.getElementById('ghp-save-btn');
+    if (btn) { btn.disabled = true; btn.style.opacity = '.6'; }
+    await ghSyncToGitHub(false);
+    if (btn) { btn.disabled = false; btn.style.opacity = ''; }
+    ghRenderHistory();
   }
 
   // ── Mark dirty on any data change ────────────────────
@@ -6000,6 +7071,318 @@
   function fmImgClose(){const lb=document.getElementById('fmimg-lb');if(lb)lb.style.display='none';}
   function fmImgNav(d){fmImgIdx=(fmImgIdx+d+fmImgIds.length)%fmImgIds.length;fmImgShow();}
 
+  // ====================================================
+  //  PROFILE SYSTEM
+  // ====================================================
+
+  const PROFILES_KEY       = 'vd_profiles';
+  const ACTIVE_PROFILE_KEY = 'vd_active_profile';
+  const PROFILE_DATA_KEYS  = ['vd_modules','vd_notes_v2','vd_agenda','vd_filesystem','vd_icon_positions'];
+  const PCM_AVATARS = ['👤','👨','👩','🧑','👨‍💼','👩‍💼','🧑‍💻','👨‍🎨','👩‍🎨','🦸','🧙','🤖','😎','🐱','🐸','🦊','🌟','🏆','⚡','🔥'];
+  const PCM_COLORS  = ['#667eea','#ec4899','#f97316','#44d17a','#06b6d4','#f5c542','#a855f7','#f5574f','#64748b','#0ea5e9'];
+
+  let profiles        = [];
+  let activeProfileId = null;
+  let pscSelectedId   = null;
+
+  function loadProfiles() {
+    try { profiles = JSON.parse(localStorage.getItem(PROFILES_KEY) || '[]'); } catch(e) { profiles = []; }
+    activeProfileId = localStorage.getItem(ACTIVE_PROFILE_KEY) || null;
+  }
+
+  function saveProfiles() {
+    localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles));
+  }
+
+  function saveCurrentProfileData() {
+    if (!activeProfileId) return;
+    const snapshot = {};
+    PROFILE_DATA_KEYS.forEach(k => { snapshot[k] = localStorage.getItem(k); });
+    localStorage.setItem('vd_profile_data_' + activeProfileId, JSON.stringify(snapshot));
+  }
+
+  function loadProfileData(id) {
+    const raw = localStorage.getItem('vd_profile_data_' + id);
+    if (!raw) return;
+    try {
+      const snapshot = JSON.parse(raw);
+      PROFILE_DATA_KEYS.forEach(k => {
+        if (snapshot[k] != null) localStorage.setItem(k, snapshot[k]);
+        else localStorage.removeItem(k);
+      });
+    } catch(e) {}
+  }
+
+  async function hashPassword(str) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+  }
+
+  async function verifyPassword(input, hash) {
+    if (!hash) return true;
+    return (await hashPassword(input)) === hash;
+  }
+
+  // ── Init ────────────────────────────────────────────────────────────────
+
+  async function initProfiles() {
+    loadProfiles();
+    if (profiles.length === 0) {
+      const def = { id: 'profile-default', name: 'Mon Bureau', avatar: '👤', color: '#667eea', createdAt: Date.now(), passwordHash: null };
+      profiles.push(def);
+      saveProfiles();
+      activeProfileId = def.id;
+      localStorage.setItem(ACTIVE_PROFILE_KEY, def.id);
+      saveCurrentProfileData();
+      updateSmProfileBadge();
+      return;
+    }
+    if (!activeProfileId || !profiles.find(p => p.id === activeProfileId)) {
+      activeProfileId = profiles[0].id;
+      localStorage.setItem(ACTIVE_PROFILE_KEY, activeProfileId);
+    }
+    const active = profiles.find(p => p.id === activeProfileId);
+    updateSmProfileBadge();
+    if (active && active.passwordHash) {
+      // Show lock screen for the active profile
+      openProfileScreen(activeProfileId);
+    }
+  }
+
+  // ── Profile screen ──────────────────────────────────────────────────────
+
+  function openProfileScreen(preSelectId) {
+    pscSelectedId = preSelectId || null;
+    renderPscCards();
+    document.getElementById('psc-pw-block').classList.remove('show');
+    document.getElementById('psc-pw-error').textContent = '';
+    document.getElementById('profile-screen').classList.add('visible');
+    if (pscSelectedId) {
+      const p = profiles.find(x => x.id === pscSelectedId);
+      if (p && p.passwordHash) {
+        document.getElementById('psc-pw-block').classList.add('show');
+        document.getElementById('psc-pw-label').textContent = `🔒 Mot de passe — ${escHtml(p.name)}`;
+        setTimeout(() => document.getElementById('psc-pw-input').focus(), 200);
+      }
+    }
+    if (startMenuOpen) toggleStartMenu();
+  }
+
+  function closeProfileScreen() {
+    document.getElementById('profile-screen').classList.remove('visible');
+  }
+
+  function renderPscCards() {
+    const el = document.getElementById('psc-cards');
+    el.innerHTML = profiles.map(p => {
+      const isActive = p.id === pscSelectedId;
+      const bg = p.color + '22';
+      return `<div class="psc-card ${isActive ? 'selected' : ''}"
+        style="--psc-color:${p.color};--psc-color-bg:${bg}"
+        onclick="pscSelectProfile('${p.id}')">
+        ${p.passwordHash ? '<span class="psc-lock">🔒</span>' : ''}
+        <div class="psc-avatar" style="background:${bg};border-color:${p.color}">${p.avatar}</div>
+        <div class="psc-name">${escHtml(p.name)}</div>
+      </div>`;
+    }).join('') + `
+    <div class="psc-add-card" onclick="openPcm()">
+      <div class="psc-add-icon">+</div>
+      <div class="psc-add-lbl">Nouveau profil</div>
+    </div>`;
+  }
+
+  function pscSelectProfile(id) {
+    const p = profiles.find(x => x.id === id);
+    if (!p) return;
+    pscSelectedId = id;
+    renderPscCards();
+    const pwBlock = document.getElementById('psc-pw-block');
+    const pwErr   = document.getElementById('psc-pw-error');
+    pwErr.textContent = '';
+    if (p.passwordHash) {
+      pwBlock.classList.add('show');
+      document.getElementById('psc-pw-label').textContent = `🔒 Mot de passe — ${escHtml(p.name)}`;
+      document.getElementById('psc-pw-input').value = '';
+      setTimeout(() => document.getElementById('psc-pw-input').focus(), 50);
+    } else {
+      pwBlock.classList.remove('show');
+      activateProfile(id);
+    }
+  }
+
+  async function pscSubmitPassword() {
+    const input  = document.getElementById('psc-pw-input').value;
+    const errorEl= document.getElementById('psc-pw-error');
+    if (!pscSelectedId) return;
+    const p = profiles.find(x => x.id === pscSelectedId);
+    if (!p) return;
+    const ok = await verifyPassword(input, p.passwordHash);
+    if (ok) {
+      errorEl.textContent = '';
+      activateProfile(pscSelectedId);
+    } else {
+      errorEl.textContent = '❌ Mot de passe incorrect';
+      const inp = document.getElementById('psc-pw-input');
+      inp.classList.add('error'); inp.value = '';
+      setTimeout(() => inp.classList.remove('error'), 420);
+      inp.focus();
+    }
+  }
+
+  function activateProfile(id) {
+    if (activeProfileId && activeProfileId !== id) saveCurrentProfileData();
+    activeProfileId = id;
+    localStorage.setItem(ACTIVE_PROFILE_KEY, id);
+    loadProfileData(id);
+    closeProfileScreen();
+    // Reload state
+    apps = loadModules();
+    renderDesktopIcons();
+    renderStartMenu();
+    notesData = loadNotesData();
+    if (openWindows['notes']) { renderFolderList(); renderNoteList(); renderNoteEditor(); }
+    const p = profiles.find(x => x.id === id);
+    notify(`👤 Profil "${p ? escHtml(p.name) : ''}" activé`);
+    updateSmProfileBadge();
+    const sl = document.getElementById('settings-profiles-list');
+    if (sl) renderSettingsProfiles();
+  }
+
+  // ── Profile badge in start menu ─────────────────────────────────────────
+
+  function updateSmProfileBadge() {
+    const el = document.getElementById('sm-profile-badge');
+    if (!el) return;
+    const p = profiles.find(x => x.id === activeProfileId);
+    if (!p) return;
+    el.innerHTML = `
+      <div class="sm-profile-avatar">${p.avatar}</div>
+      <div class="sm-profile-info">
+        <div class="sm-profile-name">${escHtml(p.name)}</div>
+        <div class="sm-profile-sub">${profiles.length} profil${profiles.length > 1 ? 's' : ''} · Actif</div>
+      </div>
+      <div class="sm-profile-switch" onclick="openProfileScreen();event.stopPropagation()">Changer ›</div>`;
+  }
+
+  // ── Profile create modal ────────────────────────────────────────────────
+
+  function openPcm() {
+    const grid = document.getElementById('pcm-emoji-grid');
+    grid.innerHTML = PCM_AVATARS.map((e,i) =>
+      `<button class="pcm-emoji-btn ${i===0?'active':''}" onclick="pcmSetAvatar('${e}',this)">${e}</button>`
+    ).join('');
+    const colorRow = document.getElementById('pcm-color-row');
+    colorRow.innerHTML = PCM_COLORS.map((c,i) =>
+      `<div class="pcm-color-dot ${i===0?'active':''}" style="background:${c}" onclick="pcmSetColor('${c}',this)" title="${c}"></div>`
+    ).join('');
+    document.getElementById('pcm-name').value = '';
+    document.getElementById('pcm-password').value = '';
+    document.getElementById('pcm-password2').value = '';
+    document.getElementById('pcm-avatar-val').value = '👤';
+    document.getElementById('pcm-color-val').value = '#667eea';
+    document.getElementById('pcm-avatar-preview').textContent = '👤';
+    document.getElementById('pcm-avatar-preview').style.borderColor = '#667eea';
+    document.getElementById('pcm-avatar-preview').style.background = '#667eea22';
+    document.getElementById('pcm-name-preview').textContent = 'Nouveau profil';
+    document.getElementById('pcm-title').textContent = '👤 Nouveau profil';
+    document.getElementById('pcm-confirm-btn').textContent = '✓ Créer le profil';
+    document.getElementById('profile-create-modal').classList.add('show');
+    setTimeout(() => document.getElementById('pcm-name').focus(), 50);
+  }
+
+  function closePcm() {
+    document.getElementById('profile-create-modal').classList.remove('show');
+  }
+
+  function pcmSetAvatar(emoji, btn) {
+    document.querySelectorAll('.pcm-emoji-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('pcm-avatar-val').value = emoji;
+    document.getElementById('pcm-avatar-preview').textContent = emoji;
+  }
+
+  function pcmSetColor(color, dot) {
+    document.querySelectorAll('.pcm-color-dot').forEach(d => d.classList.remove('active'));
+    dot.classList.add('active');
+    document.getElementById('pcm-color-val').value = color;
+    document.getElementById('pcm-avatar-preview').style.borderColor = color;
+    document.getElementById('pcm-avatar-preview').style.background = color + '22';
+  }
+
+  async function pcmConfirm() {
+    const name   = document.getElementById('pcm-name').value.trim();
+    const avatar = document.getElementById('pcm-avatar-val').value;
+    const color  = document.getElementById('pcm-color-val').value;
+    const pw1    = document.getElementById('pcm-password').value;
+    const pw2    = document.getElementById('pcm-password2').value;
+    if (!name) {
+      const ni = document.getElementById('pcm-name');
+      ni.style.borderColor = '#f5574f'; ni.focus();
+      setTimeout(() => ni.style.borderColor = '', 1500);
+      return;
+    }
+    if (pw1 && pw1 !== pw2) {
+      notify('❌ Les mots de passe ne correspondent pas');
+      document.getElementById('pcm-password2').focus();
+      return;
+    }
+    const passwordHash = pw1 ? await hashPassword(pw1) : null;
+    const profile = { id: 'profile-' + Date.now(), name, avatar, color, createdAt: Date.now(), passwordHash };
+    profiles.push(profile);
+    saveProfiles();
+    closePcm();
+    if (document.getElementById('profile-screen').classList.contains('visible')) renderPscCards();
+    notify(`✅ Profil "${escHtml(name)}" créé`);
+    confirmDialog('Nouveau profil', `Basculer vers "${escHtml(name)}" maintenant ?`, () => {
+      activateProfile(profile.id);
+    }, '👤', 'Basculer');
+    const sl = document.getElementById('settings-profiles-list');
+    if (sl) renderSettingsProfiles();
+  }
+
+  // ── Profile list in Settings ────────────────────────────────────────────
+
+  function renderSettingsProfiles() {
+    const el = document.getElementById('settings-profiles-list');
+    if (!el) return;
+    if (profiles.length === 0) { el.innerHTML = '<div style="color:#555;font-size:12px;padding:8px 0;">Aucun profil.</div>'; return; }
+    el.innerHTML = profiles.map(p => {
+      const isActive = p.id === activeProfileId;
+      return `<div class="profile-list-item">
+        <div class="profile-list-avatar" style="background:${p.color+'22'};border:1px solid ${p.color+'55'}">${p.avatar}</div>
+        <div class="profile-list-info">
+          <div class="profile-list-name">${escHtml(p.name)}</div>
+          <div class="profile-list-sub">${p.passwordHash ? '🔒 Protégé par mot de passe' : '🔓 Sans mot de passe'} · ${new Date(p.createdAt).toLocaleDateString('fr-FR')}</div>
+        </div>
+        <div class="profile-list-actions">
+          ${isActive
+            ? '<span class="profile-list-btn active-tag">✓ Actif</span>'
+            : `<button class="profile-list-btn" onclick="pscSelectProfile('${p.id}');openProfileScreen('${p.id}')">Choisir</button>`
+          }
+          <button class="profile-list-btn" onclick="deleteProfileConfirm('${p.id}')" ${profiles.length<=1?'disabled':''}>🗑️</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  function deleteProfileConfirm(id) {
+    if (profiles.length <= 1) { notify('❌ Impossible de supprimer le seul profil'); return; }
+    const p = profiles.find(x => x.id === id);
+    if (!p) return;
+    confirmDialog('Supprimer le profil', `Supprimer définitivement "${escHtml(p.name)}" et toutes ses données ?`, () => {
+      profiles = profiles.filter(x => x.id !== id);
+      localStorage.removeItem('vd_profile_data_' + id);
+      saveProfiles();
+      if (activeProfileId === id) activateProfile(profiles[0].id);
+      renderSettingsProfiles();
+      notify(`🗑️ Profil "${escHtml(p.name)}" supprimé`);
+    }, '🗑️', 'Supprimer');
+  }
+
+  // ====================================================
+  //  END PROFILE SYSTEM
+  // ====================================================
+
   // ====== INIT ======
   loadModules();
   loadNotesData();
@@ -6012,6 +7395,23 @@
   initPWA();
   ghLoadConfig();
   ghStartAutoSync();
+  initProfiles();
+
+  // ── Ctrl+S / Ctrl+R ───────────────────────────────────────────────────
+  document.addEventListener('keydown', e => {
+    if (e.ctrlKey && e.key === 's') {
+      e.preventDefault();
+      if (ghConfig.token && ghConfig.owner && ghConfig.repo) {
+        ghManualSave();
+      } else {
+        notify('⚠️ GitHub non configuré — ouvrez Paramètres');
+      }
+    }
+    if (e.ctrlKey && e.key === 'r') {
+      e.preventDefault();
+      location.reload();
+    }
+  });
 
   setTimeout(() => notify('👋 Bienvenue sur Bureau Virtuel Pro v3 !'), 500);
   setTimeout(() => notify('💡 Clic droit sur le bureau pour les options'), 2000);
