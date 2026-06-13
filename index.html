@@ -1133,80 +1133,75 @@
   .url-preview-meta .upm-desc { color: #666; font-size: 11px; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
   /* Calculator */
-  .calc-container {
-    padding: 20px;
-    max-width: 300px;
-    margin: 0 auto;
+  /* ══════════ CALCULATRICE v2 ══════════ */
+  .calc2-root { display:flex; flex-direction:column; height:100%; overflow:hidden; }
+  .calc2-modebar {
+    display:flex; align-items:center; gap:6px;
+    padding:7px 10px 5px; border-bottom:1px solid rgba(255,255,255,0.07); flex-shrink:0;
   }
-
-  .calc-display {
-    width: 100%;
-    padding: 16px;
-    border-radius: 12px;
-    border: 1px solid rgba(255,255,255,0.12);
-    background: rgba(0,0,0,0.3);
-    color: #fff;
-    font-size: 28px;
-    text-align: right;
-    margin-bottom: 6px;
-    outline: none;
-    font-family: 'Segoe UI', sans-serif;
+  .calc2-mode-btn {
+    padding:4px 13px; border-radius:20px; border:1px solid rgba(255,255,255,0.15);
+    background:transparent; color:#999; font-size:12px; cursor:pointer; transition:all .15s; font-family:inherit;
   }
-
-  .calc-expression {
-    color: #888;
-    font-size: 13px;
-    text-align: right;
-    margin-bottom: 14px;
-    min-height: 18px;
-    padding-right: 4px;
+  .calc2-mode-btn.active { background:linear-gradient(135deg,#667eea,#764ba2); border-color:transparent; color:#fff; font-weight:600; }
+  .calc2-mode-btn:hover:not(.active) { background:rgba(255,255,255,0.07); color:#fff; }
+  .calc2-angle-grp { display:flex; gap:3px; margin-left:auto; }
+  .calc2-angle-btn {
+    padding:3px 9px; border-radius:14px; border:1px solid rgba(255,255,255,0.15);
+    background:transparent; color:#888; font-size:11px; cursor:pointer; transition:all .15s; font-family:inherit;
   }
-
-  .calc-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 8px;
+  .calc2-angle-btn.active { background:rgba(245,87,79,0.28); border-color:#f5574f; color:#f5574f; font-weight:600; }
+  .calc2-disp-wrap { padding:8px 12px 4px; flex-shrink:0; }
+  .calc2-expr {
+    color:#555; font-size:11.5px; text-align:right; min-height:17px; padding-right:2px;
+    margin-bottom:3px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
   }
-
-  .calc-btn {
-    padding: 16px;
-    border-radius: 10px;
-    border: none;
-    font-size: 17px;
-    cursor: pointer;
-    color: #fff;
-    transition: background 0.15s, transform 0.08s;
-    font-family: 'Segoe UI', sans-serif;
+  .calc2-disp {
+    width:100%; padding:9px 12px; border-radius:10px;
+    border:1px solid rgba(255,255,255,0.1); background:rgba(0,0,0,0.22);
+    color:#fff; font-size:26px; text-align:right; outline:none;
+    font-family:'Segoe UI',monospace; letter-spacing:.3px;
   }
-
-  .calc-btn:active { transform: scale(0.95); }
-  .calc-btn.num { background: rgba(255,255,255,0.08); }
-  .calc-btn.num:hover { background: rgba(255,255,255,0.15); }
-  .calc-btn.op { background: linear-gradient(135deg, #667eea, #764ba2); }
-  .calc-btn.op:hover { background: linear-gradient(135deg, #7b93ff, #8b5cbf); }
-  .calc-btn.fn { background: rgba(245,87,79,0.25); color: #f5574f; }
-  .calc-btn.fn:hover { background: rgba(245,87,79,0.35); }
-  .calc-btn.eq { background: linear-gradient(135deg, #44d17a, #06b6d4); }
-  .calc-btn.eq:hover { background: linear-gradient(135deg, #55e88d, #19c5d9); }
-
-  .calc-keyboard-hint {
-    margin-top: 12px;
-    padding: 10px;
-    border-radius: 8px;
-    background: rgba(102,126,234,0.08);
-    border: 1px solid rgba(102,126,234,0.15);
-    color: #888;
-    font-size: 11px;
-    text-align: center;
+  .calc2-body { display:flex; flex:1; overflow:hidden; }
+  .calc2-btns {
+    flex:1; display:grid; gap:4px; padding:6px; overflow:hidden;
+    align-content:start;
   }
-
-  .calc-keyboard-hint kbd {
-    background: rgba(255,255,255,0.1);
-    padding: 1px 5px;
-    border-radius: 4px;
-    font-size: 10px;
-    color: #aaa;
+  .calc2-btn {
+    border:none; border-radius:8px; font-size:13px; font-weight:500; cursor:pointer;
+    color:#fff; transition:background .12s, transform .08s; font-family:inherit;
+    height:44px; display:flex; align-items:center; justify-content:center;
   }
+  .calc2-btn.pressed { transform:scale(0.90); }
+  .c2-num { background:rgba(255,255,255,0.07); }
+  .c2-num:hover { background:rgba(255,255,255,0.14); }
+  .c2-op  { background:linear-gradient(135deg,#667eea,#764ba2); }
+  .c2-op:hover  { background:linear-gradient(135deg,#7b93ff,#8b5cbf); }
+  .c2-fn  { background:rgba(255,255,255,0.05); color:#d0d0d0; }
+  .c2-fn:hover  { background:rgba(255,255,255,0.11); }
+  .c2-eq  { background:linear-gradient(135deg,#44d17a,#06b6d4); }
+  .c2-eq:hover  { background:linear-gradient(135deg,#55e88b,#19c5d9); }
+  .c2-sci { background:rgba(102,126,234,0.18); color:#a5b4fc; font-size:11.5px; }
+  .c2-sci:hover { background:rgba(102,126,234,0.32); }
+  /* History */
+  .calc2-hist { width:185px; flex-shrink:0; display:flex; flex-direction:column; border-left:1px solid rgba(255,255,255,0.07); }
+  .calc2-hist-head {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:6px 9px; border-bottom:1px solid rgba(255,255,255,0.06);
+    font-size:11.5px; color:#777; flex-shrink:0;
+  }
+  .calc2-hist-head button { border:none; background:none; color:#555; cursor:pointer; font-size:13px; padding:0; line-height:1; }
+  .calc2-hist-head button:hover { color:#f5574f; }
+  .calc2-hist-body { flex:1; overflow-y:auto; padding:5px; scrollbar-width:thin; scrollbar-color:rgba(255,255,255,0.1) transparent; }
+  .calc2-hist-item {
+    padding:6px 7px; border-radius:7px; cursor:pointer;
+    border-bottom:1px solid rgba(255,255,255,0.04); transition:background .12s; margin-bottom:2px;
+  }
+  .calc2-hist-item:hover { background:rgba(255,255,255,0.06); }
+  .calc2-hist-expr { font-size:9.5px; color:#555; margin-bottom:2px; word-break:break-all; line-height:1.3; }
+  .calc2-hist-res  { font-size:14px; color:#a5b4fc; font-weight:600; text-align:right; }
+  .calc2-hist-empty { color:#444; font-size:11px; text-align:center; padding:18px 8px; }
+  /* ══════════ FIN CALCULATRICE v2 ══════════ */
 
   /* Module link cards */
   .module-links-panel { padding: 20px; }
@@ -3483,7 +3478,7 @@
 
     // Window sizes
     if (appId === 'calculator') {
-      win.style.width = '340px';  win.style.height = '520px';
+      win.style.width = '580px';  win.style.height = '500px';
     } else if (appId === 'notes') {
       win.style.width = '760px';  win.style.height = '500px';
     } else if (appId === 'agenda') {
@@ -3781,71 +3776,217 @@
     }
   }
 
-  // ====== CALCULATOR ======
-  let calcExpression = '';
-  let calcDisplay = '0';
-  let calcJustEvaluated = false;
+  // ====== CALCULATRICE v2 ======
+  const calc2 = {
+    expr: '', display: '0', justEval: false,
+    mode: 'std', angleMode: 'deg', memory: 0, history: []
+  };
 
-  function updateCalcDisplay() {
-    const disp = document.getElementById('calc-display');
-    const expr = document.getElementById('calc-expression');
-    if (disp) disp.value = calcDisplay;
-    if (expr) expr.textContent = calcExpression;
+  function calc2LoadHist() {
+    try { calc2.history = JSON.parse(localStorage.getItem('vd_calc_hist') || '[]'); } catch(e) { calc2.history = []; }
+  }
+  function calc2SaveHist() {
+    localStorage.setItem('vd_calc_hist', JSON.stringify(calc2.history.slice(-60)));
   }
 
-  function calcInput(value) {
-    if (calcJustEvaluated && !isNaN(value)) { calcExpression = ''; calcDisplay = ''; calcJustEvaluated = false; }
-    if (calcJustEvaluated) calcJustEvaluated = false;
-
-    if (value === 'C') { calcExpression = ''; calcDisplay = '0'; }
-    else if (value === 'CE') { calcDisplay = '0'; }
-    else if (value === '⌫') { calcDisplay = calcDisplay.length > 1 ? calcDisplay.slice(0,-1) : '0'; }
-    else if (value === '±') { if (calcDisplay !== '0') calcDisplay = calcDisplay.startsWith('-') ? calcDisplay.slice(1) : '-' + calcDisplay; }
-    else if (value === '%') { try { calcDisplay = String(parseFloat(calcDisplay) / 100); } catch(e){} }
-    else if (['+','-','×','÷'].includes(value)) { calcExpression = calcDisplay + ' ' + value + ' '; calcDisplay = '0'; }
-    else if (value === '=') {
-      try {
-        const full = calcExpression + calcDisplay;
-        const expr = full.replace(/×/g,'*').replace(/÷/g,'/');
-        const result = Function('"use strict"; return (' + expr + ')')();
-        calcExpression = full + ' =';
-        calcDisplay = String(Math.round(result * 1e10) / 1e10);
-        calcJustEvaluated = true;
-      } catch(e) { calcDisplay = 'Erreur'; calcJustEvaluated = true; }
-    } else if (value === '.') {
-      if (!calcDisplay.includes('.')) calcDisplay += '.';
-    } else {
-      if (calcDisplay === '0' || calcDisplay === 'Erreur') calcDisplay = value;
-      else calcDisplay += value;
-    }
-
-    updateCalcDisplay();
-    highlightCalcBtn(value);
+  function calc2Fmt(n) {
+    if (isNaN(n)) return 'Erreur';
+    if (!isFinite(n)) return n > 0 ? '+∞' : '-∞';
+    const r = Math.round(n * 1e12) / 1e12;
+    if (Math.abs(r) >= 1e15 || (r !== 0 && Math.abs(r) < 1e-9))
+      return r.toExponential(8).replace(/\.?0+e/, 'e');
+    return String(r);
   }
 
-  function highlightCalcBtn(value) {
-    document.querySelectorAll('.calc-btn').forEach(btn => {
-      if (btn.getAttribute('data-value') === value) {
-        btn.style.transform = 'scale(0.93)';
-        setTimeout(() => { btn.style.transform = ''; }, 100);
-      }
+  function calc2UpdateDisp() {
+    const d = document.getElementById('calc2-disp');
+    const e = document.getElementById('calc2-expr');
+    if (d) d.value = calc2.display;
+    if (e) e.textContent = calc2.expr || ' ';
+  }
+
+  function calc2SetMode(m) {
+    calc2.mode = m;
+    document.querySelectorAll('.calc2-mode-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === m));
+    const ag = document.getElementById('calc2-angle-grp');
+    if (ag) ag.style.display = m === 'sci' ? 'flex' : 'none';
+    calc2RenderBtns();
+    const win = document.getElementById('win-calculator');
+    if (win) win.style.width = m === 'sci' ? '760px' : '580px';
+  }
+
+  function calc2SetAngle(a) {
+    calc2.angleMode = a;
+    document.getElementById('c2-deg').classList.toggle('active', a === 'deg');
+    document.getElementById('c2-rad').classList.toggle('active', a === 'rad');
+  }
+
+  function calc2ToRad(x) { return calc2.angleMode === 'deg' ? x * Math.PI / 180 : x; }
+  function calc2FromRad(x) { return calc2.angleMode === 'deg' ? x * 180 / Math.PI : x; }
+
+  // Buttons definition
+  const C2_STD = [
+    [{v:'MC',c:'fn'},{v:'MR',c:'fn'},{v:'M+',c:'fn'},{v:'M-',c:'fn'}],
+    [{v:'CE',c:'fn'},{v:'C', c:'fn'},{v:'⌫', c:'fn'},{v:'÷', c:'op'}],
+    [{v:'7', c:'num'},{v:'8',c:'num'},{v:'9',c:'num'},{v:'×',c:'op'}],
+    [{v:'4', c:'num'},{v:'5',c:'num'},{v:'6',c:'num'},{v:'-',c:'op'}],
+    [{v:'1', c:'num'},{v:'2',c:'num'},{v:'3',c:'num'},{v:'+',c:'op'}],
+    [{v:'±', c:'fn'},{v:'0',c:'num'},{v:'.',c:'num'},{v:'=',c:'eq'}],
+  ];
+  const C2_SCI_L = [
+    [{v:'x²',c:'sci'},{v:'xʸ', c:'sci'},{v:'√x', c:'sci'},{v:'(',  c:'fn'}],
+    [{v:'∛x',c:'sci'},{v:'eˣ', c:'sci'},{v:'10ˣ',c:'sci'},{v:')',  c:'fn'}],
+    [{v:'ln', c:'sci'},{v:'log',c:'sci'},{v:'π',  c:'sci'},{v:'e',  c:'sci'}],
+    [{v:'sin',c:'sci'},{v:'cos',c:'sci'},{v:'tan',c:'sci'},{v:'n!', c:'sci'}],
+    [{v:'sin⁻¹',c:'sci'},{v:'cos⁻¹',c:'sci'},{v:'tan⁻¹',c:'sci'},{v:'1/x',c:'sci'}],
+    [{v:'log₂',c:'sci'},{v:'abs',c:'sci'},{v:'EE', c:'sci'},{v:'%', c:'fn'}],
+  ];
+
+  function calc2RenderBtns() {
+    const cont = document.getElementById('calc2-btns');
+    if (!cont) return;
+    const isSci = calc2.mode === 'sci';
+    const cols = isSci ? 8 : 4;
+    cont.style.gridTemplateColumns = `repeat(${cols},1fr)`;
+    cont.innerHTML = '';
+    C2_STD.forEach((row, ri) => {
+      const leftRow = isSci ? C2_SCI_L[ri] : [];
+      [...leftRow, ...row].forEach(b => {
+        const el = document.createElement('button');
+        el.className = `calc2-btn c2-${b.c}`;
+        el.textContent = b.v;
+        el.dataset.val = b.v;
+        el.onclick = () => calc2Input(b.v);
+        cont.appendChild(el);
+      });
     });
   }
 
-  const keyToCalc = {
-    '0':'0','1':'1','2':'2','3':'3','4':'4','5':'5','6':'6','7':'7','8':'8','9':'9',
-    '.':'.', ',':'.',
-    '+':'+','-':'-','*':'×','/':'÷',
-    'Enter':'=','=':'=',
-    'Backspace':'⌫','Delete':'C','Escape':'C','%':'%',
-  };
+  function calc2AnimBtn(v) {
+    document.querySelectorAll('.calc2-btn').forEach(b => {
+      if (b.dataset.val === v) { b.classList.add('pressed'); setTimeout(() => b.classList.remove('pressed'), 120); }
+    });
+  }
 
+  function calc2AddHist(expr, result) {
+    calc2.history.push({ expr, result });
+    calc2SaveHist();
+    calc2RenderHist();
+  }
+
+  function calc2RenderHist() {
+    const body = document.getElementById('calc2-hist-body');
+    if (!body) return;
+    if (!calc2.history.length) { body.innerHTML = '<div class="calc2-hist-empty">Aucun calcul</div>'; return; }
+    body.innerHTML = calc2.history.slice().reverse().map((h, i) => `
+      <div class="calc2-hist-item" onclick="calc2UseHist(${calc2.history.length-1-i})">
+        <div class="calc2-hist-expr">${escHtml(h.expr)}</div>
+        <div class="calc2-hist-res">${escHtml(h.result)}</div>
+      </div>`).join('');
+  }
+
+  function calc2UseHist(idx) {
+    const h = calc2.history[idx];
+    if (!h) return;
+    calc2.display = h.result; calc2.expr = h.expr + ' ='; calc2.justEval = true;
+    calc2UpdateDisp();
+  }
+
+  function calc2ClearHist() { calc2.history = []; calc2SaveHist(); calc2RenderHist(); }
+
+  function calc2ApplyFn(label, fn) {
+    const n = parseFloat(calc2.display);
+    let r;
+    try { r = fn(n); } catch(e) { r = NaN; }
+    const rs = calc2Fmt(r);
+    calc2AddHist(`${label}(${calc2.display})`, rs);
+    calc2.expr = `${label}(${calc2.display}) =`;
+    calc2.display = rs; calc2.justEval = true;
+    calc2UpdateDisp();
+  }
+
+  function calc2Input(v) {
+    const s = calc2;
+    if (s.justEval && /^[0-9\.]$/.test(v)) { s.expr = ''; s.display = '0'; s.justEval = false; }
+    if (s.justEval && ['+','-','×','÷','^','('].every(op => v !== op)) s.justEval = false;
+
+    switch(v) {
+      case 'C':  s.expr=''; s.display='0'; s.justEval=false; break;
+      case 'CE': s.display='0'; break;
+      case '⌫':  s.display = s.display.length>1 ? s.display.slice(0,-1) : '0'; break;
+      case '±':  s.display = s.display.startsWith('-') ? s.display.slice(1) : (s.display!=='0'?'-'+s.display:'0'); break;
+      case '%':  try { s.display = calc2Fmt(parseFloat(s.display)/100); } catch(e){} break;
+      case '+': case '-': case '×': case '÷':
+        s.expr = (s.expr + s.display) + ' ' + v + ' '; s.display = '0'; s.justEval=false; break;
+      case '(':
+        s.expr += (s.display!=='0'?s.display:'') + '('; s.display='0'; break;
+      case ')':
+        s.expr += s.display + ')'; s.display='0'; break;
+      case '.':  if (!s.display.includes('.')) s.display += '.'; break;
+      case 'MC': s.memory=0; break;
+      case 'MR': s.display=calc2Fmt(s.memory); s.justEval=false; break;
+      case 'M+': s.memory+=parseFloat(s.display)||0; break;
+      case 'M-': s.memory-=parseFloat(s.display)||0; break;
+      case '=': {
+        const full = s.expr + s.display;
+        if (!s.expr && s.display==='0') break;
+        try {
+          const sanitized = full
+            .replace(/×/g,'*').replace(/÷/g,'/').replace(/π/g,`(${Math.PI})`).replace(/\be\b/g,`(${Math.E})`);
+          const result = Function('"use strict";return('+sanitized+')')();
+          const rs = calc2Fmt(result);
+          calc2AddHist(full, rs);
+          s.expr = full+' ='; s.display = rs; s.justEval=true;
+        } catch(e) { s.display='Erreur'; s.justEval=true; }
+        break;
+      }
+      case 'x²': { const n=parseFloat(s.display); const rs=calc2Fmt(n*n); calc2AddHist(`(${s.display})²`,rs); s.expr=`(${s.display})² =`; s.display=rs; s.justEval=true; break; }
+      case 'xʸ': s.expr=(s.expr+s.display)+'^'; s.display='0'; s.justEval=false; break;
+      case '√x': calc2ApplyFn('√', x => Math.sqrt(x)); break;
+      case '∛x': calc2ApplyFn('∛', x => Math.cbrt(x)); break;
+      case 'eˣ': calc2ApplyFn('eˣ', x => Math.exp(x)); break;
+      case '10ˣ': calc2ApplyFn('10ˣ', x => Math.pow(10,x)); break;
+      case 'ln':  calc2ApplyFn('ln',  x => Math.log(x)); break;
+      case 'log': calc2ApplyFn('log', x => Math.log10(x)); break;
+      case 'log₂':calc2ApplyFn('log₂',x => Math.log2(x)); break;
+      case 'n!': {
+        const n=Math.round(parseFloat(s.display)); let r=1;
+        if(n>=0&&n<=170){for(let i=2;i<=n;i++)r*=i;}else r=NaN;
+        const rs=calc2Fmt(r); calc2AddHist(`${s.display}!`,rs); s.expr=`${s.display}! =`; s.display=rs; s.justEval=true; break;
+      }
+      case '1/x': calc2ApplyFn('1/x', x => 1/x); break;
+      case 'abs': calc2ApplyFn('|x|', x => Math.abs(x)); break;
+      case 'π':   s.display=String(Math.PI); s.justEval=false; break;
+      case 'e':   s.display=String(Math.E);  s.justEval=false; break;
+      case 'EE':  s.expr=(s.expr+s.display)+'×10^'; s.display='0'; s.justEval=false; break;
+      case 'sin': calc2ApplyFn('sin', x => Math.sin(calc2ToRad(x))); break;
+      case 'cos': calc2ApplyFn('cos', x => Math.cos(calc2ToRad(x))); break;
+      case 'tan': calc2ApplyFn('tan', x => Math.tan(calc2ToRad(x))); break;
+      case 'sin⁻¹': calc2ApplyFn('arcsin', x => calc2FromRad(Math.asin(x))); break;
+      case 'cos⁻¹': calc2ApplyFn('arccos', x => calc2FromRad(Math.acos(x))); break;
+      case 'tan⁻¹': calc2ApplyFn('arctan', x => calc2FromRad(Math.atan(x))); break;
+      default:
+        if (/^[0-9]$/.test(v)) {
+          if (s.display==='0'||s.display==='Erreur') s.display=v; else s.display+=v;
+        }
+    }
+    calc2UpdateDisp();
+    calc2AnimBtn(v);
+  }
+
+  // Keyboard support
+  const c2KeyMap = {
+    '0':'0','1':'1','2':'2','3':'3','4':'4','5':'5','6':'6','7':'7','8':'8','9':'9',
+    '.':'.', ',':'.','+':'+','-':'-','*':'×','/':'÷',
+    'Enter':'=','=':'=','Backspace':'⌫','Delete':'C','Escape':'C','%':'%',
+    '(':  '(', ')':')',
+  };
   document.addEventListener('keydown', (e) => {
     if (!openWindows['calculator']) return;
     const tag = document.activeElement.tagName.toLowerCase();
-    if ((tag === 'input' || tag === 'textarea') && document.activeElement.id !== 'calc-display') return;
-    const mapped = keyToCalc[e.key];
-    if (mapped) { e.preventDefault(); calcInput(mapped); }
+    if ((tag==='input'||tag==='textarea') && document.activeElement.id!=='calc2-disp') return;
+    const mapped = c2KeyMap[e.key];
+    if (mapped) { e.preventDefault(); calc2Input(mapped); }
   });
 
   // ====== BUILT-IN APP CONTENT ======
@@ -3922,12 +4063,30 @@
         </div>`;
 
       case 'calculator':
-        return `<div class="calc-container" id="calc-container">
-          <div class="calc-expression" id="calc-expression"></div>
-          <input type="text" class="calc-display" id="calc-display" value="0" readonly>
-          <div class="calc-grid" id="calc-buttons"></div>
-          <div class="calc-keyboard-hint">
-            ⌨️ <kbd>0-9</kbd> chiffres · <kbd>+ - * /</kbd> opérateurs · <kbd>Entrée</kbd> = · <kbd>Retour</kbd> effacer · <kbd>Échap</kbd> reset
+        return `<div class="calc2-root">
+          <div class="calc2-modebar">
+            <button class="calc2-mode-btn active" data-mode="std" onclick="calc2SetMode('std')">Standard</button>
+            <button class="calc2-mode-btn" data-mode="sci" onclick="calc2SetMode('sci')">Scientifique</button>
+            <div class="calc2-angle-grp" id="calc2-angle-grp" style="display:none;">
+              <button class="calc2-angle-btn active" id="c2-deg" onclick="calc2SetAngle('deg')">DEG</button>
+              <button class="calc2-angle-btn" id="c2-rad" onclick="calc2SetAngle('rad')">RAD</button>
+            </div>
+          </div>
+          <div class="calc2-body">
+            <div class="calc2-left">
+              <div class="calc2-disp-wrap">
+                <div class="calc2-expr" id="calc2-expr">&nbsp;</div>
+                <input class="calc2-disp" id="calc2-disp" value="0" readonly>
+              </div>
+              <div class="calc2-btns" id="calc2-btns"></div>
+            </div>
+            <div class="calc2-hist">
+              <div class="calc2-hist-head">
+                Historique
+                <button onclick="calc2ClearHist()" title="Effacer l'historique">🗑</button>
+              </div>
+              <div class="calc2-hist-body" id="calc2-hist-body"></div>
+            </div>
           </div>
         </div>`;
 
@@ -4124,25 +4283,13 @@
   }
 
   function initCalculator() {
-    calcExpression = ''; calcDisplay = '0'; calcJustEvaluated = false;
-    const btns = [
-      {label:'C',  value:'C',  cls:'fn'},{label:'±', value:'±', cls:'fn'},{label:'%', value:'%',cls:'fn'},{label:'÷',value:'÷',cls:'op'},
-      {label:'7',  value:'7',  cls:'num'},{label:'8',value:'8',cls:'num'},{label:'9',value:'9',cls:'num'},{label:'×',value:'×',cls:'op'},
-      {label:'4',  value:'4',  cls:'num'},{label:'5',value:'5',cls:'num'},{label:'6',value:'6',cls:'num'},{label:'-',value:'-',cls:'op'},
-      {label:'1',  value:'1',  cls:'num'},{label:'2',value:'2',cls:'num'},{label:'3',value:'3',cls:'num'},{label:'+',value:'+',cls:'op'},
-      {label:'0',  value:'0',  cls:'num'},{label:'.',value:'.',cls:'num'},{label:'⌫',value:'⌫',cls:'fn'},{label:'=',value:'=',cls:'eq'},
-    ];
-    const container = document.getElementById('calc-buttons');
-    if (!container) return;
-    container.innerHTML = '';
-    btns.forEach(b => {
-      const btn = document.createElement('button');
-      btn.className = 'calc-btn ' + b.cls;
-      btn.textContent = b.label;
-      btn.setAttribute('data-value', b.value);
-      btn.onclick = () => calcInput(b.value);
-      container.appendChild(btn);
-    });
+    calc2.expr = ''; calc2.display = '0'; calc2.justEval = false;
+    calc2LoadHist();
+    calc2RenderBtns();
+    calc2RenderHist();
+    calc2UpdateDisp();
+    // Restore mode
+    calc2SetMode(calc2.mode || 'std');
   }
 
   function initSysMonitor() {
@@ -8910,7 +9057,7 @@ function tkAppHtml() {
     <div class="tk-toolbar">
       <button class="wp-btn wp-btn-p" onclick="tkOpenForm()">➕ Nouvelle tâche</button>
       <button class="wp-btn" id="tk-view-btn" onclick="tkToggleView()">📋 Vue tableau</button>
-      <input class="tkc-inp" style="flex:1;min-width:140px;max-width:260px" placeholder="🔍 Rechercher…" oninput="tkQ=this.value.toLowerCase();tkRender()">
+      <input class="tkc-inp" style="flex:1;min-width:140px;max-width:260px" placeholder="🔍 Rechercher…" oninput="tkQ=this.value.toLowerCase();tkRender()" autocapitalize="none" autocorrect="off" spellcheck="false">
       <select class="tk-sel" onchange="tkPrioFilter=this.value;tkRender()">
         <option value="all">Toutes priorités</option>
         <option value="high">🔴 Haute</option>
@@ -8924,8 +9071,8 @@ function tkAppHtml() {
     <div class="tkc-overlay" id="tk-form-overlay" style="display:none">
       <div class="tkc-form">
         <h4 id="tk-form-title">➕ Nouvelle tâche</h4>
-        <input class="tkc-inp" id="tk-f-title" placeholder="Titre de la tâche *" maxlength="120">
-        <textarea class="tkc-inp" id="tk-f-desc" rows="2" placeholder="Description (optionnel)"></textarea>
+        <input class="tkc-inp" id="tk-f-title" placeholder="Titre de la tâche *" maxlength="120" autocapitalize="none" autocorrect="off" spellcheck="false">
+        <textarea class="tkc-inp" id="tk-f-desc" rows="2" placeholder="Description (optionnel)" autocapitalize="none" autocorrect="off" spellcheck="false"></textarea>
         <div class="tkc-row">
           <select id="tk-f-prio">
             <option value="high">🔴 Priorité haute</option>
@@ -9188,7 +9335,7 @@ function ctAppHtml() {
   return `<div class="tk-root" id="ct-root">
     <div class="tk-toolbar">
       <button class="wp-btn wp-btn-p" onclick="ctOpenForm()">➕ Nouveau contact</button>
-      <input class="tkc-inp" style="flex:1;min-width:140px;max-width:280px" placeholder="🔍 Rechercher un nom, une société…" oninput="ctQ=this.value.toLowerCase();ctRender()">
+      <input class="tkc-inp" style="flex:1;min-width:140px;max-width:280px" placeholder="🔍 Rechercher un nom, une société…" oninput="ctQ=this.value.toLowerCase();ctRender()" autocapitalize="none" autocorrect="off" spellcheck="false">
       <button class="wp-btn" onclick="ctExportCsv()" title="Exporter en CSV (Excel)">📤 CSV</button>
     </div>
     <div class="tk-stats" id="ct-stats"></div>
@@ -9196,14 +9343,14 @@ function ctAppHtml() {
     <div class="tkc-overlay" id="ct-form-overlay" style="display:none">
       <div class="tkc-form">
         <h4 id="ct-form-title">➕ Nouveau contact</h4>
-        <input class="tkc-inp" id="ct-f-name" placeholder="Nom complet *" maxlength="80">
+        <input class="tkc-inp" id="ct-f-name" placeholder="Nom complet *" maxlength="80" autocapitalize="words" autocorrect="off" spellcheck="false">
         <div class="tkc-row">
-          <input class="tkc-inp" id="ct-f-company" placeholder="Société">
-          <input class="tkc-inp" id="ct-f-role" placeholder="Fonction">
+          <input class="tkc-inp" id="ct-f-company" placeholder="Société" autocapitalize="words" autocorrect="off" spellcheck="false">
+          <input class="tkc-inp" id="ct-f-role" placeholder="Fonction" autocapitalize="none" autocorrect="off" spellcheck="false">
         </div>
         <div class="tkc-row">
-          <input class="tkc-inp" id="ct-f-email" type="email" placeholder="Email">
-          <input class="tkc-inp" id="ct-f-phone" placeholder="Téléphone">
+          <input class="tkc-inp" id="ct-f-email" type="email" placeholder="Email" autocapitalize="none" autocorrect="off" spellcheck="false">
+          <input class="tkc-inp" id="ct-f-phone" placeholder="Téléphone" autocapitalize="none" autocorrect="off" spellcheck="false">
         </div>
         <select id="ct-f-tag">
           <option value="client">Client</option>
