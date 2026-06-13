@@ -108,6 +108,91 @@
     color: #fff;
   }
 
+  /* ── Icon right-click context menu ── */
+  #icon-ctx-menu {
+    display: none; position: fixed; z-index: 10001;
+    background: rgba(14,12,36,0.97); backdrop-filter: blur(24px);
+    border: 1px solid rgba(255,255,255,0.13); border-radius: 11px;
+    overflow: hidden; box-shadow: 0 14px 44px rgba(0,0,0,0.6);
+    min-width: 185px; animation: ctxFadeIn .12s ease;
+  }
+  .icon-ctx-item {
+    padding: 10px 16px; font-size: 13px; color: #cdd3ea;
+    cursor: pointer; display: flex; align-items: center; gap: 9px;
+    transition: background .12s;
+  }
+  .icon-ctx-item:hover { background: rgba(255,255,255,0.1); }
+  .icon-ctx-item.danger { color: #f5574f; }
+  .icon-ctx-item.danger:hover { background: rgba(245,87,79,0.12); }
+  .icon-ctx-sep { height: 1px; background: rgba(255,255,255,0.08); margin: 3px 0; }
+
+  /* ── Hidden icons management panel ── */
+  #hidden-panel {
+    display: none; position: fixed; z-index: 10000;
+    left: 50%; bottom: 62px; transform: translateX(-50%);
+    background: rgba(14,12,36,0.97); backdrop-filter: blur(24px);
+    border: 1px solid rgba(255,255,255,0.13); border-radius: 14px;
+    padding: 16px 18px; min-width: 300px; max-width: 480px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.65); animation: ctxFadeIn .15s ease;
+  }
+  #hidden-panel.show { display: block; }
+  .hp-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+  .hp-title { color:#fff; font-size:13.5px; font-weight:700; }
+  .hp-close { background:none; border:none; color:#666; font-size:18px; cursor:pointer; padding:0 4px; line-height:1; }
+  .hp-close:hover { color:#f5574f; }
+  .hp-item { display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.06); }
+  .hp-item:last-child { border-bottom:none; }
+  .hp-icon { width:34px; height:34px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:16px; color:#fff; flex-shrink:0; }
+  .hp-name { flex:1; color:#ddd; font-size:13px; }
+  .hp-show-btn { padding:5px 12px; border-radius:8px; border:1px solid rgba(102,126,234,0.4); background:rgba(102,126,234,0.12); color:#a0aeff; cursor:pointer; font-size:12px; white-space:nowrap; }
+  .hp-show-btn:hover { background:rgba(102,126,234,0.25); }
+  .hp-empty { color:#555; font-size:13px; text-align:center; padding:10px 0; }
+
+  /* ── Corbeille bureau ── */
+  #desktop-trash {
+    position: fixed;
+    bottom: 68px;
+    right: 18px;
+    width: 80px;
+    height: 88px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    border-radius: 14px;
+    border: 2px solid transparent;
+    z-index: 90;
+    cursor: default;
+    transition: background .15s, border-color .15s, transform .15s, box-shadow .15s;
+    user-select: none;
+  }
+  #desktop-trash:hover {
+    background: rgba(255,255,255,0.07);
+  }
+  #desktop-trash-icon {
+    font-size: 34px;
+    line-height: 1;
+    transition: transform .2s;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
+  }
+  #desktop-trash-label {
+    font-size: 11px;
+    color: rgba(255,255,255,0.65);
+    font-weight: 500;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.7);
+  }
+  #desktop-trash.trash-drag-over {
+    background: rgba(220,50,50,0.22);
+    border-color: rgba(240,80,80,0.65);
+    box-shadow: 0 0 0 4px rgba(220,50,50,0.15);
+    transform: scale(1.12);
+  }
+  #desktop-trash.trash-drag-over #desktop-trash-icon {
+    transform: rotate(-12deg) scale(1.18);
+    filter: drop-shadow(0 2px 8px rgba(255,80,80,0.6));
+  }
+
   #taskbar {
     position: fixed;
     bottom: 0;
@@ -480,6 +565,13 @@
     overflow: auto;
     color: #ddd;
     font-size: 13px;
+  }
+  /* Tasks & Contacts internal scrolling handled by .tk-content; locking
+     the window-body prevents the tk-root from scrolling off-screen so the
+     position:absolute overlay (inset:0) stays fully visible */
+  #win-tasks .window-body, #win-contacts .window-body {
+    overflow: hidden;
+    padding: 0;
   }
 
   .window-body iframe {
@@ -869,7 +961,9 @@
     color:#ddd; padding:0; height:26px; min-width:90px;
     background:transparent; cursor:cell;
   }
+  .fmsheet-cell:focus { outline: none; }
   .fmsheet-cell.active { outline:2px solid #667eea; outline-offset:-2px; z-index:1; background:rgba(102,126,234,0.05); }
+  .fmsheet-cell.active.editing { background:rgba(102,126,234,0.12); }
   .fmsheet-cell input {
     width:100%; height:100%; padding:0 6px;
     background:rgba(102,126,234,0.1);
@@ -880,6 +974,38 @@
   .fmsheet-cv.num { justify-content:flex-end; color:#a0c4ff; }
   .fmsheet-cv.fx  { color:#44d17a; }
   .fmsheet-cv.err { color:#f87171; font-style:italic; }
+
+  /* ── Autocomplete formules ── */
+  #fm-ac-dd {
+    position:fixed; z-index:50000; display:none;
+    background:rgba(11,8,32,0.97); backdrop-filter:blur(14px);
+    border:1px solid rgba(102,126,234,0.35); border-radius:10px;
+    box-shadow:0 10px 40px rgba(0,0,0,0.65),0 0 0 1px rgba(102,126,234,0.08);
+    min-width:340px; max-width:520px; overflow:hidden;
+  }
+  .fm-ac-header {
+    padding:6px 14px 4px; font-size:10px; font-weight:600;
+    color:rgba(102,126,234,0.7); letter-spacing:.06em; text-transform:uppercase;
+    border-bottom:1px solid rgba(255,255,255,0.06);
+  }
+  .fm-ac-item {
+    display:grid; grid-template-columns:110px 1fr;
+    gap:10px; align-items:center; padding:7px 14px;
+    cursor:pointer; border-bottom:1px solid rgba(255,255,255,0.04);
+    transition:background .1s;
+  }
+  .fm-ac-item:last-child { border-bottom:none; }
+  .fm-ac-item:hover, .fm-ac-item.ac-sel { background:rgba(102,126,234,0.18); }
+  .fm-ac-name {
+    font-weight:700; font-size:13px; color:#667eea;
+    font-family:'Courier New',monospace;
+  }
+  .fm-ac-right { display:flex; flex-direction:column; gap:1px; }
+  .fm-ac-syntax {
+    font-size:11px; color:rgba(255,255,255,0.6);
+    font-family:'Courier New',monospace;
+  }
+  .fm-ac-desc { font-size:10px; color:rgba(255,255,255,0.35); }
 
   /* ===== IMAGE VIEWER ===== */
   .fmimg-lb {
@@ -1898,21 +2024,6 @@
     transition: border-color .15s, background .15s;
   }
   .im-input:focus { border-color: rgba(102,126,234,0.6); background: rgba(255,255,255,0.10); }
-  /* ── Bouton quitter plein écran ── */
-  #fs-exit-btn {
-    position: fixed; top: 10px; right: 54px;
-    z-index: 99992; display: none;
-    align-items: center; gap: 6px;
-    background: rgba(20,15,50,0.78); backdrop-filter: blur(10px);
-    border: 1px solid rgba(255,255,255,0.14); color: rgba(255,255,255,0.6);
-    padding: 5px 13px 5px 10px; border-radius: 8px;
-    font-size: 12px; font-weight: 500; font-family: inherit; cursor: pointer;
-    transition: background .15s, color .15s, border-color .15s;
-  }
-  #fs-exit-btn:hover {
-    background: rgba(200,40,40,0.45); color: #fff;
-    border-color: rgba(255,90,90,0.4);
-  }
 
   /* ====================================================
      AGENDA v2 — Calendrier + Événements
@@ -2490,6 +2601,11 @@
   <div id="desktop-icons"></div>
 </div>
 
+<div id="desktop-trash" title="Corbeille — Glissez une icône ici pour la supprimer">
+  <div id="desktop-trash-icon">🗑️</div>
+  <div id="desktop-trash-label">Corbeille</div>
+</div>
+
 <div id="taskbar">
   <button id="start-btn" onclick="toggleStartMenu()">⬡</button>
   <div id="taskbar-apps"></div>
@@ -2558,6 +2674,7 @@
   <div class="ctx-separator"></div>
   <div class="ctx-item" onclick="alignIconsToGrid()">⊞ Aligner sur la grille</div>
   <div class="ctx-item" onclick="autoArrangeIcons()">🔃 Réorganisation automatique</div>
+  <div class="ctx-item" onclick="openHiddenPanel()">👁 Icônes masquées</div>
   <div class="ctx-separator"></div>
   <div class="ctx-item" onclick="changeWallpaper()">🎨 Changer le fond</div>
   <div class="ctx-separator"></div>
@@ -2702,6 +2819,25 @@
   </div>
 </div>
 
+<!-- Icon right-click context menu -->
+<div id="icon-ctx-menu">
+  <div class="icon-ctx-item" id="ictx-open"   onclick="iconCtxOpen()">▶ Ouvrir</div>
+  <div class="icon-ctx-sep"></div>
+  <div class="icon-ctx-item"                  onclick="iconCtxHide()">👁 Masquer l'icône</div>
+  <div class="icon-ctx-sep" id="ictx-sep-mod" style="display:none"></div>
+  <div class="icon-ctx-item" id="ictx-edit"   onclick="iconCtxEdit()" style="display:none">✏️ Modifier</div>
+  <div class="icon-ctx-item danger" id="ictx-del" onclick="iconCtxDel()" style="display:none">🗑️ Supprimer</div>
+</div>
+
+<!-- Hidden icons management panel -->
+<div id="hidden-panel">
+  <div class="hp-header">
+    <span class="hp-title">👁 Icônes masquées</span>
+    <button class="hp-close" onclick="closeHiddenPanel()">✕</button>
+  </div>
+  <div id="hidden-panel-list"></div>
+</div>
+
 <!-- Confirm Dialog -->
 <div id="confirm-modal">
   <div class="cf-card">
@@ -2715,7 +2851,6 @@
   </div>
 </div>
 
-<button id="fs-exit-btn" onclick="fsExitByUser()">⊠ Quitter</button>
 
 <div id="input-modal">
   <div class="cf-card" style="min-width:340px;">
@@ -2945,6 +3080,8 @@
   // Icon drag state
   let iconPositions   = {};
   let iconDragState   = null;
+  let hiddenApps      = {};   // { appId: true } — persisted in vd_hidden_icons
+  let iconCtxId       = null; // app id under right-click
   let iconJustDragged = false;
 
   const wallpapers = [
@@ -3038,6 +3175,8 @@
     { id: 'sysmonitor',  name: 'Moniteur',    icon: '📊', color: '#f97316', type: 'builtin' },
     { id: 'settings',    name: 'Paramètres',  icon: '⚙️', color: '#667eea', type: 'builtin' },
     { id: 'agenda',      name: 'Agenda',      icon: '📅', color: '#f5574f', type: 'builtin' },
+    { id: 'tasks',       name: 'Tâches',      icon: '✅', color: '#22c55e', type: 'builtin' },
+    { id: 'contacts',    name: 'Contacts',    icon: '👥', color: '#3b82f6', type: 'builtin' },
   ];
 
   function loadModules() {
@@ -3068,30 +3207,101 @@
     localStorage.setItem('vd_icon_positions', JSON.stringify(iconPositions));
   }
 
-  function getDefaultIconPos(index) {
-    const iconH = 100, iconW = 100;
-    const padX = 20, padY = 20;
-    const desktopH = window.innerHeight - 56;
-    const maxRows  = Math.max(1, Math.floor((desktopH - padY * 2) / iconH));
-    const col = Math.floor(index / maxRows);
-    const row = index % maxRows;
-    return { x: padX + col * iconW, y: padY + row * iconH };
+  function loadHiddenApps() {
+    try {
+      const s = localStorage.getItem('vd_hidden_icons');
+      hiddenApps = s ? JSON.parse(s) : {};
+    } catch(e) { hiddenApps = {}; }
   }
+
+  function saveHiddenApps() {
+    localStorage.setItem('vd_hidden_icons', JSON.stringify(hiddenApps));
+    if (typeof ghMarkDirty === 'function') ghMarkDirty();
+  }
+
+  const ICON_GRID = 100;
+  const ICON_PAD  = 14;
+
+  // Returns occupied grid cells as Set("col,row") — excludes excludeId
+  // Returns array of [x1,y1,x2,y2] bounding boxes for all visible positioned icons
+  function iconPixelBoxes(excludeId) {
+    return apps
+      .filter(a => a.id !== excludeId && !hiddenApps[a.id] && iconPositions[a.id])
+      .map(a => {
+        const p = iconPositions[a.id];
+        return [p.x, p.y, p.x + 88, p.y + 88];
+      });
+  }
+
+  // Returns true if cell (cx,cy) overlaps any existing icon bounding box
+  function cellFree(cx, cy, boxes) {
+    const nx = ICON_PAD + cx * ICON_GRID;
+    const ny = ICON_PAD + cy * ICON_GRID;
+    return !boxes.some(([x1,y1,x2,y2]) => nx + 88 > x1 && nx < x2 && ny + 88 > y1 && ny < y2);
+  }
+
+  // Snap x,y to nearest free grid cell (BFS) — pixel-based collision
+  function snapToFreeCell(x, y, excludeId) {
+    const dw = window.innerWidth || 1280;
+    const dh = (window.innerHeight || 800) - 56;
+    const cols = Math.max(1, Math.floor((dw - ICON_PAD * 2) / ICON_GRID));
+    const rows = Math.max(1, Math.floor((dh - ICON_PAD * 2) / ICON_GRID));
+    const boxes = iconPixelBoxes(excludeId);
+    const tx = Math.max(0, Math.min(cols - 1, Math.round((x - ICON_PAD) / ICON_GRID)));
+    const ty = Math.max(0, Math.min(rows - 1, Math.round((y - ICON_PAD) / ICON_GRID)));
+    const visited = new Set([tx + ',' + ty]);
+    const queue   = [[tx, ty]];
+    while (queue.length) {
+      const [cx, cy] = queue.shift();
+      if (cx >= 0 && cy >= 0 && cx < cols && cy < rows && cellFree(cx, cy, boxes)) {
+        return { x: ICON_PAD + cx * ICON_GRID, y: ICON_PAD + cy * ICON_GRID };
+      }
+      for (const [dx, dy] of [[0,1],[1,0],[0,-1],[-1,0],[1,1],[1,-1],[-1,1],[-1,-1]]) {
+        const k = (cx+dx) + ',' + (cy+dy);
+        if (!visited.has(k)) { visited.add(k); queue.push([cx+dx, cy+dy]); }
+      }
+    }
+    return { x: ICON_PAD + tx * ICON_GRID, y: ICON_PAD + ty * ICON_GRID };
+  }
+
+  // Find next free cell for a new icon (column-first, top-to-bottom) — pixel-based
+  function getNextFreePos(excludeId) {
+    const dw = window.innerWidth || 1280;
+    const dh = (window.innerHeight || 800) - 56;
+    const cols = Math.max(1, Math.floor((dw - ICON_PAD * 2) / ICON_GRID));
+    const rows = Math.max(1, Math.floor((dh - ICON_PAD * 2) / ICON_GRID));
+    const boxes = iconPixelBoxes(excludeId);
+    for (let col = 0; col < cols + 20; col++) {
+      for (let row = 0; row < rows; row++) {
+        if (cellFree(col, row, boxes))
+          return { x: ICON_PAD + col * ICON_GRID, y: ICON_PAD + row * ICON_GRID };
+      }
+    }
+    return { x: ICON_PAD, y: ICON_PAD };
+  }
+
+  function getDefaultIconPos(index) { return getNextFreePos(null); }
 
   // ====== RENDER ======
   function renderDesktopIcons() {
     const container = document.getElementById('desktop-icons');
     container.innerHTML = '';
-    apps.forEach((app, index) => {
-      const el = document.createElement('div');
-      el.className = 'desktop-icon';
-      el.dataset.id = app.id;
 
-      // Position: use saved or compute default grid position
+    // Assign positions for any icon that doesn't have one yet
+    apps.forEach(app => {
+      if (hiddenApps[app.id]) return;
       if (!iconPositions[app.id]) {
-        iconPositions[app.id] = getDefaultIconPos(index);
+        iconPositions[app.id] = getNextFreePos(app.id);
       }
+    });
+
+    apps.forEach(app => {
+      if (hiddenApps[app.id]) return; // skip hidden icons
+
       const pos = iconPositions[app.id];
+      const el  = document.createElement('div');
+      el.className  = 'desktop-icon';
+      el.dataset.id = app.id;
       el.style.left = pos.x + 'px';
       el.style.top  = pos.y + 'px';
 
@@ -3101,6 +3311,7 @@
         if (e.button !== 0) return;
         e.preventDefault();
         e.stopPropagation();
+        closeIconCtxMenu();
         iconDragState = {
           appId:    app.id,
           el,
@@ -3170,6 +3381,84 @@
   }
 
   // ====== WINDOW SYSTEM ======
+  // ── Transform video watch-page URLs to embeddable player URLs ──────────────
+  // Transform watch-page URLs → embeddable player URLs
+  // Returns { src, embedded } — embedded=true means a player URL was found
+  function getEmbedInfo(url) {
+    if (!url) return { src: url, embedded: false };
+    let m;
+    // YouTube specific video (watch, shorts, youtu.be)
+    m = url.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)([\w-]{11})/);
+    if (m) return { src: 'https://www.youtube.com/embed/' + m[1] + '?rel=0&modestbranding=1&enablejsapi=1', embedded: true, platform: 'youtube' };
+    // Vimeo specific video
+    m = url.match(/vimeo\.com\/(?:video\/)?([0-9]+)/);
+    if (m) return { src: 'https://player.vimeo.com/video/' + m[1], embedded: true };
+    // Dailymotion specific video
+    m = url.match(/dailymotion\.com\/video\/([a-zA-Z0-9]+)/);
+    if (m) return { src: 'https://www.dailymotion.com/embed/video/' + m[1], embedded: true };
+    return { src: url, embedded: false };
+  }
+  function getEmbedUrl(url) { return getEmbedInfo(url).src; }
+
+  // Sites known to block iframe embedding at the homepage/root level
+  const BLOCKED_DOMAINS = [
+    'youtube.com','youtu.be','vimeo.com','dailymotion.com',
+    'instagram.com','facebook.com','twitter.com','x.com',
+    'tiktok.com','linkedin.com','netflix.com','twitch.tv',
+    'pinterest.com','reddit.com','snapchat.com'
+  ];
+  function isKnownBlockedSite(url) {
+    try {
+      const h = new URL(url.includes('://') ? url : 'https://' + url).hostname.replace(/^www\./,'');
+      return BLOCKED_DOMAINS.some(d => h === d || h.endsWith('.' + d));
+    } catch(e) { return false; }
+  }
+
+  // Contextual hint for known video platforms (shown inside the fallback card)
+  function getEmbedHint(url) {
+    try {
+      const h = new URL(url.includes('://') ? url : 'https://' + url).hostname.replace(/^www\./,'');
+      if (h.includes('youtube') || h === 'youtu.be')
+        return '💡 Pour intégrer une vidéo, collez l\'URL de la vidéo (ex : youtube.com/watch?v=<b>ID</b>)';
+      if (h.includes('vimeo'))
+        return '💡 Pour intégrer une vidéo, collez l\'URL de la vidéo (ex : vimeo.com/<b>12345678</b>)';
+      if (h.includes('dailymotion'))
+        return '💡 Pour intégrer une vidéo, collez l\'URL de la vidéo (ex : dailymotion.com/video/<b>ID</b>)';
+    } catch(e) {}
+    return '';
+  }
+
+  function showIframeFallback(container, app, customMsg) {
+    // Remove existing iframe if present (e.g. YouTube error fired after load)
+    const existingIframe = container.querySelector('iframe');
+    if (existingIframe) existingIframe.remove();
+    if (container.querySelector('.iframe-fallback')) return;
+    container.innerHTML = '';
+    const card = document.createElement('div');
+    card.className = 'iframe-fallback';
+    card.style.cssText = `
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      height:100%;gap:14px;color:#aaa;text-align:center;padding:24px;`;
+    const domain = (() => { try { return new URL(app.url.includes('://') ? app.url : 'https://'+app.url).hostname.replace('www.',''); } catch(e){ return app.url; } })();
+    const hint = getEmbedHint(app.url);
+    card.innerHTML = `
+      <div style="font-size:48px">${app.icon || '🌐'}</div>
+      <div style="font-size:15px;font-weight:600;color:#ddd">${escHtml(app.name)}</div>
+      <div style="font-size:12px;opacity:0.65;max-width:340px">
+        ${customMsg ? escHtml(customMsg) : `<b>${escHtml(domain)}</b> n'autorise pas la prévisualisation intégrée.`}
+      </div>
+      ${hint ? `<div style="font-size:11.5px;color:#7dd3fc;max-width:340px;background:rgba(14,165,233,0.1);border:1px solid rgba(14,165,233,0.25);border-radius:8px;padding:8px 12px;line-height:1.6">${hint}</div>` : ''}
+      <a href="${escHtml(app.url.includes('://') ? app.url : 'https://'+app.url)}" target="_blank" rel="noopener"
+         style="padding:9px 22px;border-radius:10px;background:rgba(99,102,241,0.25);
+                border:1px solid rgba(99,102,241,0.5);color:#a5b4fc;text-decoration:none;
+                font-size:13px;transition:background .2s"
+         onmouseover="this.style.background='rgba(99,102,241,0.45)'"
+         onmouseout="this.style.background='rgba(99,102,241,0.25)'">
+        ↗ Ouvrir dans le navigateur
+      </a>`;
+    container.appendChild(card);
+  }
+
   function openApp(appId) {
     // Pinned file shortcuts → open filemanager then navigate to file
     const pinnedApp = apps.find(a => a.id === appId);
@@ -3196,6 +3485,10 @@
       win.style.width = '760px';  win.style.height = '520px';
     } else if (appId === 'filemanager') {
       win.style.width = '900px';  win.style.height = '580px';
+    } else if (appId === 'tasks') {
+      win.style.width = '940px';  win.style.height = '600px';
+    } else if (appId === 'contacts') {
+      win.style.width = '880px';  win.style.height = '560px';
     } else {
       win.style.width = '600px';  win.style.height = '420px';
     }
@@ -3234,7 +3527,50 @@
 
     const body = document.getElementById('winbody-' + appId);
     if (app.type === 'module' && app.url) {
-      body.innerHTML = `<iframe src="${app.url}" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>`;
+      const embedInfo = getEmbedInfo(app.url);
+      // If URL is a known blocked site and we didn't find a specific embed URL → show fallback immediately
+      if (!embedInfo.embedded && isKnownBlockedSite(app.url)) {
+        showIframeFallback(body, app);
+      } else {
+        const iframeEl = document.createElement('iframe');
+        iframeEl.src = embedInfo.src;
+        iframeEl.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-popups allow-presentation allow-popups-to-escape-sandbox');
+        iframeEl.setAttribute('allow', 'autoplay; fullscreen; picture-in-picture');
+        iframeEl.style.cssText = 'width:100%;height:100%;border:none;display:block;';
+        // Fallback: detect empty/blocked response
+        iframeEl.addEventListener('load', () => {
+          try {
+            const doc = iframeEl.contentDocument;
+            if (doc && (!doc.body || doc.body.innerHTML.trim() === '')) {
+              showIframeFallback(body, app);
+            }
+          } catch(e) { /* cross-origin = loaded fine */ }
+        });
+        iframeEl.addEventListener('error', () => showIframeFallback(body, app));
+
+        // YouTube IFrame API: listen for error codes via postMessage
+        // Error 150/153 = embedding disabled by video owner
+        if (embedInfo.platform === 'youtube') {
+          const ytMsgHandler = (e) => {
+            if (e.source !== iframeEl.contentWindow) return;
+            try {
+              const msg = typeof e.data === 'string' ? JSON.parse(e.data) : e.data;
+              const evt  = msg && (msg.event || (msg.info && msg.info.event));
+              const code = msg && (msg.info || msg.data);
+              const isErr = evt === 'onError' || evt === 'error' ||
+                            (msg.event === 'infoDelivery' && msg.info && msg.info.error);
+              const errCode = typeof code === 'object' ? code?.error : code;
+              if (isErr && [2, 5, 100, 101, 150, 153].includes(Number(errCode))) {
+                window.removeEventListener('message', ytMsgHandler);
+                showIframeFallback(body, app, '⛔ L\'auteur a désactivé l\'intégration de cette vidéo.');
+              }
+            } catch(e2) {}
+          };
+          window.addEventListener('message', ytMsgHandler);
+        }
+
+        body.appendChild(iframeEl);
+      }
     } else {
       body.innerHTML = getBuiltinContent(appId);
       initBuiltinApp(appId);
@@ -3329,6 +3665,13 @@
         const newY = Math.max(0, Math.min(desktopH - 90,           iconDragState.startEY + dy));
         iconDragState.el.style.left = newX + 'px';
         iconDragState.el.style.top  = newY + 'px';
+        // Surbrillance corbeille
+        const trash = document.getElementById('desktop-trash');
+        if (trash) {
+          const tr = trash.getBoundingClientRect();
+          const over = e.clientX>=tr.left && e.clientX<=tr.right && e.clientY>=tr.top && e.clientY<=tr.bottom;
+          trash.classList.toggle('trash-drag-over', over);
+        }
       }
     }
 
@@ -3345,12 +3688,34 @@
     }
   });
 
-  document.addEventListener('mouseup', () => {
+  document.addEventListener('mouseup', (e) => {
     if (iconDragState) {
+      const trash = document.getElementById('desktop-trash');
+      if (trash) trash.classList.remove('trash-drag-over');
+
       if (iconDragState.moved) {
-        const newX = parseInt(iconDragState.el.style.left) || 0;
-        const newY = parseInt(iconDragState.el.style.top)  || 0;
-        iconPositions[iconDragState.appId] = { x: newX, y: newY };
+        // Vérifier si déposé sur la corbeille
+        let droppedOnTrash = false;
+        if (trash) {
+          const tr = trash.getBoundingClientRect();
+          droppedOnTrash = e.clientX>=tr.left && e.clientX<=tr.right &&
+                           e.clientY>=tr.top  && e.clientY<=tr.bottom;
+        }
+        if (droppedOnTrash) {
+          iconDragState.el.classList.remove('dragging');
+          const appId = iconDragState.appId;
+          iconDragState = null;
+          trashDropApp(appId);
+          dragState = null;
+          return;
+        }
+        // Snap à la cellule libre la plus proche — anti-superposition
+        const rawX   = parseInt(iconDragState.el.style.left) || 0;
+        const rawY   = parseInt(iconDragState.el.style.top)  || 0;
+        const snapped = snapToFreeCell(rawX, rawY, iconDragState.appId);
+        iconDragState.el.style.left = snapped.x + 'px';
+        iconDragState.el.style.top  = snapped.y + 'px';
+        iconPositions[iconDragState.appId] = snapped;
         saveIconPositions();
         iconJustDragged = true;
         setTimeout(() => { iconJustDragged = false; }, 300);
@@ -3360,6 +3725,56 @@
     }
     dragState = null;
   });
+
+  // ── Corbeille : dépôt d'une icône de bureau ──
+  function trashDropApp(appId) {
+    const app = apps.find(a => a.id === appId);
+    if (!app) return;
+
+    if (app.type === 'builtin') {
+      // Application intégrée — impossible de supprimer, on remet en place
+      const pos = iconPositions[appId] || getDefaultIconPos(apps.findIndex(a=>a.id===appId));
+      const el = document.querySelector(`.desktop-icon[data-id="${appId}"]`);
+      if (el) { el.style.left = pos.x+'px'; el.style.top = pos.y+'px'; }
+      notify('⚠️ Les applications intégrées ne peuvent pas être supprimées');
+      return;
+    }
+
+    if (app.type === 'pinned-file') {
+      const it = fmFs[app.fileId];
+      const name = it ? it.name : app.name;
+      confirmDialog(
+        'Supprimer le fichier',
+        'Supprimer "' + name + '" du bureau ET du gestionnaire de fichiers ?',
+        () => {
+          if (it) {
+            fmDelete(app.fileId); // supprime le fichier + retire l'icône
+          } else {
+            apps = apps.filter(a => a.id !== appId);
+            delete iconPositions[appId];
+            saveModules(); renderDesktopIcons();
+          }
+        },
+        '🗑️', 'Supprimer', 'danger'
+      );
+      return;
+    }
+
+    if (app.type === 'module') {
+      confirmDialog(
+        'Retirer du bureau',
+        'Supprimer le module "' + app.name + '" ?',
+        () => {
+          apps = apps.filter(a => a.id !== appId);
+          delete iconPositions[appId];
+          saveModules(); renderDesktopIcons();
+          notify('🗑️ "' + app.name + '" supprimé');
+        },
+        '🗑️', 'Supprimer', 'danger'
+      );
+      return;
+    }
+  }
 
   // ====== CALCULATOR ======
   let calcExpression = '';
@@ -3518,8 +3933,27 @@
         return `<div class="settings-panel">
           <h3>⚙️ Paramètres du Bureau</h3>
           <div class="setting-group">
-            <label>Fond d'écran</label>
+            <label>🎨 Fond d'écran</label>
+            <div class="wp-sec">Dégradés</div>
             <div class="color-options" id="wp-options"></div>
+            <div class="wp-sec">Couleurs unies</div>
+            <div class="wp-color-row" id="wp-color-presets"></div>
+            <div class="wp-color-row" style="margin-top:8px;">
+              <input type="color" id="wp-color-inp" value="#16213e" class="wp-color-input" oninput="wpSetColor(this.value)" title="Couleur personnalisée">
+              <span style="color:#888;font-size:12px;">Couleur personnalisée</span>
+            </div>
+            <div class="wp-sec">Images</div>
+            <div class="wp-img-actions">
+              <button class="wp-btn wp-btn-p" onclick="wpUpload()">🖼️ Importer une image</button>
+              <input type="text" id="wp-url-inp" class="wp-url-inp" placeholder="https://exemple.com/image.jpg">
+              <button class="wp-btn" onclick="wpSetUrl()">Appliquer l'URL</button>
+            </div>
+            <div class="wp-thumbs" id="wp-img-presets"></div>
+            <div id="wp-custom-wrap" style="display:none;">
+              <div class="wp-sec" style="margin-top:12px;">Mes images importées</div>
+              <div class="wp-thumbs" id="wp-custom-list"></div>
+            </div>
+            <button class="wp-btn" style="margin-top:14px;" onclick="wpReset()">↺ Fond par défaut</button>
           </div>
           <div class="setting-group">
             <label>Opacité de la barre des tâches</label>
@@ -3617,6 +4051,12 @@
           </div>
         </div>`;
 
+      case 'tasks':
+        return tkAppHtml();
+
+      case 'contacts':
+        return ctAppHtml();
+
       case 'agenda':
         return `<div class="agenda-app">
           <div class="agenda-left">
@@ -3674,6 +4114,8 @@
     if (appId === 'agenda')       initAgenda();
     if (appId === 'notes')        initNotes();
     if (appId === 'filemanager')  fmInit();
+    if (appId === 'tasks')        tkInit();
+    if (appId === 'contacts')     ctInit();
   }
 
   function initCalculator() {
@@ -3727,20 +4169,7 @@
   }
 
   function initSettings() {
-    const container = document.getElementById('wp-options');
-    if (container) {
-      wallpapers.forEach(wp => {
-        const div = document.createElement('div');
-        div.className = 'color-opt';
-        div.style.background = wp;
-        div.onclick = () => {
-          document.getElementById('desktop').style.background = wp;
-          document.querySelectorAll('.color-opt').forEach(c => c.classList.remove('selected'));
-          div.classList.add('selected');
-        };
-        container.appendChild(div);
-      });
-    }
+    wpInitSettings();
     const list = document.getElementById('settings-module-list');
     if (list) {
       const modules = apps.filter(a => a.type === 'module');
@@ -4879,8 +5308,9 @@
     const name = document.getElementById('fnm-input').value.trim();
     const icon = document.getElementById('fnm-sel-icon').value;
     if (!name) { document.getElementById('fnm-input').focus(); return; }
+    const cb = fnmCallback;
     fnmClose();
-    if (fnmCallback) fnmCallback(name, icon);
+    if (cb) cb(name, icon);
   }
   // ──────────────────────────────────────────────────
 
@@ -5531,6 +5961,9 @@
       wallpaper:    document.getElementById('desktop').style.background || '',
       // ── Nouvelles données ──
       agenda:       (() => { try { return JSON.parse(localStorage.getItem('vd_agenda') || '[]'); } catch(e){ return []; } })(),
+      tasks:        (() => { try { return JSON.parse(localStorage.getItem('vd_tasks')        || '[]'); } catch(e){ return []; } })(),
+      contacts:     (() => { try { return JSON.parse(localStorage.getItem('vd_contacts')     || '[]'); } catch(e){ return []; } })(),
+      hiddenIcons:  (() => { try { return JSON.parse(localStorage.getItem('vd_hidden_icons') || '{}'); } catch(e){ return {}; } })(),
       filesystem:   (() => { try { return JSON.parse(localStorage.getItem('vd_filesystem') || 'null'); } catch(e){ return null; } })(),
       iconPositions:    (() => { try { return JSON.parse(localStorage.getItem('vd_icon_positions') || 'null'); } catch(e){ return null; } })(),
       fullscreenDefault: localStorage.getItem(FS_PREF_KEY) === '1',
@@ -5585,12 +6018,34 @@
           // ── Fond d'écran ──
           if (data.wallpaper) {
             document.getElementById('desktop').style.background = data.wallpaper;
+            try { localStorage.setItem('vd_wallpaper', data.wallpaper); } catch(e) {}
           }
 
           // ── Agenda ──
           if (data.agenda && Array.isArray(data.agenda)) {
             localStorage.setItem('vd_agenda', JSON.stringify(data.agenda));
             changes.push(`${data.agenda.length} événement(s) agenda`);
+          }
+
+          // ── Tâches ──
+          if (data.tasks && Array.isArray(data.tasks)) {
+            localStorage.setItem('vd_tasks', JSON.stringify(data.tasks));
+            if (typeof tkLoad === 'function') { tkLoad(); if (openWindows['tasks']) tkRender(); }
+            changes.push(`${data.tasks.length} tâche(s)`);
+          }
+
+          // ── Contacts ──
+          if (data.contacts && Array.isArray(data.contacts)) {
+            localStorage.setItem('vd_contacts', JSON.stringify(data.contacts));
+            if (typeof ctLoad === 'function') { ctLoad(); if (openWindows['contacts']) ctRender(); }
+            changes.push(`${data.contacts.length} contact(s)`);
+          }
+
+          // ── Icônes masquées ──
+          if (data.hiddenIcons && typeof data.hiddenIcons === 'object') {
+            localStorage.setItem('vd_hidden_icons', JSON.stringify(data.hiddenIcons));
+            hiddenApps = data.hiddenIcons;
+            renderDesktopIcons();
           }
 
           // ── Filesystem ──
@@ -5664,14 +6119,25 @@
   // ====== CONTEXT MENU ======
   document.getElementById('desktop').addEventListener('contextmenu', (e) => {
     e.preventDefault();
-    const menu = document.getElementById('context-menu');
-    menu.style.display = 'block';
-    menu.style.left = e.clientX + 'px';
-    menu.style.top  = e.clientY + 'px';
+    const iconEl = e.target.closest('.desktop-icon');
+    if (iconEl) {
+      const app = apps.find(a => a.id === iconEl.dataset.id);
+      showIconCtxMenu(e, iconEl.dataset.id, app && app.type === 'module');
+    } else {
+      closeIconCtxMenu();
+      const menu = document.getElementById('context-menu');
+      menu.style.display = 'block';
+      const vw = window.innerWidth, vh = window.innerHeight;
+      const mw = menu.offsetWidth || 200, mh = menu.offsetHeight || 200;
+      menu.style.left = Math.min(e.clientX, vw - mw - 6) + 'px';
+      menu.style.top  = Math.min(e.clientY, vh - mh - 6) + 'px';
+    }
   });
 
   document.addEventListener('click', (e) => {
-    if (!e.target.closest('#context-menu')) closeContextMenu();
+    if (!e.target.closest('#context-menu'))   closeContextMenu();
+    if (!e.target.closest('#icon-ctx-menu') && !e.target.closest('.desktop-icon')) closeIconCtxMenu();
+    if (!e.target.closest('#hidden-panel') && !e.target.closest('#context-menu') && !e.target.closest('#icon-ctx-menu')) closeHiddenPanel();
     if (!e.target.closest('#start-menu') && !e.target.closest('#start-btn') && startMenuOpen) toggleStartMenu();
   });
 
@@ -5693,13 +6159,28 @@
 
   // ── Aligne chaque icône sur le point de grille le plus proche ──
   function alignIconsToGrid() {
-    const GRID = 100;
-    apps.forEach((app, i) => {
-      const pos = iconPositions[app.id] || getDefaultIconPos(i);
-      iconPositions[app.id] = {
-        x: Math.round(pos.x / GRID) * GRID,
-        y: Math.round(pos.y / GRID) * GRID,
-      };
+    // Snap each icon to nearest grid cell, pixel-based collision resolution
+    const dh = window.innerHeight - 56;
+    const maxRow = Math.max(1, Math.floor((dh - ICON_PAD * 2) / ICON_GRID));
+    const settled = []; // accumulated bounding boxes of placed icons
+    apps.filter(a => !hiddenApps[a.id]).forEach(app => {
+      const pos = iconPositions[app.id];
+      if (!pos) return;
+      let cx = Math.round((pos.x - ICON_PAD) / ICON_GRID);
+      let cy = Math.round((pos.y - ICON_PAD) / ICON_GRID);
+      cx = Math.max(0, cx); cy = Math.max(0, cy);
+      let attempts = 0;
+      while (attempts < 500) {
+        const nx = ICON_PAD + cx * ICON_GRID, ny = ICON_PAD + cy * ICON_GRID;
+        if (!settled.some(([x1,y1,x2,y2]) => nx+88>x1 && nx<x2 && ny+88>y1 && ny<y2)) {
+          iconPositions[app.id] = { x: nx, y: ny };
+          settled.push([nx, ny, nx+88, ny+88]);
+          break;
+        }
+        cy++;
+        if (cy >= maxRow) { cy = 0; cx++; }
+        attempts++;
+      }
     });
     saveIconPositions();
     animateIconRearrange();
@@ -5707,9 +6188,13 @@
     notify('⊞ Icônes alignées sur la grille');
   }
 
-  // ── Remet toutes les icônes en colonnes ordonnées ──
+  // ── Remet toutes les icônes visibles en colonnes ordonnées ──
   function autoArrangeIcons() {
-    apps.forEach((app, i) => { iconPositions[app.id] = getDefaultIconPos(i); });
+    // Clear positions of visible icons then let getNextFreePos place them
+    apps.filter(a => !hiddenApps[a.id]).forEach(a => { delete iconPositions[a.id]; });
+    apps.filter(a => !hiddenApps[a.id]).forEach(a => {
+      iconPositions[a.id] = getNextFreePos(a.id);
+    });
     saveIconPositions();
     animateIconRearrange();
     closeContextMenu();
@@ -5717,6 +6202,88 @@
   }
 
   function closeContextMenu() { document.getElementById('context-menu').style.display = 'none'; }
+
+  // ── Icon right-click context menu ────────────────────────────────────────
+  function showIconCtxMenu(e, appId, isModule) {
+    closeContextMenu();
+    iconCtxId = appId;
+    const menu = document.getElementById('icon-ctx-menu');
+    const editEl = document.getElementById('ictx-edit');
+    const delEl  = document.getElementById('ictx-del');
+    const sepMod = document.getElementById('ictx-sep-mod');
+    if (editEl) editEl.style.display = isModule ? 'flex' : 'none';
+    if (delEl)  delEl.style.display  = isModule ? 'flex' : 'none';
+    if (sepMod) sepMod.style.display = isModule ? 'block' : 'none';
+    menu.style.display = 'block';
+    const vw = window.innerWidth, vh = window.innerHeight;
+    const mw = 200, mh = isModule ? 168 : 90;
+    menu.style.left = Math.min(e.clientX, vw - mw - 6) + 'px';
+    menu.style.top  = Math.min(e.clientY, vh - mh - 6) + 'px';
+  }
+
+  function closeIconCtxMenu() {
+    document.getElementById('icon-ctx-menu').style.display = 'none';
+    iconCtxId = null;
+  }
+
+  function iconCtxOpen()  { if (iconCtxId) openApp(iconCtxId);                       closeIconCtxMenu(); }
+  function iconCtxEdit()  { if (iconCtxId) openEditModuleModal(iconCtxId);            closeIconCtxMenu(); }
+  function iconCtxDel()   { if (iconCtxId) deleteSingleModule(iconCtxId);             closeIconCtxMenu(); }
+
+  function iconCtxHide() {
+    if (!iconCtxId) return;
+    const app = apps.find(a => a.id === iconCtxId);
+    const idToHide = iconCtxId;
+    closeIconCtxMenu();
+    // Close the window if it's open
+    if (openWindows[idToHide]) closeWindow(idToHide);
+    hiddenApps[idToHide] = true;
+    saveHiddenApps();
+    renderDesktopIcons();
+    notify(`👁 Icône « ${escHtml(app ? app.name : idToHide)} » masquée — Clic droit › Icônes masquées pour la réafficher`);
+  }
+
+  // ── Hidden icons panel ────────────────────────────────────────────────────
+  function openHiddenPanel() {
+    closeContextMenu();
+    const hiddenList = Object.keys(hiddenApps).filter(id => hiddenApps[id]);
+    const panel = document.getElementById('hidden-panel');
+    const list  = document.getElementById('hidden-panel-list');
+    if (hiddenList.length === 0) {
+      list.innerHTML = '<div class="hp-empty">Aucune icône masquée</div>';
+    } else {
+      list.innerHTML = hiddenList.map(id => {
+        const app = apps.find(a => a.id === id);
+        if (!app) return '';
+        const faviconUrl = getAppFavicon(app);
+        const iconHtml = faviconUrl
+          ? `<img src="${faviconUrl}" style="width:20px;height:20px;object-fit:contain;border-radius:4px;">`
+          : app.icon;
+        return `<div class="hp-item">
+          <div class="hp-icon" style="background:${app.color || '#667eea'}">${iconHtml}</div>
+          <span class="hp-name">${escHtml(app.name)}</span>
+          <button class="hp-show-btn" onclick="showIcon('${id}')">Afficher</button>
+        </div>`;
+      }).join('');
+    }
+    panel.classList.add('show');
+  }
+
+  function closeHiddenPanel() {
+    document.getElementById('hidden-panel').classList.remove('show');
+  }
+
+  function showIcon(appId) {
+    delete hiddenApps[appId];
+    saveHiddenApps();
+    const p = getNextFreePos(appId);
+    iconPositions[appId] = p;
+    saveIconPositions();
+    renderDesktopIcons();
+    const app = apps.find(a => a.id === appId);
+    notify(`👁 Icône « ${escHtml(app ? app.name : appId)} » réaffichée`);
+    openHiddenPanel(); // refresh
+  }
 
   function toggleStartMenu() {
     startMenuOpen = !startMenuOpen;
@@ -6248,6 +6815,10 @@
       modules:  JSON.parse(localStorage.getItem('vd_modules')       || '[]'),
       notes:    JSON.parse(localStorage.getItem('vd_notes_v2')      || '{}'),
       agenda:   JSON.parse(localStorage.getItem('vd_agenda')        || '[]'),
+      tasks:    JSON.parse(localStorage.getItem('vd_tasks')         || '[]'),
+      contacts: JSON.parse(localStorage.getItem('vd_contacts')      || '[]'),
+      wallpaper:   localStorage.getItem('vd_wallpaper') || '',
+      hiddenIcons: JSON.parse(localStorage.getItem('vd_hidden_icons') || '{}'),
       filesystem:    JSON.parse(localStorage.getItem('vd_filesystem')      || '{}'),
       iconPositions:     JSON.parse(localStorage.getItem('vd_icon_positions')  || '{}'),
       fullscreenDefault: localStorage.getItem(FS_PREF_KEY) === '1',
@@ -6264,6 +6835,10 @@
     if (obj.modules)       localStorage.setItem('vd_modules',        JSON.stringify(obj.modules));
     if (obj.notes)         localStorage.setItem('vd_notes_v2',       JSON.stringify(obj.notes));
     if (obj.agenda)        localStorage.setItem('vd_agenda',         JSON.stringify(obj.agenda));
+    if (obj.tasks)         localStorage.setItem('vd_tasks',          JSON.stringify(obj.tasks));
+    if (obj.contacts)      localStorage.setItem('vd_contacts',       JSON.stringify(obj.contacts));
+    if (obj.wallpaper)     { try { localStorage.setItem('vd_wallpaper', obj.wallpaper); document.getElementById('desktop').style.background = obj.wallpaper; } catch(e) {} }
+    if (obj.hiddenIcons)   { try { localStorage.setItem('vd_hidden_icons', JSON.stringify(obj.hiddenIcons)); hiddenApps = obj.hiddenIcons; renderDesktopIcons(); } catch(e) {} }
     if (obj.filesystem)    localStorage.setItem('vd_filesystem',     JSON.stringify(obj.filesystem));
     if (obj.iconPositions)         localStorage.setItem('vd_icon_positions', JSON.stringify(obj.iconPositions));
     if (typeof obj.fullscreenDefault === 'boolean') localStorage.setItem(FS_PREF_KEY, obj.fullscreenDefault ? '1' : '0');
@@ -6743,7 +7318,8 @@
   let fmSel     = null;
   let fmCtxId   = null;
   let fmSheetId = null;
-  let fmSheetSel= null;
+  let fmSheetSel     = null;
+  let fmSheetEditing = false; // true = inline input visible dans la cellule
   let fmImgIds  = [];
   let fmImgIdx  = 0;
 
@@ -6990,8 +7566,18 @@
   function fmDelete(id) {
     const it=fmFs[id]; if(!it) return;
     const par=fmFs[it.parent]; if(par) par.children=par.children.filter(c=>c!==id);
-    const delRec=i=>{const x=fmFs[i];if(!x)return;(x.children||[]).forEach(delRec);delete fmFs[i];};
-    delRec(id); fmSave(); fmSel=null; fmRender(); notify('🗑️ "'+it.name+'" supprimé');
+    // Collecter tous les IDs supprimés (récursif pour les dossiers)
+    const deleted=[];
+    const delRec=i=>{const x=fmFs[i];if(!x)return;(x.children||[]).forEach(delRec);deleted.push(i);delete fmFs[i];};
+    delRec(id);
+    // Supprimer automatiquement les icônes de bureau épinglées correspondantes
+    const before=apps.length;
+    apps=apps.filter(a=>!(a.type==='pinned-file'&&deleted.includes(a.fileId)));
+    if(apps.length!==before){
+      deleted.forEach(i=>delete iconPositions['pin-'+i]);
+      saveModules(); renderDesktopIcons();
+    }
+    fmSave(); fmSel=null; fmRender(); notify('🗑️ "'+it.name+'" supprimé');
   }
 
   function fmRename(id) {
@@ -7042,21 +7628,27 @@
   }
 
   // ── Tableur ──
-  function fmOpenSpreadsheet(id) { fmSheetId=id; fmSheetSel=null; fmRender(); }
+  function fmOpenSpreadsheet(id) { fmSheetId=id; fmSheetSel=null; fmSheetEditing=false; fmRender(); }
 
   function fmSheetBack() {
-    const it=fmFs[fmSheetId]; if(it) fmCwd=it.parent||'root';
-    fmSheetId=null; fmSel=null; fmRender();
+    fmAcHide();
+    fmCommitPending();
+    const it=fmFs[fmSheetId];
+    if(it){ fmSave(); fmCwd=it.parent||'root'; }
+    fmSheetId=null; fmSheetSel=null; fmSheetEditing=false; fmSel=null; fmRender();
   }
 
   function fmRenderSheet() {
     const el=document.getElementById('fm2-content'); if(!el) return;
     const it=fmFs[fmSheetId]; if(!it) return;
     const {cells={},cols=10,rows=25}=it.content||{};
-    const COLS='ABCDEFGHIJ'.slice(0,cols).split('');
+    const COLS='ABCDEFGHIJKLMNOPQRSTUVWXYZ'.slice(0,cols).split('');
     const sel=fmSheetSel;
     const selKey=sel?sel.c+sel.r:'';
-    const cellRaw=key=>{const v=cells[key]?.v;if(!v)return'';if(String(v).startsWith('='))return fmEval(String(v),cells);return v;};
+    const cellRaw=key=>{
+      const v=cells[key]?.v; if(v==null||v==='') return '';
+      return String(v).startsWith('=')?fmEval(String(v),cells):v;
+    };
 
     let tbl=`<table class="fmsheet-tbl"><thead><tr>
       <th></th>${COLS.map(c=>`<th>${c}</th>`).join('')}
@@ -7064,19 +7656,31 @@
     for(let r=1;r<=rows;r++){
       tbl+=`<tr><td class="fmsheet-rn">${r}</td>`;
       for(const c of COLS){
-        const key=c+r, raw=cells[key]?.v??'', isFx=String(raw).startsWith('=');
-        const disp=String(cellRaw(key)), isSel=sel&&sel.c===c&&sel.r===r;
-        const isNum=!isNaN(disp)&&disp!=='';
-        if(isSel){
-          tbl+=`<td class="fmsheet-cell active">
+        const key=c+r;
+        const raw=cells[key]?.v??'';
+        const isFx=String(raw).startsWith('=');
+        const dispVal=String(cellRaw(key));
+        const isErr=dispVal==='#ERR';
+        const isSel=sel&&sel.c===c&&sel.r===r;
+        const isNum=!isNaN(dispVal)&&dispVal!==''&&!isErr;
+        if(isSel&&fmSheetEditing){
+          tbl+=`<td class="fmsheet-cell active editing">
             <input id="fmsi" value="${escHtml(String(raw))}"
-              onblur="fmCellCommit('${c}',${r},this.value)"
               onkeydown="fmCellKey(event,'${c}',${r})"
-              oninput="fmFbarSync(this.value)">
+              oninput="fmFbarSync(this.value);fmAcShow(this)"
+              onblur="setTimeout(fmAcHide,120)">
+          </td>`;
+        } else if(isSel){
+          tbl+=`<td class="fmsheet-cell active" tabindex="0"
+            ondblclick="fmCellDbl('${c}',${r})"
+            onkeydown="fmSelKey(event,'${c}',${r})">
+            <div class="fmsheet-cv${isNum?' num':''}${isFx&&!isErr?' fx':''}${isErr?' err':''}">${escHtml(dispVal)}</div>
           </td>`;
         } else {
-          tbl+=`<td class="fmsheet-cell" onclick="fmCellClick('${c}',${r})" ondblclick="fmCellDbl('${c}',${r})">
-            <div class="fmsheet-cv${isNum?' num':''}${isFx?' fx':''}">${escHtml(disp)}</div>
+          tbl+=`<td class="fmsheet-cell"
+            onclick="fmCellClick('${c}',${r})"
+            ondblclick="fmCellDbl('${c}',${r})">
+            <div class="fmsheet-cv${isNum?' num':''}${isFx&&!isErr?' fx':''}${isErr?' err':''}">${escHtml(dispVal)}</div>
           </td>`;
         }
       }
@@ -7084,24 +7688,37 @@
     }
     tbl+=`</tbody></table>`;
 
+    const rawVal=sel?String(cells[selKey]?.v??''):'';
     el.innerHTML=`<div class="fmsheet-wrap">
       <div class="fmsheet-bar">
         <button class="fm2-btn" onclick="fmSheetBack()">← Retour</button>
         <input class="fmsheet-ref" id="fmsr" value="${escHtml(selKey)}" readonly>
-        <span style="color:#3a3a7a;font-weight:bold;font-size:13px;margin:0 2px">fx</span>
-        <input class="fmsheet-fbar" id="fmsfb" value="${escHtml(String(cells[selKey]?.v??''))}"
-          onkeydown="fmFbarKey(event)" placeholder="Saisir une valeur ou =formule…">
+        <span style="color:#667eea;font-weight:bold;font-size:13px;margin:0 2px">fx</span>
+        <input class="fmsheet-fbar" id="fmsfb" value="${escHtml(rawVal)}"
+          onkeydown="fmFbarKey(event)"
+          oninput="fmFbarInput(this.value)"
+          onblur="setTimeout(fmAcHide,120)"
+          placeholder="Valeur ou =formule…"
+          ${sel?'':'disabled style="opacity:.4"'}>
         <button class="fm2-btn p" onclick="fmSheetSave()">💾 Sauvegarder</button>
         <button class="fm2-btn" onclick="fmPinToDesktop('${fmSheetId}')" title="Épingler sur le bureau">📌 Bureau</button>
       </div>
       <div class="fmsheet-scroll">${tbl}</div>
     </div>`;
-    if(sel) setTimeout(()=>{const i=document.getElementById('fmsi');if(i){i.focus();i.select();}},25);
+    if(sel&&fmSheetEditing){
+      setTimeout(()=>{const i=document.getElementById('fmsi');if(i){i.focus();i.select();}},20);
+    } else if(sel){
+      setTimeout(()=>{const td=el.querySelector('.fmsheet-cell.active');if(td)td.focus();},20);
+    }
   }
 
   function fmEval(formula,cells) {
     try {
       let ex=formula.slice(1).trim();
+      // Aliases français → noms internes
+      ex=ex.replace(/\bSOMME\(/gi,'SUM(');
+      ex=ex.replace(/\bMOYENNE\(/gi,'AVERAGE(');
+      ex=ex.replace(/\bNB\(/gi,'COUNT(');
       const rng=(c1,r1,c2,r2)=>{
         const vals=[];
         for(let r=+r1;r<=+r2;r++)
@@ -7111,15 +7728,33 @@
           }
         return vals;
       };
-      ex=ex.replace(/\bSUM\(([A-J]+)(\d+):([A-J]+)(\d+)\)/gi,(_,c1,r1,c2,r2)=>rng(c1,r1,c2,r2).reduce((a,b)=>a+b,0)||0);
-      ex=ex.replace(/\b(?:AVERAGE|AVG)\(([A-J]+)(\d+):([A-J]+)(\d+)\)/gi,(_,c1,r1,c2,r2)=>{const v=rng(c1,r1,c2,r2);return v.length?v.reduce((a,b)=>a+b,0)/v.length:0;});
-      ex=ex.replace(/\bMAX\(([A-J]+)(\d+):([A-J]+)(\d+)\)/gi,(_,c1,r1,c2,r2)=>{const v=rng(c1,r1,c2,r2);return v.length?Math.max(...v):0;});
-      ex=ex.replace(/\bMIN\(([A-J]+)(\d+):([A-J]+)(\d+)\)/gi,(_,c1,r1,c2,r2)=>{const v=rng(c1,r1,c2,r2);return v.length?Math.min(...v):0;});
-      ex=ex.replace(/\bCOUNT\(([A-J]+)(\d+):([A-J]+)(\d+)\)/gi,(_,c1,r1,c2,r2)=>rng(c1,r1,c2,r2).length);
-      ex=ex.replace(/\b([A-J])(\d+)\b/g,(_,c,r)=>{const v=parseFloat(fmCellV(c+r,cells));return isNaN(v)?0:v;});
+      ex=ex.replace(/\bSUM\(([A-Z]+)(\d+):([A-Z]+)(\d+)\)/gi,(_,c1,r1,c2,r2)=>rng(c1,r1,c2,r2).reduce((a,b)=>a+b,0)||0);
+      ex=ex.replace(/\b(?:AVERAGE|AVG)\(([A-Z]+)(\d+):([A-Z]+)(\d+)\)/gi,(_,c1,r1,c2,r2)=>{const v=rng(c1,r1,c2,r2);return v.length?v.reduce((a,b)=>a+b,0)/v.length:0;});
+      ex=ex.replace(/\bMAX\(([A-Z]+)(\d+):([A-Z]+)(\d+)\)/gi,(_,c1,r1,c2,r2)=>{const v=rng(c1,r1,c2,r2);return v.length?Math.max(...v):0;});
+      ex=ex.replace(/\bMIN\(([A-Z]+)(\d+):([A-Z]+)(\d+)\)/gi,(_,c1,r1,c2,r2)=>{const v=rng(c1,r1,c2,r2);return v.length?Math.min(...v):0;});
+      ex=ex.replace(/\bCOUNT\(([A-Z]+)(\d+):([A-Z]+)(\d+)\)/gi,(_,c1,r1,c2,r2)=>rng(c1,r1,c2,r2).length);
+      // Références de cellules → valeur numérique OU chaîne entre guillemets
+      ex=ex.replace(/\b([A-Z])(\d+)\b/g,(_,c,r)=>{
+        const v=fmCellV(c+r,cells);
+        const n=Number(String(v).trim());
+        return isNaN(n)?JSON.stringify(String(v)):n;
+      });
+      // Opérateurs de comparaison Excel/français → JavaScript
+      ex=ex.replace(/<>/g,'!=');                     // inégalité  <>  →  !=
+      ex=ex.replace(/([^<>!=])=([^=])/g,'$1==$2');  // égalité  =  →  ==
+      // Séparateur français ; → ,
+      ex=ex.replace(/;/g,',');
       // eslint-disable-next-line no-new-func
-      const res=Function('"use strict";return('+ex+')')();
-      return typeof res==='number'?Math.round(res*100)/100:res;
+      const res=Function(
+        '"use strict";'+
+        'const SI=(c,a,b)=>c?a:b;const IF=SI;'+
+        'const ARRONDI=(n,d)=>{const p=Math.pow(10,d||0);return Math.round(n*p)/p;};const ROUND=ARRONDI;'+
+        'const ABS=v=>Math.abs(v);'+
+        'const RACINE=v=>Math.sqrt(v);const SQRT=RACINE;'+
+        'const PUISSANCE=(b,e)=>Math.pow(b,e);const POWER=PUISSANCE;'+
+        'const ENTIER=v=>Math.floor(v);const INT=ENTIER;'+
+        'return('+ex+')')();
+      return typeof res==='number'?Math.round(res*1e10)/1e10:res;
     } catch(e){return '#ERR';}
   }
 
@@ -7128,45 +7763,274 @@
     return String(v).startsWith('=')?fmEval(String(v),cells):v;
   }
 
-  function fmCellClick(c,r){fmSheetSel={c,r};fmRenderSheet();}
-  function fmCellDbl(c,r){fmSheetSel={c,r};fmRenderSheet();setTimeout(()=>{const i=document.getElementById('fmsi');if(i){i.focus();const l=i.value.length;i.setSelectionRange(l,l);}},25);}
-  function fmFbarSync(v){const fb=document.getElementById('fmsfb');if(fb)fb.value=v;}
-
-  function fmFbarKey(e) {
-    if(e.key==='Enter'){
-      const fb=document.getElementById('fmsfb');
-      if(fb&&fmSheetSel)fmCellCommit(fmSheetSel.c,fmSheetSel.r,fb.value);
-    }
-  }
-
-  function fmCellCommit(c,r,val) {
+  // ── Commit sans re-render (utilisé avant navigation ou sauvegarde) ──
+  function fmCommitPending() {
+    const inp=document.getElementById('fmsi');
+    if(!inp||!fmSheetSel||!fmSheetEditing) return;
+    const {c,r}=fmSheetSel;
+    const val=inp.value;
     const it=fmFs[fmSheetId]; if(!it) return;
+    if(!it.content) it.content={cols:10,rows:25,cells:{}};
     if(!it.content.cells) it.content.cells={};
     const key=c+r;
     if(val===''||val==null){delete it.content.cells[key];}
     else{it.content.cells[key]={v:val};}
     it.modified=new Date().toISOString();
+    fmSheetEditing=false;
+  }
+
+  // Clic simple → sélection seule (pas d'input inline)
+  function fmCellClick(c,r){
+    fmAcHide();
+    fmCommitPending();
+    fmSheetEditing=false;
+    fmSheetSel={c,r};
     fmRenderSheet();
   }
 
-  function fmCellKey(e,c,r) {
-    const COLS='ABCDEFGHIJ', ci=COLS.indexOf(c);
-    const maxR=fmFs[fmSheetId]?.content?.rows||25;
-    if(e.key==='Enter'&&!e.shiftKey){
-      e.preventDefault(); fmCellCommit(c,r,e.target.value);
-      fmSheetSel={c,r:Math.min(r+1,maxR)}; fmRenderSheet();
+  // Double-clic → mode édition inline
+  function fmCellDbl(c,r){
+    fmAcHide();
+    fmCommitPending();
+    fmSheetSel={c,r};
+    fmSheetEditing=true;
+    fmRenderSheet();
+  }
+
+  // Sync cellule → barre de formule
+  function fmFbarSync(v){const fb=document.getElementById('fmsfb');if(fb)fb.value=v;}
+
+  // Frappe dans la barre de formule → sync vers l'input cellule (si édition active)
+  function fmFbarInput(v){
+    const inp=document.getElementById('fmsi');
+    if(inp) inp.value=v;
+    if(fmSheetSel&&!fmSheetEditing){
+      fmSheetEditing=true;
+      fmRenderSheet();
+      setTimeout(()=>{
+        const fb=document.getElementById('fmsfb');
+        if(fb){fb.value=v;fb.focus();const l=v.length;fb.setSelectionRange(l,l);fmAcShow(fb);}
+        const i2=document.getElementById('fmsi');if(i2)i2.value=v;
+      },20);
+    } else {
+      const fb=document.getElementById('fmsfb');
+      if(fb) fmAcShow(fb);
+    }
+  }
+
+  // Touches dans la barre de formule
+  function fmFbarKey(e) {
+    // Priorité : navigation dans le dropdown autocomplete
+    const _dd=document.getElementById('fm-ac-dd');
+    if(_dd&&_dd.style.display!=='none'){
+      if(e.key==='ArrowDown'){e.preventDefault();fmAcNav(1);return;}
+      if(e.key==='ArrowUp')  {e.preventDefault();fmAcNav(-1);return;}
+      if(e.key==='Tab'){if(fmAcSelectCurrent()){e.preventDefault();return;}}
+      if(e.key==='Enter'){if(fmAcSelectCurrent()){e.preventDefault();return;}}
+      if(e.key==='Escape'){fmAcHide();e.preventDefault();return;}
+    }
+    const fb=document.getElementById('fmsfb');
+    if(!fb||!fmSheetSel) return;
+    const {c,r}=fmSheetSel;
+    const it=fmFs[fmSheetId]; if(!it) return;
+    const COLS='ABCDEFGHIJKLMNOPQRSTUVWXYZ'.slice(0,it.content?.cols||10);
+    const maxR=it.content?.rows||25;
+    if(e.key==='Enter'){
+      e.preventDefault();
+      fmSheetSel={c,r:Math.min(maxR,r+1)};
+      fmCellCommit(c,r,fb.value);
     } else if(e.key==='Tab'){
-      e.preventDefault(); fmCellCommit(c,r,e.target.value);
-      const ni=e.shiftKey?Math.max(0,ci-1):Math.min(COLS.length-1,ci+1);
-      fmSheetSel={c:COLS[ni],r}; fmRenderSheet();
-    } else if(e.key==='Escape'){fmSheetSel=null;fmRenderSheet();}
-    else if(e.key==='ArrowUp'&&e.ctrlKey){e.preventDefault();fmSheetSel={c,r:Math.max(1,r-1)};fmRenderSheet();}
-    else if(e.key==='ArrowDown'&&e.ctrlKey){e.preventDefault();fmSheetSel={c,r:Math.min(maxR,r+1)};fmRenderSheet();}
+      e.preventDefault();
+      const ci=COLS.indexOf(c);
+      fmSheetSel={c:COLS[Math.min(COLS.length-1,ci+1)],r};
+      fmCellCommit(c,r,fb.value);
+    } else if(e.key==='Escape'){
+      e.preventDefault();
+      fmSheetEditing=false;
+      fmRenderSheet();
+    }
+  }
+
+  // Sauvegarde la valeur d'une cellule + re-render
+  function fmCellCommit(c,r,val) {
+    const it=fmFs[fmSheetId]; if(!it) return;
+    if(!it.content) it.content={cols:10,rows:25,cells:{}};
+    if(!it.content.cells) it.content.cells={};
+    const key=c+r;
+    if(val===''||val==null){delete it.content.cells[key];}
+    else{it.content.cells[key]={v:val};}
+    it.modified=new Date().toISOString();
+    fmSheetEditing=false;
+    fmRenderSheet();
+  }
+
+  // Touches clavier dans la cellule sélectionnée (mode édition)
+  function fmCellKey(e,c,r) {
+    // Priorité : navigation dans le dropdown autocomplete
+    const _dd=document.getElementById('fm-ac-dd');
+    if(_dd&&_dd.style.display!=='none'){
+      if(e.key==='ArrowDown'){e.preventDefault();fmAcNav(1);return;}
+      if(e.key==='ArrowUp')  {e.preventDefault();fmAcNav(-1);return;}
+      if(e.key==='Tab'||e.key==='Enter'){if(fmAcSelectCurrent()){e.preventDefault();return;}}
+      if(e.key==='Escape')   {fmAcHide();e.preventDefault();return;}
+    }
+    const it=fmFs[fmSheetId]; if(!it) return;
+    const COLS='ABCDEFGHIJKLMNOPQRSTUVWXYZ'.slice(0,it.content?.cols||10);
+    const ci=COLS.indexOf(c);
+    const maxR=it.content?.rows||25;
+    if(e.key==='Enter'&&!e.shiftKey){
+      e.preventDefault();
+      fmSheetSel={c,r:Math.min(maxR,r+1)};
+      fmCellCommit(c,r,e.target.value);
+    } else if(e.key==='Tab'){
+      e.preventDefault();
+      fmSheetSel={c:COLS[e.shiftKey?Math.max(0,ci-1):Math.min(COLS.length-1,ci+1)],r};
+      fmCellCommit(c,r,e.target.value);
+    } else if(e.key==='Escape'){
+      e.preventDefault();
+      fmSheetEditing=false;
+      fmRenderSheet();
+    } else if(e.key==='ArrowDown'){
+      e.preventDefault();
+      fmSheetSel={c,r:Math.min(maxR,r+1)};
+      fmCellCommit(c,r,e.target.value);
+    } else if(e.key==='ArrowUp'){
+      e.preventDefault();
+      fmSheetSel={c,r:Math.max(1,r-1)};
+      fmCellCommit(c,r,e.target.value);
+    }
+    // ArrowLeft/Right : laissé au navigateur pour déplacer le curseur dans le texte
+  }
+
+  // Touches clavier sur cellule sélectionnée (mode sélection, pas édition)
+  function fmSelKey(e,c,r) {
+    const it=fmFs[fmSheetId]; if(!it) return;
+    const COLS='ABCDEFGHIJKLMNOPQRSTUVWXYZ'.slice(0,it.content?.cols||10);
+    const ci=COLS.indexOf(c);
+    const maxR=it.content?.rows||25;
+    if(e.key==='ArrowDown'||e.key==='Enter'){
+      e.preventDefault(); fmSheetSel={c,r:Math.min(maxR,r+1)}; fmRenderSheet();
+    } else if(e.key==='ArrowUp'){
+      e.preventDefault(); fmSheetSel={c,r:Math.max(1,r-1)}; fmRenderSheet();
+    } else if(e.key==='ArrowRight'||(e.key==='Tab'&&!e.shiftKey)){
+      e.preventDefault(); fmSheetSel={c:COLS[Math.min(COLS.length-1,ci+1)],r}; fmRenderSheet();
+    } else if(e.key==='ArrowLeft'||(e.key==='Tab'&&e.shiftKey)){
+      e.preventDefault(); fmSheetSel={c:COLS[Math.max(0,ci-1)],r}; fmRenderSheet();
+    } else if(e.key==='F2'){
+      e.preventDefault(); fmSheetEditing=true; fmRenderSheet();
+    } else if(e.key==='Delete'||e.key==='Backspace'){
+      e.preventDefault(); fmCellCommit(c,r,'');
+    } else if(!e.ctrlKey&&!e.altKey&&!e.metaKey&&e.key.length===1){
+      // Frappe directe → entre en mode édition avec le caractère tapé
+      fmSheetEditing=true;
+      fmRenderSheet();
+      setTimeout(()=>{
+        const i=document.getElementById('fmsi');
+        if(i){i.value=e.key;i.focus();i.setSelectionRange(1,1);fmFbarSync(e.key);fmAcShow(i);}
+      },20);
+    }
   }
 
   function fmSheetSave() {
+    fmCommitPending();
     const it=fmFs[fmSheetId]; if(!it) return;
-    it.modified=new Date().toISOString(); fmSave(); notify('💾 "'+it.name+'" sauvegardé');
+    it.modified=new Date().toISOString();
+    fmSave();
+    notify('💾 "'+it.name+'" sauvegardé');
+    fmRenderSheet();
+  }
+
+  // ── Assistant de formules (autocomplete) ──
+  const FM_FORMULAS = [
+    {name:'SOMME',    syntax:'SOMME(A1:B5)',          desc:'Somme d\'une plage'},
+    {name:'MOYENNE',  syntax:'MOYENNE(A1:B5)',        desc:'Moyenne d\'une plage'},
+    {name:'SI',       syntax:'SI(cond;val_vrai;val_faux)', desc:'Si/Alors/Sinon'},
+    {name:'MAX',      syntax:'MAX(A1:B5)',             desc:'Valeur maximale'},
+    {name:'MIN',      syntax:'MIN(A1:B5)',             desc:'Valeur minimale'},
+    {name:'NB',       syntax:'NB(A1:B5)',              desc:'Nombre de cellules'},
+    {name:'ARRONDI',  syntax:'ARRONDI(A1;2)',          desc:'Arrondi à N décimales'},
+    {name:'ABS',      syntax:'ABS(A1)',                desc:'Valeur absolue'},
+    {name:'RACINE',   syntax:'RACINE(A1)',             desc:'Racine carrée'},
+    {name:'PUISSANCE',syntax:'PUISSANCE(A1;2)',        desc:'Élève à la puissance'},
+    {name:'ENTIER',   syntax:'ENTIER(A1)',             desc:'Partie entière (plancher)'},
+    {name:'SUM',      syntax:'SUM(A1:B5)',             desc:'Sum (anglais)'},
+    {name:'AVERAGE',  syntax:'AVERAGE(A1:B5)',         desc:'Average (anglais)'},
+    {name:'COUNT',    syntax:'COUNT(A1:B5)',           desc:'Count (anglais)'},
+    {name:'IF',       syntax:'IF(cond,vrai,faux)',     desc:'If/Then/Else (anglais)'},
+  ];
+
+  function fmAcShow(inp) {
+    if (!inp || !inp.isConnected) return;
+    const val = inp.value;
+    if (!val.startsWith('=')) { fmAcHide(); return; }
+    // Extraire le nom partiel en fin d'expression
+    const m = val.match(/([A-Za-z]+)$/);
+    if (!m) { fmAcHide(); return; }
+    const partial = m[1].toUpperCase();
+    const matches = FM_FORMULAS.filter(f => f.name.startsWith(partial));
+    if (!matches.length) { fmAcHide(); return; }
+
+    let dd = document.getElementById('fm-ac-dd');
+    if (!dd) { dd = document.createElement('div'); dd.id = 'fm-ac-dd'; document.body.appendChild(dd); }
+
+    const rect = inp.getBoundingClientRect();
+    dd.style.left   = rect.left + 'px';
+    dd.style.top    = (rect.bottom + 4) + 'px';
+    dd.style.display = 'block';
+
+    dd.innerHTML = '<div class="fm-ac-header">Formules disponibles — ↑↓ Naviguer · Entrée Insérer · Échap Fermer</div>' +
+      matches.map(f =>
+        `<div class="fm-ac-item" data-name="${escHtml(f.name)}"
+           onmousedown="fmAcSelect('${escHtml(f.name)}',event)">
+          <span class="fm-ac-name">${escHtml(f.name)}</span>
+          <div class="fm-ac-right">
+            <span class="fm-ac-syntax">${escHtml(f.syntax)}</span>
+            <span class="fm-ac-desc">${escHtml(f.desc)}</span>
+          </div>
+        </div>`
+      ).join('');
+  }
+
+  function fmAcHide() {
+    const dd = document.getElementById('fm-ac-dd');
+    if (dd) dd.style.display = 'none';
+  }
+
+  function fmAcNav(dir) {
+    const dd = document.getElementById('fm-ac-dd');
+    if (!dd || dd.style.display === 'none') return;
+    const items = Array.from(dd.querySelectorAll('.fm-ac-item'));
+    if (!items.length) return;
+    let cur = items.findIndex(i => i.classList.contains('ac-sel'));
+    cur = cur === -1 ? (dir > 0 ? -1 : items.length) : cur;
+    cur = (cur + dir + items.length) % items.length;
+    items.forEach(i => i.classList.remove('ac-sel'));
+    items[cur].classList.add('ac-sel');
+    items[cur].scrollIntoView({block:'nearest'});
+  }
+
+  function fmAcSelectCurrent() {
+    const dd = document.getElementById('fm-ac-dd');
+    if (!dd || dd.style.display === 'none') return false;
+    const active = dd.querySelector('.fm-ac-item.ac-sel') || dd.querySelector('.fm-ac-item');
+    if (active) { fmAcSelect(active.dataset.name, null); return true; }
+    return false;
+  }
+
+  function fmAcSelect(name, e) {
+    if (e) e.preventDefault();
+    const fb = document.getElementById('fmsfb');
+    const ci = document.getElementById('fmsi');
+    const tgt = (document.activeElement === fb || document.activeElement === ci)
+                ? document.activeElement : (fb || ci);
+    if (!tgt) { fmAcHide(); return; }
+    const newVal = tgt.value.replace(/([A-Za-z]+)$/, name + '(');
+    tgt.value = newVal;
+    if (tgt === fb && ci) ci.value = newVal;
+    if (tgt === ci && fb) fb.value = newVal;
+    fmAcHide();
+    tgt.focus();
+    tgt.setSelectionRange(newVal.length, newVal.length);
   }
 
   // ── Éditeur de texte ──
@@ -7228,7 +8092,7 @@
 
   const PROFILES_KEY       = 'vd_profiles';
   const ACTIVE_PROFILE_KEY = 'vd_active_profile';
-  const PROFILE_DATA_KEYS  = ['vd_modules','vd_notes_v2','vd_agenda','vd_filesystem','vd_icon_positions'];
+  const PROFILE_DATA_KEYS  = ['vd_modules','vd_notes_v2','vd_agenda','vd_filesystem','vd_icon_positions','vd_tasks','vd_contacts','vd_wallpaper','vd_wallpaper_imgs','vd_hidden_icons'];
   const PCM_AVATARS = ['👤','👨','👩','🧑','👨‍💼','👩‍💼','🧑‍💻','👨‍🎨','👩‍🎨','🦸','🧙','🤖','😎','🐱','🐸','🦊','🌟','🏆','⚡','🔥'];
   const PCM_COLORS  = ['#667eea','#ec4899','#f97316','#44d17a','#06b6d4','#f5c542','#a855f7','#f5574f','#64748b','#0ea5e9'];
 
@@ -7389,6 +8253,9 @@
     // Reload state — reset to built-ins then reload saved modules for this profile
     apps = apps.filter(a => a.type === 'builtin');
     loadModules();
+    if (typeof wpApplySaved === 'function') wpApplySaved();
+    if (typeof tkLoad === 'function') { tkLoad(); if (openWindows['tasks'] && document.getElementById('tk-content')) tkRender(); }
+    if (typeof ctLoad === 'function') { ctLoad(); if (openWindows['contacts'] && document.getElementById('ct-content')) ctRender(); }
     renderDesktopIcons();
     renderStartMenu();
     notesData = loadNotesData();
@@ -7541,7 +8408,7 @@
 
   const FS_PREF_KEY = 'vd_fullscreen_default';
   let fsPrefActive    = false; // préférence plein écran activée
-  let fsExitingByUser = false; // sortie intentionnelle via le bouton ⊠
+  let fsExitingByUser = false; // sortie intentionnelle via Paramètres
 
   // Bloque Échap et F11 en phase capture quand le plein écran forcé est actif
   function blockFsKeys(e) {
@@ -7553,20 +8420,10 @@
     }
   }
 
-  // Seul point d'entrée autorisé pour quitter le plein écran
-  function fsExitByUser() {
-    fsExitingByUser = true;
-    document.exitFullscreen();
-  }
-
-  function updateFsExitBtn() {
-    const btn = document.getElementById('fs-exit-btn');
-    if (btn) btn.style.display = (fsPrefActive && !!document.fullscreenElement) ? 'flex' : 'none';
-  }
-
   function toggleFullscreen() {
     if (document.fullscreenElement) {
-      fsExitByUser();
+      fsExitingByUser = true;
+      document.exitFullscreen();
     } else {
       document.documentElement.requestFullscreen().catch(e => {
         notify('⚠️ Plein écran non disponible : ' + e.message);
@@ -7600,7 +8457,6 @@
       btn.title = inFs ? 'Quitter le plein écran' : 'Plein écran';
       btn.classList.toggle('active', inFs);
     }
-    updateFsExitBtn();
   }
 
   function initFullscreenPref() {
@@ -7616,7 +8472,7 @@
       const inFs = !!document.fullscreenElement;
       if (fsPrefActive && !inFs) {
         if (fsExitingByUser) {
-          fsExitingByUser = false; // sortie autorisée via ⊠
+          fsExitingByUser = false; // sortie autorisée via Paramètres
         } else {
           // Sortie non autorisée — retour automatique sans overlay ni message
           setTimeout(() => {
@@ -7666,6 +8522,7 @@
   loadModules();
   loadNotesData();
   loadIconPositions();
+  loadHiddenApps();
   renderDesktopIcons();
   renderStartMenu();
   updateClock();
@@ -7699,6 +8556,7 @@
 
   setTimeout(() => notify('👋 Bienvenue sur Bureau Virtuel Pro v3 !'), 500);
   setTimeout(() => notify('💡 Clic droit sur le bureau pour les options'), 2000);
+  setTimeout(() => notify('🆕 Nouveau : ✅ Tâches · 👥 Contacts · 🎨 Fonds d\'écran personnalisés'), 3800);
 </script>
 
 <!-- ===== FILE MANAGER — overlays body-level ===== -->
@@ -7761,5 +8619,729 @@
     </div>
   </div>
 </div>
+<!-- ============================================================
+     AMÉLIORATIONS PRO v3.2 — Fonds d'écran avancés · Tâches · Contacts
+     ============================================================ -->
+<input type="file" id="wp-file-input" accept="image/*" style="display:none" onchange="wpHandleFile(this)">
+
+<style>
+/* ── Fond d'écran (Paramètres) ─────────────────────────────── */
+.wp-sec { color:#9aa3c0; font-size:11px; text-transform:uppercase; letter-spacing:1px; margin:14px 0 8px; }
+.wp-color-row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+.wp-dot { width:34px; height:34px; border-radius:8px; cursor:pointer; border:2px solid transparent; transition:transform .15s; }
+.wp-dot:hover { transform:scale(1.12); }
+.wp-dot.selected { border-color:#fff; }
+.wp-color-input { width:46px; height:34px; border:none; border-radius:8px; background:transparent; cursor:pointer; padding:0; }
+.wp-img-actions { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:10px; }
+.wp-btn { padding:9px 14px; border-radius:9px; border:1px solid rgba(255,255,255,0.14); background:rgba(255,255,255,0.06); color:#ddd; cursor:pointer; font-size:12.5px; }
+.wp-btn:hover { background:rgba(255,255,255,0.12); }
+.wp-btn-p { background:linear-gradient(135deg,#667eea,#764ba2); border:none; color:#fff; }
+.wp-btn-p:hover { filter:brightness(1.15); }
+.wp-url-inp { flex:1; min-width:180px; padding:9px 12px; border-radius:9px; border:1px solid rgba(255,255,255,0.12); background:rgba(0,0,0,0.3); color:#eee; font-size:12.5px; outline:none; }
+.wp-url-inp:focus { border-color:rgba(102,126,234,0.6); }
+.wp-thumbs { display:flex; gap:10px; flex-wrap:wrap; }
+.wp-thumb { width:96px; height:58px; border-radius:9px; background-size:cover; background-position:center; background-color:rgba(255,255,255,0.05); cursor:pointer; border:2px solid rgba(255,255,255,0.12); position:relative; transition:transform .15s; }
+.wp-thumb:hover { transform:scale(1.06); }
+.wp-thumb.selected { border-color:#667eea; box-shadow:0 0 0 2px rgba(102,126,234,0.4); }
+.wp-del { position:absolute; top:-7px; right:-7px; width:20px; height:20px; border-radius:50%; background:#f5574f; color:#fff; border:none; font-size:11px; cursor:pointer; display:flex; align-items:center; justify-content:center; line-height:1; }
+
+/* ── App Tâches ────────────────────────────────────────────── */
+.tk-root { display:flex; flex-direction:column; height:100%; overflow:hidden; position:relative; color:#ddd; }
+.tk-toolbar { display:flex; gap:8px; align-items:center; padding:12px 14px; border-bottom:1px solid rgba(255,255,255,0.07); flex-wrap:wrap; }
+.tk-sel { padding:8px 10px; border-radius:8px; background:rgba(20,22,40,0.9); color:#ddd; border:1px solid rgba(255,255,255,0.12); font-size:12px; outline:none; cursor:pointer; }
+.tk-stats { display:flex; gap:14px; align-items:center; padding:10px 16px; font-size:12px; color:#9aa3c0; border-bottom:1px solid rgba(255,255,255,0.05); flex-wrap:wrap; }
+.tk-stats b { color:#fff; }
+.tk-progress { flex:1; min-width:110px; height:7px; border-radius:4px; background:rgba(255,255,255,0.08); overflow:hidden; }
+.tk-progress > div { height:100%; background:linear-gradient(90deg,#44d17a,#06b6d4); transition:width .4s; }
+.tk-content { flex:1; overflow:auto; padding:14px; }
+.tk-kanban { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; align-items:start; }
+.tk-col { background:rgba(255,255,255,0.035); border:1px solid rgba(255,255,255,0.07); border-radius:12px; padding:10px; }
+.tk-col-hd { display:flex; justify-content:space-between; align-items:center; font-size:12.5px; font-weight:600; margin-bottom:10px; padding:2px 4px; color:#cdd3ea; }
+.tk-col-count { background:rgba(255,255,255,0.1); border-radius:10px; padding:1px 8px; font-size:11px; }
+.tk-col-body { display:flex; flex-direction:column; gap:8px; min-height:70px; border-radius:8px; transition:background .15s; }
+.tk-col-body.over { background:rgba(102,126,234,0.12); outline:1px dashed rgba(102,126,234,0.5); }
+.tk-card { background:rgba(20,22,40,0.85); border:1px solid rgba(255,255,255,0.09); border-left:3px solid var(--pc,#667eea); border-radius:10px; padding:10px 11px; cursor:grab; }
+.tk-card:active { cursor:grabbing; }
+.tk-card-title { font-size:13px; color:#fff; margin-bottom:4px; }
+.tk-card-desc { font-size:11.5px; color:#9aa3c0; margin-bottom:6px; line-height:1.4; }
+.tk-card-meta { display:flex; gap:8px; align-items:center; font-size:11px; color:#8a93b5; flex-wrap:wrap; }
+.tk-due.late { color:#f5574f; font-weight:600; }
+.tk-mini { margin-left:auto; display:flex; gap:4px; }
+.tk-mini button { background:none; border:none; cursor:pointer; font-size:12px; opacity:.55; padding:1px 2px; }
+.tk-mini button:hover { opacity:1; }
+.tk-table { width:100%; border-collapse:collapse; font-size:12.5px; }
+.tk-table th { text-align:left; padding:9px 10px; color:#9aa3c0; font-size:11px; text-transform:uppercase; letter-spacing:.6px; border-bottom:1px solid rgba(255,255,255,0.1); cursor:pointer; user-select:none; white-space:nowrap; position:sticky; top:-14px; background:#16182e; z-index:2; }
+.tk-table th:hover { color:#fff; }
+.tk-table td { padding:9px 10px; border-bottom:1px solid rgba(255,255,255,0.05); vertical-align:middle; }
+.tk-table tr:hover td { background:rgba(255,255,255,0.03); }
+.tk-badge { padding:2px 9px; border-radius:10px; font-size:11px; white-space:nowrap; }
+.tk-empty { text-align:center; color:#667; padding:36px 10px; font-size:13px; }
+.tkc-overlay { position:absolute; inset:0; background:rgba(8,9,20,0.72); display:flex; align-items:center; justify-content:center; z-index:30; backdrop-filter:blur(3px); }
+.tkc-form { width:min(440px,92%); background:#181a30; border:1px solid rgba(255,255,255,0.12); border-radius:14px; padding:18px; display:flex; flex-direction:column; gap:10px; box-shadow:0 18px 50px rgba(0,0,0,0.5); }
+.tkc-form h4 { color:#fff; font-size:14px; margin:0 0 2px; }
+.tkc-inp, .tkc-form select, .tkc-form textarea { width:100%; padding:9px 11px; border-radius:9px; border:1px solid rgba(255,255,255,0.12); background:rgba(0,0,0,0.3); color:#eee; font-size:13px; outline:none; font-family:inherit; resize:vertical; }
+.tkc-inp:focus, .tkc-form select:focus, .tkc-form textarea:focus { border-color:rgba(102,126,234,0.6); }
+.tkc-form select { background:#181a30; }
+.tkc-row { display:flex; gap:8px; }
+.tkc-row > * { flex:1; }
+.tkc-btns { display:flex; gap:8px; justify-content:flex-end; margin-top:4px; }
+
+/* ── App Contacts ──────────────────────────────────────────── */
+.ct-avatar { width:32px; height:32px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; color:#fff; flex-shrink:0; }
+.ct-name-cell { display:flex; align-items:center; gap:10px; }
+.ct-role { font-size:11px; color:#8a93b5; }
+.ct-link { color:#a0c4ff; text-decoration:none; }
+.ct-link:hover { text-decoration:underline; }
+@media (max-width:760px){ .tk-kanban { grid-template-columns:1fr; } }
+</style>
+
+<script>
+/* ============================================================
+   1) FONDS D'ÉCRAN PRO — dégradés, couleurs, photos, images perso
+   ============================================================ */
+const WP_KEY = 'vd_wallpaper';
+const WP_IMGS_KEY = 'vd_wallpaper_imgs';
+const wpSolidColors = ['#0f0c29','#16213e','#0f172a','#1e293b','#312e81','#134e4a','#3f1d38','#0c4a6e','#365314','#581c87','#27272a','#7c2d12'];
+const wpPhotoIds = [1015, 1018, 1036, 1043, 29, 110];
+
+function wpGetImgs() { try { return JSON.parse(localStorage.getItem(WP_IMGS_KEY) || '[]'); } catch(e) { return []; } }
+function wpImgCss(u) { return 'url("' + u + '") center center / cover no-repeat fixed #0f0c29'; }
+
+function wpApply(css, silent) {
+  document.getElementById('desktop').style.background = css;
+  try { localStorage.setItem(WP_KEY, css); } catch(e) {}
+  if (typeof ghMarkDirty === 'function') ghMarkDirty();
+  wpMarkSelected();
+  if (!silent) notify('🎨 Fond d\'écran appliqué');
+}
+
+function wpApplySaved() {
+  const s = localStorage.getItem(WP_KEY);
+  if (s) document.getElementById('desktop').style.background = s;
+}
+
+/* Remplace la version d'origine : persiste le choix + évite de retomber sur le même fond */
+function changeWallpaper() {
+  const cur = localStorage.getItem(WP_KEY);
+  let wp = wallpapers[Math.floor(Math.random() * wallpapers.length)];
+  let n = 0;
+  while (wp === cur && n++ < 10) wp = wallpapers[Math.floor(Math.random() * wallpapers.length)];
+  wpApply(wp, true);
+  if (typeof closeContextMenu === 'function') closeContextMenu();
+  notify('🎨 Fond d\'écran changé');
+}
+
+function wpSetColor(c) { wpApply(c); }
+
+function wpSetUrl() {
+  const inp = document.getElementById('wp-url-inp');
+  const u = (inp.value || '').trim();
+  if (!/^https?:\/\//i.test(u)) { notify('⚠️ URL invalide — elle doit commencer par http(s)://'); return; }
+  notify('⏳ Chargement de l\'image…');
+  const img = new Image();
+  img.onload = () => { wpApply(wpImgCss(u)); inp.value = ''; };
+  img.onerror = () => notify('❌ Impossible de charger cette image');
+  img.src = u;
+}
+
+function wpUpload() { document.getElementById('wp-file-input').click(); }
+
+function wpHandleFile(input) {
+  const f = input.files && input.files[0];
+  input.value = '';
+  if (!f) return;
+  if (!f.type.startsWith('image/')) { notify('⚠️ Sélectionnez un fichier image'); return; }
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = new Image();
+    img.onload = () => {
+      const MAX = 1600;
+      let w = img.width, h = img.height;
+      if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; }
+      const c = document.createElement('canvas');
+      c.width = w; c.height = h;
+      c.getContext('2d').drawImage(img, 0, 0, w, h);
+      let q = 0.82, data = c.toDataURL('image/jpeg', q);
+      while (data.length > 1200000 && q > 0.3) { q -= 0.12; data = c.toDataURL('image/jpeg', q); }
+      if (data.length > 1500000) { notify('❌ Image trop lourde pour le stockage local'); return; }
+      let list = wpGetImgs();
+      list.unshift({ id: 'wpi-' + Date.now(), name: f.name, data: data });
+      list = list.slice(0, 4);
+      try { localStorage.setItem(WP_IMGS_KEY, JSON.stringify(list)); }
+      catch(err) {
+        list = list.slice(0, 1);
+        try { localStorage.setItem(WP_IMGS_KEY, JSON.stringify(list)); }
+        catch(e2) { notify('❌ Stockage local plein — libérez de l\'espace'); return; }
+      }
+      wpApply(wpImgCss(data), true);
+      wpRenderCustom();
+      notify('🖼️ « ' + f.name + ' » définie en fond d\'écran');
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(f);
+}
+
+function wpDeleteImg(id) {
+  localStorage.setItem(WP_IMGS_KEY, JSON.stringify(wpGetImgs().filter(i => i.id !== id)));
+  wpRenderCustom();
+  notify('🗑️ Image supprimée de la galerie');
+}
+
+function wpReset() { wpApply(wallpapers[0], true); notify('↺ Fond d\'écran par défaut restauré'); }
+
+function wpInitSettings() {
+  const grads = document.getElementById('wp-options');
+  if (grads) {
+    grads.innerHTML = '';
+    wallpapers.forEach(wp => {
+      const d = document.createElement('div');
+      d.className = 'color-opt';
+      d.style.background = wp;
+      d.dataset.wp = wp;
+      d.onclick = () => wpApply(wp);
+      grads.appendChild(d);
+    });
+  }
+  const cp = document.getElementById('wp-color-presets');
+  if (cp) {
+    cp.innerHTML = '';
+    wpSolidColors.forEach(c => {
+      const d = document.createElement('div');
+      d.className = 'wp-dot';
+      d.style.background = c;
+      d.dataset.wp = c;
+      d.title = c;
+      d.onclick = () => wpApply(c);
+      cp.appendChild(d);
+    });
+  }
+  const ip = document.getElementById('wp-img-presets');
+  if (ip) {
+    ip.innerHTML = '';
+    wpPhotoIds.forEach(id => {
+      const u  = 'https://picsum.photos/id/' + id + '/1920/1080';
+      const d = document.createElement('div');
+      d.className = 'wp-thumb';
+      d.style.backgroundImage = 'url("https://picsum.photos/id/' + id + '/192/116")';
+      d.dataset.wp = wpImgCss(u);
+      d.title = 'Photo HD (connexion internet requise)';
+      d.onclick = () => wpApply(wpImgCss(u));
+      ip.appendChild(d);
+    });
+  }
+  wpRenderCustom();
+}
+
+function wpRenderCustom() {
+  const wrap = document.getElementById('wp-custom-wrap');
+  const list = document.getElementById('wp-custom-list');
+  if (!wrap || !list) return;
+  const imgs = wpGetImgs();
+  wrap.style.display = imgs.length ? 'block' : 'none';
+  list.innerHTML = '';
+  imgs.forEach(i => {
+    const d = document.createElement('div');
+    d.className = 'wp-thumb';
+    d.style.backgroundImage = 'url("' + i.data + '")';
+    d.dataset.wp = wpImgCss(i.data);
+    d.title = i.name || 'Image importée';
+    d.onclick = () => wpApply(wpImgCss(i.data));
+    const del = document.createElement('button');
+    del.className = 'wp-del';
+    del.textContent = '✕';
+    del.title = 'Supprimer de la galerie';
+    del.onclick = (e) => { e.stopPropagation(); wpDeleteImg(i.id); };
+    d.appendChild(del);
+    list.appendChild(d);
+  });
+  wpMarkSelected();
+}
+
+function wpMarkSelected() {
+  const cur = localStorage.getItem(WP_KEY) || '';
+  document.querySelectorAll('#wp-options .color-opt, .wp-dot, .wp-thumb').forEach(el => {
+    el.classList.toggle('selected', el.dataset.wp === cur);
+  });
+}
+
+/* ============================================================
+   2) APP TÂCHES — Kanban drag & drop + vue tableau triable
+   ============================================================ */
+let tkTasks = [], tkView = 'kanban', tkQ = '', tkPrioFilter = 'all', tkSortF = 'due', tkSortD = 1, tkEditId = null;
+const TK_STATUSES = [['todo','📋 À faire'], ['doing','🚧 En cours'], ['done','✅ Terminé']];
+const TK_PRIOS = { high: ['Haute', '#f5574f'], med: ['Moyenne', '#f5c542'], low: ['Basse', '#44d17a'] };
+
+function tkLoad() {
+  try {
+    const s = localStorage.getItem('vd_tasks');
+    if (s) { tkTasks = JSON.parse(s); return; }
+  } catch(e) {}
+  const day = 86400000, now = Date.now(), d = t => new Date(t).toISOString().slice(0, 10);
+  tkTasks = [
+    { id:'tk-1', title:'Découvrir le gestionnaire de tâches', desc:'Glissez-déposez les cartes entre colonnes, ou passez en vue Tableau.', prio:'high', due:d(now + 2*day), status:'todo', created:now },
+    { id:'tk-2', title:'Personnaliser le fond d\'écran', desc:'Paramètres → Fond d\'écran : dégradés, couleurs, photos ou vos images.', prio:'med', due:d(now + 5*day), status:'todo', created:now },
+    { id:'tk-3', title:'Ajouter mes contacts professionnels', desc:'L\'application Contacts est sur le bureau.', prio:'low', due:'', status:'doing', created:now },
+    { id:'tk-4', title:'Explorer le tableur (app Fichiers)', desc:'', prio:'med', due:'', status:'done', created:now },
+  ];
+  tkSave();
+}
+
+function tkSave() {
+  localStorage.setItem('vd_tasks', JSON.stringify(tkTasks));
+  if (typeof ghMarkDirty === 'function') ghMarkDirty();
+}
+
+function tkAppHtml() {
+  return `<div class="tk-root" id="tk-root">
+    <div class="tk-toolbar">
+      <button class="wp-btn wp-btn-p" onclick="tkOpenForm()">➕ Nouvelle tâche</button>
+      <button class="wp-btn" id="tk-view-btn" onclick="tkToggleView()">📋 Vue tableau</button>
+      <input class="tkc-inp" style="flex:1;min-width:140px;max-width:260px" placeholder="🔍 Rechercher…" oninput="tkQ=this.value.toLowerCase();tkRender()">
+      <select class="tk-sel" onchange="tkPrioFilter=this.value;tkRender()">
+        <option value="all">Toutes priorités</option>
+        <option value="high">🔴 Haute</option>
+        <option value="med">🟡 Moyenne</option>
+        <option value="low">🟢 Basse</option>
+      </select>
+      <button class="wp-btn" onclick="tkExportCsv()" title="Exporter en CSV (Excel)">📤 CSV</button>
+    </div>
+    <div class="tk-stats" id="tk-stats"></div>
+    <div class="tk-content" id="tk-content"></div>
+    <div class="tkc-overlay" id="tk-form-overlay" style="display:none">
+      <div class="tkc-form">
+        <h4 id="tk-form-title">➕ Nouvelle tâche</h4>
+        <input class="tkc-inp" id="tk-f-title" placeholder="Titre de la tâche *" maxlength="120">
+        <textarea class="tkc-inp" id="tk-f-desc" rows="2" placeholder="Description (optionnel)"></textarea>
+        <div class="tkc-row">
+          <select id="tk-f-prio">
+            <option value="high">🔴 Priorité haute</option>
+            <option value="med" selected>🟡 Priorité moyenne</option>
+            <option value="low">🟢 Priorité basse</option>
+          </select>
+          <input type="date" class="tkc-inp" id="tk-f-due" title="Échéance">
+        </div>
+        <select id="tk-f-status">
+          <option value="todo">📋 À faire</option>
+          <option value="doing">🚧 En cours</option>
+          <option value="done">✅ Terminé</option>
+        </select>
+        <div class="tkc-btns">
+          <button class="wp-btn" onclick="tkCloseForm()">Annuler</button>
+          <button class="wp-btn wp-btn-p" onclick="tkSubmitForm()">💾 Enregistrer</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function tkInit() { tkLoad(); tkRender(); }
+
+function tkToggleView() {
+  tkView = tkView === 'kanban' ? 'table' : 'kanban';
+  const b = document.getElementById('tk-view-btn');
+  if (b) b.textContent = tkView === 'kanban' ? '📋 Vue tableau' : '🗂️ Vue Kanban';
+  tkRender();
+}
+
+function tkFiltered() {
+  return tkTasks.filter(t =>
+    (tkPrioFilter === 'all' || t.prio === tkPrioFilter) &&
+    (!tkQ || (t.title + ' ' + (t.desc || '')).toLowerCase().includes(tkQ))
+  );
+}
+
+function tkFmtDate(s) {
+  if (!s) return '—';
+  try { return new Date(s + 'T00:00:00').toLocaleDateString('fr-FR', { day:'numeric', month:'short', year:'numeric' }); }
+  catch(e) { return s; }
+}
+
+function tkIsLate(t) { return t.due && t.status !== 'done' && t.due < new Date().toISOString().slice(0, 10); }
+
+function tkRenderStats() {
+  const el = document.getElementById('tk-stats');
+  if (!el) return;
+  const total = tkTasks.length;
+  const done  = tkTasks.filter(t => t.status === 'done').length;
+  const doing = tkTasks.filter(t => t.status === 'doing').length;
+  const late  = tkTasks.filter(tkIsLate).length;
+  const pct   = total ? Math.round(done / total * 100) : 0;
+  el.innerHTML =
+    `<span><b>${total}</b> tâche${total > 1 ? 's' : ''}</span>` +
+    `<span>🚧 <b>${doing}</b> en cours</span>` +
+    `<span>✅ <b>${done}</b> terminée${done > 1 ? 's' : ''}</span>` +
+    (late ? `<span style="color:#f5574f">⚠ <b>${late}</b> en retard</span>` : '') +
+    `<div class="tk-progress" title="${pct}% terminé"><div style="width:${pct}%"></div></div>` +
+    `<span><b>${pct}%</b></span>`;
+}
+
+function tkCardHtml(t) {
+  const p = TK_PRIOS[t.prio] || TK_PRIOS.med;
+  const late = tkIsLate(t);
+  return `<div class="tk-card" style="--pc:${p[1]}" draggable="true" ondragstart="tkDragStart(event,'${t.id}')">
+    <div class="tk-card-title">${escHtml(t.title)}</div>
+    ${t.desc ? `<div class="tk-card-desc">${escHtml(t.desc)}</div>` : ''}
+    <div class="tk-card-meta">
+      <span style="color:${p[1]}">● ${p[0]}</span>
+      ${t.due ? `<span class="tk-due ${late ? 'late' : ''}">📅 ${tkFmtDate(t.due)}${late ? ' ⚠' : ''}</span>` : ''}
+      <span class="tk-mini">
+        <button onclick="tkOpenForm('${t.id}')" title="Modifier">✏️</button>
+        <button onclick="tkDelete('${t.id}')" title="Supprimer">🗑️</button>
+      </span>
+    </div>
+  </div>`;
+}
+
+function tkRender() {
+  tkRenderStats();
+  const el = document.getElementById('tk-content');
+  if (!el) return;
+  const list = tkFiltered();
+  if (tkView === 'kanban') {
+    el.innerHTML = '<div class="tk-kanban">' + TK_STATUSES.map(s => {
+      const items = list.filter(t => t.status === s[0]);
+      return `<div class="tk-col">
+        <div class="tk-col-hd"><span>${s[1]}</span><span class="tk-col-count">${items.length}</span></div>
+        <div class="tk-col-body"
+          ondragover="event.preventDefault();this.classList.add('over')"
+          ondragleave="this.classList.remove('over')"
+          ondrop="this.classList.remove('over');tkDrop(event,'${s[0]}')">
+          ${items.map(tkCardHtml).join('') || '<div class="tk-empty" style="padding:16px 4px;font-size:11.5px">Déposez une carte ici</div>'}
+        </div>
+      </div>`;
+    }).join('') + '</div>';
+  } else {
+    const arrow = f => tkSortF === f ? (tkSortD === 1 ? ' ▲' : ' ▼') : '';
+    const prioRank = { high: 3, med: 2, low: 1 };
+    const stRank = { todo: 1, doing: 2, done: 3 };
+    const sorted = [...list].sort((a, b) => {
+      let r = 0;
+      if (tkSortF === 'title')   r = a.title.localeCompare(b.title, 'fr');
+      if (tkSortF === 'prio')    r = (prioRank[a.prio] || 0) - (prioRank[b.prio] || 0);
+      if (tkSortF === 'due')     r = (a.due || '9999').localeCompare(b.due || '9999');
+      if (tkSortF === 'status')  r = (stRank[a.status] || 0) - (stRank[b.status] || 0);
+      if (tkSortF === 'created') r = a.created - b.created;
+      return r * tkSortD;
+    });
+    const rows = sorted.map(t => {
+      const p = TK_PRIOS[t.prio] || TK_PRIOS.med;
+      const late = tkIsLate(t);
+      return `<tr>
+        <td><div style="color:#fff">${escHtml(t.title)}</div>${t.desc ? `<div class="ct-role">${escHtml(t.desc)}</div>` : ''}</td>
+        <td><span class="tk-badge" style="background:${p[1]}22;color:${p[1]};border:1px solid ${p[1]}55">${p[0]}</span></td>
+        <td class="${late ? 'tk-due late' : ''}">${tkFmtDate(t.due)}${late ? ' ⚠' : ''}</td>
+        <td><select class="tk-sel" onchange="tkSetStatus('${t.id}',this.value)">
+          ${TK_STATUSES.map(s => `<option value="${s[0]}" ${t.status === s[0] ? 'selected' : ''}>${s[1]}</option>`).join('')}
+        </select></td>
+        <td style="color:#8a93b5">${new Date(t.created).toLocaleDateString('fr-FR')}</td>
+        <td><span class="tk-mini" style="margin-left:0">
+          <button onclick="tkOpenForm('${t.id}')" title="Modifier">✏️</button>
+          <button onclick="tkDelete('${t.id}')" title="Supprimer">🗑️</button>
+        </span></td>
+      </tr>`;
+    }).join('');
+    el.innerHTML = list.length
+      ? `<table class="tk-table"><thead><tr>
+          <th onclick="tkSetSort('title')">Tâche${arrow('title')}</th>
+          <th onclick="tkSetSort('prio')">Priorité${arrow('prio')}</th>
+          <th onclick="tkSetSort('due')">Échéance${arrow('due')}</th>
+          <th onclick="tkSetSort('status')">Statut${arrow('status')}</th>
+          <th onclick="tkSetSort('created')">Créée le${arrow('created')}</th>
+          <th>Actions</th>
+        </tr></thead><tbody>${rows}</tbody></table>`
+      : '<div class="tk-empty">Aucune tâche — cliquez sur ➕ Nouvelle tâche</div>';
+  }
+}
+
+function tkSetSort(f) {
+  if (tkSortF === f) tkSortD = -tkSortD; else { tkSortF = f; tkSortD = 1; }
+  tkRender();
+}
+
+function tkDragStart(e, id) { e.dataTransfer.setData('text/plain', id); }
+
+function tkDrop(e, status) {
+  e.preventDefault();
+  const id = e.dataTransfer.getData('text/plain');
+  const t = tkTasks.find(x => x.id === id);
+  if (!t || t.status === status) return;
+  t.status = status;
+  tkSave(); tkRender();
+  if (status === 'done') notify('🎉 Tâche terminée : ' + escHtml(t.title));
+}
+
+function tkSetStatus(id, status) {
+  const t = tkTasks.find(x => x.id === id);
+  if (!t) return;
+  t.status = status;
+  tkSave(); tkRender();
+}
+
+function tkOpenForm(id) {
+  tkEditId = id || null;
+  const t = id ? tkTasks.find(x => x.id === id) : null;
+  document.getElementById('tk-form-title').textContent = t ? '✏️ Modifier la tâche' : '➕ Nouvelle tâche';
+  document.getElementById('tk-f-title').value  = t ? t.title : '';
+  document.getElementById('tk-f-desc').value   = t ? (t.desc || '') : '';
+  document.getElementById('tk-f-prio').value   = t ? t.prio : 'med';
+  document.getElementById('tk-f-due').value    = t ? (t.due || '') : '';
+  document.getElementById('tk-f-status').value = t ? t.status : 'todo';
+  const _tkc = document.getElementById('tk-content');
+  if (_tkc) _tkc.scrollTop = 0;
+  document.getElementById('tk-form-overlay').style.display = 'flex';
+  setTimeout(() => document.getElementById('tk-f-title').focus(), 50);
+}
+
+function tkCloseForm() {
+  document.getElementById('tk-form-overlay').style.display = 'none';
+  tkEditId = null;
+}
+
+function tkSubmitForm() {
+  const title = document.getElementById('tk-f-title').value.trim();
+  if (!title) { notify('⚠️ Le titre est obligatoire'); return; }
+  const data = {
+    title: title,
+    desc:   document.getElementById('tk-f-desc').value.trim(),
+    prio:   document.getElementById('tk-f-prio').value,
+    due:    document.getElementById('tk-f-due').value,
+    status: document.getElementById('tk-f-status').value,
+  };
+  if (tkEditId) {
+    const t = tkTasks.find(x => x.id === tkEditId);
+    if (t) Object.assign(t, data);
+    notify('✏️ Tâche modifiée');
+  } else {
+    tkTasks.unshift(Object.assign({ id: 'tk-' + Date.now() + '-' + Math.floor(Math.random() * 1e4), created: Date.now() }, data));
+    notify('✅ Tâche ajoutée');
+  }
+  tkSave(); tkCloseForm(); tkRender();
+}
+
+function tkDelete(id) {
+  const t = tkTasks.find(x => x.id === id);
+  if (!t) return;
+  confirmDialog('Supprimer la tâche', `« ${escHtml(t.title)} » sera définitivement supprimée.`, () => {
+    tkTasks = tkTasks.filter(x => x.id !== id);
+    tkSave(); tkRender();
+    notify('🗑️ Tâche supprimée');
+  }, '🗑️');
+}
+
+function tkExportCsv() {
+  const stLabel = { todo: 'À faire', doing: 'En cours', done: 'Terminé' };
+  const rows = [['Titre', 'Description', 'Priorité', 'Échéance', 'Statut', 'Créée le']];
+  tkTasks.forEach(t => rows.push([
+    t.title, t.desc || '', (TK_PRIOS[t.prio] || ['?'])[0], t.due || '',
+    stLabel[t.status] || t.status, new Date(t.created).toLocaleDateString('fr-FR')
+  ]));
+  const csv = '\ufeff' + rows.map(r => r.map(c => '"' + String(c).replace(/"/g, '""') + '"').join(';')).join('\r\n');
+  downloadBlob(new Blob([csv], { type: 'text/csv;charset=utf-8' }), 'taches-' + new Date().toISOString().slice(0, 10) + '.csv');
+  notify('📤 Tâches exportées en CSV');
+}
+
+/* ============================================================
+   3) APP CONTACTS — tableau professionnel triable
+   ============================================================ */
+let ctContacts = [], ctQ = '', ctSortF = 'name', ctSortD = 1, ctEditId = null;
+const CT_TAGS = {
+  client:      ['Client',      '#06b6d4'],
+  fournisseur: ['Fournisseur', '#f5c542'],
+  partenaire:  ['Partenaire',  '#a855f7'],
+  equipe:      ['Équipe',      '#44d17a'],
+  autre:       ['Autre',       '#64748b'],
+};
+const CT_COLORS = ['#667eea', '#ec4899', '#f97316', '#44d17a', '#06b6d4', '#a855f7', '#f5574f', '#0ea5e9'];
+
+function ctLoad() {
+  try {
+    const s = localStorage.getItem('vd_contacts');
+    if (s) { ctContacts = JSON.parse(s); return; }
+  } catch(e) {}
+  ctContacts = [
+    { id:'ct-1', name:'Marie Dupont', company:'Studio Créatif', role:'Directrice artistique', email:'marie.dupont@exemple.fr', phone:'06 12 34 56 78', tag:'client', created:Date.now() },
+    { id:'ct-2', name:'Karim Benali', company:'TechServices', role:'Support informatique', email:'k.benali@exemple.fr', phone:'07 98 76 54 32', tag:'fournisseur', created:Date.now() },
+  ];
+  ctSave();
+}
+
+function ctSave() {
+  localStorage.setItem('vd_contacts', JSON.stringify(ctContacts));
+  if (typeof ghMarkDirty === 'function') ghMarkDirty();
+}
+
+function ctAppHtml() {
+  return `<div class="tk-root" id="ct-root">
+    <div class="tk-toolbar">
+      <button class="wp-btn wp-btn-p" onclick="ctOpenForm()">➕ Nouveau contact</button>
+      <input class="tkc-inp" style="flex:1;min-width:140px;max-width:280px" placeholder="🔍 Rechercher un nom, une société…" oninput="ctQ=this.value.toLowerCase();ctRender()">
+      <button class="wp-btn" onclick="ctExportCsv()" title="Exporter en CSV (Excel)">📤 CSV</button>
+    </div>
+    <div class="tk-stats" id="ct-stats"></div>
+    <div class="tk-content" id="ct-content"></div>
+    <div class="tkc-overlay" id="ct-form-overlay" style="display:none">
+      <div class="tkc-form">
+        <h4 id="ct-form-title">➕ Nouveau contact</h4>
+        <input class="tkc-inp" id="ct-f-name" placeholder="Nom complet *" maxlength="80">
+        <div class="tkc-row">
+          <input class="tkc-inp" id="ct-f-company" placeholder="Société">
+          <input class="tkc-inp" id="ct-f-role" placeholder="Fonction">
+        </div>
+        <div class="tkc-row">
+          <input class="tkc-inp" id="ct-f-email" type="email" placeholder="Email">
+          <input class="tkc-inp" id="ct-f-phone" placeholder="Téléphone">
+        </div>
+        <select id="ct-f-tag">
+          <option value="client">Client</option>
+          <option value="fournisseur">Fournisseur</option>
+          <option value="partenaire">Partenaire</option>
+          <option value="equipe">Équipe</option>
+          <option value="autre" selected>Autre</option>
+        </select>
+        <div class="tkc-btns">
+          <button class="wp-btn" onclick="ctCloseForm()">Annuler</button>
+          <button class="wp-btn wp-btn-p" onclick="ctSubmitForm()">💾 Enregistrer</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function ctInit() { ctLoad(); ctRender(); }
+
+function ctColor(name) {
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) % 997;
+  return CT_COLORS[h % CT_COLORS.length];
+}
+
+function ctInitials(name) {
+  return name.trim().split(/\s+/).slice(0, 2).map(w => w[0] ? w[0].toUpperCase() : '').join('') || '?';
+}
+
+function ctRender() {
+  const stats = document.getElementById('ct-stats');
+  if (stats) {
+    const counts = {};
+    ctContacts.forEach(c => { counts[c.tag] = (counts[c.tag] || 0) + 1; });
+    stats.innerHTML = `<span><b>${ctContacts.length}</b> contact${ctContacts.length > 1 ? 's' : ''}</span>` +
+      Object.entries(counts).map(([tag, n]) => {
+        const t = CT_TAGS[tag] || CT_TAGS.autre;
+        return `<span style="color:${t[1]}">● ${t[0]} : <b>${n}</b></span>`;
+      }).join('');
+  }
+  const el = document.getElementById('ct-content');
+  if (!el) return;
+  const list = ctContacts.filter(c =>
+    !ctQ || [c.name, c.company, c.role, c.email, c.phone, (CT_TAGS[c.tag] || [''])[0]].join(' ').toLowerCase().includes(ctQ)
+  );
+  const arrow = f => ctSortF === f ? (ctSortD === 1 ? ' ▲' : ' ▼') : '';
+  const sorted = [...list].sort((a, b) => {
+    const v = f => (f === 'tag' ? (CT_TAGS[a.tag] || [''])[0] : (a[f] || ''));
+    const w = f => (f === 'tag' ? (CT_TAGS[b.tag] || [''])[0] : (b[f] || ''));
+    return String(v(ctSortF)).localeCompare(String(w(ctSortF)), 'fr') * ctSortD;
+  });
+  const rows = sorted.map(c => {
+    const t = CT_TAGS[c.tag] || CT_TAGS.autre;
+    return `<tr>
+      <td><div class="ct-name-cell">
+        <span class="ct-avatar" style="background:${ctColor(c.name)}">${ctInitials(c.name)}</span>
+        <span><div style="color:#fff">${escHtml(c.name)}</div>${c.role ? `<div class="ct-role">${escHtml(c.role)}</div>` : ''}</span>
+      </div></td>
+      <td>${escHtml(c.company || '—')}</td>
+      <td>${c.email ? `<a class="ct-link" href="mailto:${escHtml(c.email)}">${escHtml(c.email)}</a>` : '—'}</td>
+      <td>${c.phone ? `<a class="ct-link" href="tel:${escHtml(c.phone.replace(/\s/g, ''))}">${escHtml(c.phone)}</a>` : '—'}</td>
+      <td><span class="tk-badge" style="background:${t[1]}22;color:${t[1]};border:1px solid ${t[1]}55">${t[0]}</span></td>
+      <td><span class="tk-mini" style="margin-left:0">
+        <button onclick="ctOpenForm('${c.id}')" title="Modifier">✏️</button>
+        <button onclick="ctDelete('${c.id}')" title="Supprimer">🗑️</button>
+      </span></td>
+    </tr>`;
+  }).join('');
+  el.innerHTML = list.length
+    ? `<table class="tk-table"><thead><tr>
+        <th onclick="ctSetSort('name')">Nom${arrow('name')}</th>
+        <th onclick="ctSetSort('company')">Société${arrow('company')}</th>
+        <th onclick="ctSetSort('email')">Email${arrow('email')}</th>
+        <th>Téléphone</th>
+        <th onclick="ctSetSort('tag')">Catégorie${arrow('tag')}</th>
+        <th>Actions</th>
+      </tr></thead><tbody>${rows}</tbody></table>`
+    : '<div class="tk-empty">Aucun contact — cliquez sur ➕ Nouveau contact</div>';
+}
+
+function ctSetSort(f) {
+  if (ctSortF === f) ctSortD = -ctSortD; else { ctSortF = f; ctSortD = 1; }
+  ctRender();
+}
+
+function ctOpenForm(id) {
+  ctEditId = id || null;
+  const c = id ? ctContacts.find(x => x.id === id) : null;
+  document.getElementById('ct-form-title').textContent = c ? '✏️ Modifier le contact' : '➕ Nouveau contact';
+  document.getElementById('ct-f-name').value    = c ? c.name : '';
+  document.getElementById('ct-f-company').value = c ? (c.company || '') : '';
+  document.getElementById('ct-f-role').value    = c ? (c.role || '') : '';
+  document.getElementById('ct-f-email').value   = c ? (c.email || '') : '';
+  document.getElementById('ct-f-phone').value   = c ? (c.phone || '') : '';
+  document.getElementById('ct-f-tag').value     = c ? (c.tag || 'autre') : 'autre';
+  const _ctc = document.getElementById('ct-content');
+  if (_ctc) _ctc.scrollTop = 0;
+  document.getElementById('ct-form-overlay').style.display = 'flex';
+  setTimeout(() => document.getElementById('ct-f-name').focus(), 50);
+}
+
+function ctCloseForm() {
+  document.getElementById('ct-form-overlay').style.display = 'none';
+  ctEditId = null;
+}
+
+function ctSubmitForm() {
+  const name = document.getElementById('ct-f-name').value.trim();
+  if (!name) { notify('⚠️ Le nom est obligatoire'); return; }
+  const data = {
+    name: name,
+    company: document.getElementById('ct-f-company').value.trim(),
+    role:    document.getElementById('ct-f-role').value.trim(),
+    email:   document.getElementById('ct-f-email').value.trim(),
+    phone:   document.getElementById('ct-f-phone').value.trim(),
+    tag:     document.getElementById('ct-f-tag').value,
+  };
+  if (ctEditId) {
+    const c = ctContacts.find(x => x.id === ctEditId);
+    if (c) Object.assign(c, data);
+    notify('✏️ Contact modifié');
+  } else {
+    ctContacts.unshift(Object.assign({ id: 'ct-' + Date.now() + '-' + Math.floor(Math.random() * 1e4), created: Date.now() }, data));
+    notify('👥 Contact ajouté');
+  }
+  ctSave(); ctCloseForm(); ctRender();
+}
+
+function ctDelete(id) {
+  const c = ctContacts.find(x => x.id === id);
+  if (!c) return;
+  confirmDialog('Supprimer le contact', `« ${escHtml(c.name)} » sera définitivement supprimé.`, () => {
+    ctContacts = ctContacts.filter(x => x.id !== id);
+    ctSave(); ctRender();
+    notify('🗑️ Contact supprimé');
+  }, '🗑️');
+}
+
+function ctExportCsv() {
+  const rows = [['Nom', 'Société', 'Fonction', 'Email', 'Téléphone', 'Catégorie']];
+  ctContacts.forEach(c => rows.push([c.name, c.company || '', c.role || '', c.email || '', c.phone || '', (CT_TAGS[c.tag] || ['Autre'])[0]]));
+  const csv = '\ufeff' + rows.map(r => r.map(x => '"' + String(x).replace(/"/g, '""') + '"').join(';')).join('\r\n');
+  downloadBlob(new Blob([csv], { type: 'text/csv;charset=utf-8' }), 'contacts-' + new Date().toISOString().slice(0, 10) + '.csv');
+  notify('📤 Contacts exportés en CSV');
+}
+
+/* ── Démarrage : restaurer le fond d'écran + charger les données ── */
+wpApplySaved();
+tkLoad();
+ctLoad();
+</script>
+
 </body>
 </html>
