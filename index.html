@@ -3288,17 +3288,22 @@
     container.innerHTML = '';
 
     // Assign positions for any icon that doesn't have one yet
+    let positionsDirty = false;
     apps.forEach(app => {
       if (hiddenApps[app.id]) return;
       if (!iconPositions[app.id]) {
         iconPositions[app.id] = getNextFreePos(app.id);
+        positionsDirty = true;
       }
     });
+    // Persist any newly-assigned positions immediately so they survive a reload
+    if (positionsDirty) saveIconPositions();
 
     apps.forEach(app => {
       if (hiddenApps[app.id]) return; // skip hidden icons
 
       const pos = iconPositions[app.id];
+      if (!pos) return; // safety guard
       const el  = document.createElement('div');
       el.className  = 'desktop-icon';
       el.dataset.id = app.id;
@@ -4946,11 +4951,19 @@
         fetchedFaviconUrl = null; fetchedSiteName = null;
         apps.push(newApp);
         saveModules();
-        renderDesktopIcons();
+        renderDesktopIcons();   // assigns iconPositions[id] and saves it
         renderStartMenu();
         closeModuleModal();
         notify(`📦 Module "${name}" ajouté !`);
         openApp(id);
+        // Scroll desktop to make the new icon visible if it's off-screen
+        const newEl = document.querySelector(`.desktop-icon[data-id="${id}"]`);
+        if (newEl) {
+          const p = iconPositions[id];
+          if (p && (p.x > window.innerWidth - 110 || p.y > window.innerHeight - 110)) {
+            notify('💡 Icône placée hors de l\'écran visible — utilisez Clic droit › Réorganiser pour la retrouver');
+          }
+        }
       },
       '📦', 'Ajouter', 'success'
     );
