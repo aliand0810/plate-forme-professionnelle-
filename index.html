@@ -75,10 +75,10 @@
   }
 
   .desktop-icon .icon-img img.favicon {
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
     object-fit: cover;
-    border-radius: 8px;
+    border-radius: 10px;
     display: block;
     flex-shrink: 0;
   }
@@ -3511,6 +3511,35 @@
     }
   };
 
+  // ── Rafraîchir toutes les icônes de modules (haute résolution) ──────────
+  window.refreshAllModuleFavicons = async function() {
+    const mods = apps.filter(a => a.type === 'module' && a.url);
+    if (!mods.length) { notify('Aucun module à rafraîchir'); return; }
+    notify(`🔄 Récupération des icônes pour ${mods.length} module(s)…`);
+    let updated = 0;
+    await Promise.all(mods.map(async mod => {
+      try {
+        const url = mod.url.startsWith('http') ? mod.url : 'https://' + mod.url;
+        const googleFav = getFaviconUrl(url);
+        const htmlMeta  = await fetchHtmlMetadata(url);
+        let best = htmlMeta && htmlMeta.favicon ? htmlMeta.favicon : googleFav;
+        // Essayer la conversion base64 pour stockage fiable
+        if (best && best !== googleFav) {
+          const b64 = await fetchFaviconBase64(best);
+          if (b64) best = b64;
+        }
+        if (best && best !== mod.faviconUrl) {
+          mod.faviconUrl = best;
+          updated++;
+        }
+      } catch(e) { /* ignorer les erreurs individuelles */ }
+    }));
+    saveModules();
+    renderDesktopIcons();
+    renderStartMenu();
+    notify(`✅ ${updated} icône(s) mise(s) à jour sur ${mods.length} modules`);
+  };
+
   function getDomain(url) {
     try {
       const u = new URL(url.startsWith('http') ? url : 'https://' + url);
@@ -4555,6 +4584,7 @@
             <label>Modules installés</label>
             <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
               <button onclick="openModuleModal()" style="padding:10px 18px;border-radius:10px;border:none;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;cursor:pointer;font-size:13px;">➕ Ajouter un module</button>
+              <button onclick="refreshAllModuleFavicons()" style="padding:10px 18px;border-radius:10px;border:1px solid rgba(102,126,234,0.35);background:rgba(102,126,234,0.1);color:#8fa8f5;cursor:pointer;font-size:13px;" title="Met à jour toutes les icônes avec la meilleure qualité disponible">🖼 Rafraîchir les icônes</button>
               <button onclick="clearModules()" style="padding:10px 18px;border-radius:10px;border:1px solid rgba(255,255,255,0.12);background:transparent;color:#ccc;cursor:pointer;font-size:13px;">🗑️ Supprimer tous</button>
             </div>
             <div id="settings-module-list"></div>
@@ -7515,7 +7545,7 @@
       if (raw) { try { profilesData[p.id] = JSON.parse(raw); } catch(e) {} }
     });
     return JSON.stringify({
-      version: '3.1',
+      version: '3.2',
       exported: new Date().toISOString(),
       modules:  JSON.parse(localStorage.getItem('vd_modules')       || '[]'),
       notes:    JSON.parse(localStorage.getItem('vd_notes_v2')      || '{}'),
@@ -7527,6 +7557,11 @@
       filesystem:    JSON.parse(localStorage.getItem('vd_filesystem')      || '{}'),
       iconPositions:     JSON.parse(localStorage.getItem('vd_icon_positions')  || '{}'),
       fullscreenDefault: localStorage.getItem(FS_PREF_KEY) === '1',
+      finances: {
+        transactions:  JSON.parse(localStorage.getItem('fin_tx')   || '[]'),
+        installments:  JSON.parse(localStorage.getItem('fin_inst') || '[]'),
+        settings:      JSON.parse(localStorage.getItem('fin_cfg')  || '{}'),
+      },
       profiles: {
         list:         profiles || [],
         activeId:     activeProfileId || null,
@@ -7545,8 +7580,16 @@
     if (obj.wallpaper)     { try { localStorage.setItem('vd_wallpaper', obj.wallpaper); document.getElementById('desktop').style.background = obj.wallpaper; } catch(e) {} }
     if (obj.hiddenIcons)   { try { localStorage.setItem('vd_hidden_icons', JSON.stringify(obj.hiddenIcons)); hiddenApps = obj.hiddenIcons; renderDesktopIcons(); } catch(e) {} }
     if (obj.filesystem)    localStorage.setItem('vd_filesystem',     JSON.stringify(obj.filesystem));
-    if (obj.iconPositions)         localStorage.setItem('vd_icon_positions', JSON.stringify(obj.iconPositions));
+    if (obj.iconPositions) localStorage.setItem('vd_icon_positions', JSON.stringify(obj.iconPositions));
     if (typeof obj.fullscreenDefault === 'boolean') localStorage.setItem(FS_PREF_KEY, obj.fullscreenDefault ? '1' : '0');
+    // Restaurer les données financières
+    if (obj.finances) {
+      if (obj.finances.transactions) localStorage.setItem('fin_tx',   JSON.stringify(obj.finances.transactions));
+      if (obj.finances.installments) localStorage.setItem('fin_inst', JSON.stringify(obj.finances.installments));
+      if (obj.finances.settings)     localStorage.setItem('fin_cfg',  JSON.stringify(obj.finances.settings));
+      // Recharger le panneau financier si ouvert
+      if (typeof window.finInit === 'function') window.finInit();
+    }
     // Restore profiles
     if (obj.profiles && obj.profiles.list) {
       localStorage.setItem(PROFILES_KEY, JSON.stringify(obj.profiles.list));
@@ -8797,7 +8840,7 @@
 
   const PROFILES_KEY       = 'vd_profiles';
   const ACTIVE_PROFILE_KEY = 'vd_active_profile';
-  const PROFILE_DATA_KEYS  = ['vd_modules','vd_notes_v2','vd_agenda','vd_filesystem','vd_icon_positions','vd_tasks','vd_contacts','vd_wallpaper','vd_wallpaper_imgs','vd_hidden_icons'];
+  const PROFILE_DATA_KEYS  = ['vd_modules','vd_notes_v2','vd_agenda','vd_filesystem','vd_icon_positions','vd_tasks','vd_contacts','vd_wallpaper','vd_wallpaper_imgs','vd_hidden_icons','fin_tx','fin_inst','fin_cfg'];
   const PCM_AVATARS = ['👤','👨','👩','🧑','👨‍💼','👩‍💼','🧑‍💻','👨‍🎨','👩‍🎨','🦸','🧙','🤖','😎','🐱','🐸','🦊','🌟','🏆','⚡','🔥'];
   const PCM_COLORS  = ['#667eea','#ec4899','#f97316','#44d17a','#06b6d4','#f5c542','#a855f7','#f5574f','#64748b','#0ea5e9'];
 
