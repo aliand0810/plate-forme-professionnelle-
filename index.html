@@ -2588,6 +2588,224 @@
   .profile-list-btn:hover { background: rgba(255,255,255,0.08); color: #fff; }
   .profile-list-btn.active-tag { background: rgba(102,126,234,0.18); color: #8fa8f5; border-color: rgba(102,126,234,0.35); cursor: default; }
   .profile-list-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  /* ════════════════════════════════════════════════════════
+     SYSTÈME DE THÈMES — Bureau Virtuel Pro
+  ════════════════════════════════════════════════════════ */
+
+  /* Variables par défaut — Cosmos (bleu/violet actuel) */
+  :root {
+    --t-desk:     linear-gradient(135deg,#0f0c29 0%,#302b63 50%,#24243e 100%);
+    --t-taskbar:  rgba(15,12,41,0.92);
+    --t-taskbar-rgb: 15,12,41;
+    --t-taskbar-a: 0.92;
+    --t-taskbar-b:rgba(255,255,255,0.10);
+    --t-win:      rgba(22,20,55,0.97);
+    --t-win-b:    rgba(255,255,255,0.10);
+    --t-win-sh:   0 8px 40px rgba(0,0,0,0.4);
+    --t-win-hdr:  rgba(255,255,255,0.04);
+    --t-start:    rgba(20,18,50,0.96);
+    --t-panel:    rgba(14,12,36,0.97);
+    --t-panel-b:  rgba(255,255,255,0.13);
+    --t-a1:       #667eea;
+    --t-a2:       #764ba2;
+    --t-agrad:    linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+    --t-aglow:    rgba(102,126,234,0.50);
+    --t-asub:     rgba(102,126,234,0.12);
+    --t-asub-h:   rgba(102,126,234,0.25);
+    --t-active:   rgba(102,126,234,0.35);
+  }
+
+  /* Transitions fluides sur les éléments structurels */
+  #desktop, #taskbar, .window, .window-titlebar,
+  #start-menu, #start-btn, .taskbar-item,
+  #icon-ctx-menu, #context-menu, #hidden-panel, #net-panel {
+    transition: background 0.38s ease, border-color 0.38s ease,
+                box-shadow 0.38s ease !important;
+  }
+
+  /* Application des variables — #desktop sans !important pour que le fond
+     d'écran (style inline) garde la priorité sur le thème */
+  #desktop                       { background: var(--t-desk); }
+  #taskbar                       { background: rgba(var(--t-taskbar-rgb), var(--t-taskbar-a)) !important; border-top-color: var(--t-taskbar-b) !important; }
+  .window                        { background: var(--t-win)      !important; border-color: var(--t-win-b) !important; box-shadow: var(--t-win-sh) !important; }
+  .window-titlebar               { background: var(--t-win-hdr)  !important; border-bottom: 1px solid var(--t-win-b) !important; }
+  #start-menu                    { background: var(--t-start)    !important; border-color: var(--t-panel-b) !important; }
+  #start-btn                     { background: var(--t-agrad)    !important; }
+  #start-btn:hover               { box-shadow: 0 0 22px var(--t-aglow) !important; }
+  .taskbar-item.active           { background: var(--t-active)   !important; border-bottom-color: var(--t-a1) !important; }
+  .wt-link                       { color: var(--t-a1)  !important; background: var(--t-asub)   !important; }
+  .wt-link:hover                 { background: var(--t-asub-h)   !important; }
+  .hp-show-btn                   { color: var(--t-a1)  !important; background: var(--t-asub)   !important; }
+  .hp-show-btn:hover             { background: var(--t-asub-h)   !important; }
+  #icon-ctx-menu, #context-menu,
+  #hidden-panel, #net-panel      { background: var(--t-panel)    !important; border-color: var(--t-panel-b) !important; }
+
+  /* ── CYBERPUNK ────────────────────────────────────────── */
+  [data-theme="cyberpunk"] {
+    --t-desk:    radial-gradient(ellipse at 12% 88%,#0d0020 0%,#05040a 45%,#000818 100%);
+    --t-taskbar: rgba(2,0,10,0.95); --t-taskbar-rgb:2,0,10; --t-taskbar-b:rgba(255,0,128,0.30);
+    --t-win:     rgba(8,4,20,0.97); --t-win-b:rgba(255,0,128,0.22);
+    --t-win-sh:  0 8px 48px rgba(255,0,128,0.18), 0 0 0 1px rgba(255,0,128,0.06);
+    --t-win-hdr: rgba(255,0,128,0.05);
+    --t-start:   rgba(5,2,16,0.97); --t-panel:rgba(5,2,16,0.97); --t-panel-b:rgba(255,0,128,0.26);
+    --t-a1:#ff0080; --t-a2:#00ffcc;
+    --t-agrad:   linear-gradient(135deg,#ff0080 0%,#7700ff 100%);
+    --t-aglow:   rgba(255,0,128,0.68);
+    --t-asub:    rgba(255,0,128,0.10); --t-asub-h:rgba(255,0,128,0.22);
+    --t-active:  rgba(255,0,128,0.18);
+  }
+
+  /* ── AURORE BORÉALE ──────────────────────────────────── */
+  [data-theme="aurore"] {
+    --t-desk:    radial-gradient(ellipse at 25% 55%,#001a2e 0%,#020d18 50%,#031526 100%);
+    --t-taskbar: rgba(1,8,20,0.94); --t-taskbar-rgb:1,8,20; --t-taskbar-b:rgba(0,210,170,0.24);
+    --t-win:     rgba(2,12,26,0.97); --t-win-b:rgba(0,210,170,0.17);
+    --t-win-sh:  0 8px 44px rgba(0,210,170,0.10);
+    --t-win-hdr: rgba(0,210,170,0.04);
+    --t-start:   rgba(1,8,20,0.97); --t-panel:rgba(1,8,20,0.97); --t-panel-b:rgba(0,210,170,0.22);
+    --t-a1:#00d4aa; --t-a2:#7c3aed;
+    --t-agrad:   linear-gradient(135deg,#00d4aa 0%,#7c3aed 100%);
+    --t-aglow:   rgba(0,212,170,0.58);
+    --t-asub:    rgba(0,212,170,0.10); --t-asub-h:rgba(0,212,170,0.22);
+    --t-active:  rgba(0,212,170,0.17);
+  }
+
+  /* ── SOLAIRE ─────────────────────────────────────────── */
+  [data-theme="solaire"] {
+    --t-desk:    radial-gradient(ellipse at 75% 15%,#220e00 0%,#0d0600 50%,#140900 100%);
+    --t-taskbar: rgba(10,5,0,0.95); --t-taskbar-rgb:10,5,0; --t-taskbar-b:rgba(245,158,11,0.24);
+    --t-win:     rgba(16,8,2,0.97); --t-win-b:rgba(245,158,11,0.17);
+    --t-win-sh:  0 8px 44px rgba(239,68,68,0.16);
+    --t-win-hdr: rgba(245,158,11,0.05);
+    --t-start:   rgba(10,5,0,0.97); --t-panel:rgba(10,5,0,0.97); --t-panel-b:rgba(245,158,11,0.22);
+    --t-a1:#f59e0b; --t-a2:#ef4444;
+    --t-agrad:   linear-gradient(135deg,#f59e0b 0%,#ef4444 100%);
+    --t-aglow:   rgba(245,158,11,0.60);
+    --t-asub:    rgba(245,158,11,0.10); --t-asub-h:rgba(245,158,11,0.22);
+    --t-active:  rgba(245,158,11,0.17);
+  }
+
+  /* ── ÉMERAUDE ────────────────────────────────────────── */
+  [data-theme="emeraude"] {
+    --t-desk:    radial-gradient(ellipse at 15% 80%,#001a0e 0%,#030e06 50%,#030f08 100%);
+    --t-taskbar: rgba(2,8,4,0.95); --t-taskbar-rgb:2,8,4; --t-taskbar-b:rgba(16,185,129,0.24);
+    --t-win:     rgba(3,12,6,0.97); --t-win-b:rgba(16,185,129,0.16);
+    --t-win-sh:  0 8px 44px rgba(16,185,129,0.10);
+    --t-win-hdr: rgba(16,185,129,0.04);
+    --t-start:   rgba(2,8,4,0.97); --t-panel:rgba(2,8,4,0.97); --t-panel-b:rgba(16,185,129,0.22);
+    --t-a1:#10b981; --t-a2:#34d399;
+    --t-agrad:   linear-gradient(135deg,#10b981 0%,#34d399 100%);
+    --t-aglow:   rgba(16,185,129,0.58);
+    --t-asub:    rgba(16,185,129,0.10); --t-asub-h:rgba(16,185,129,0.22);
+    --t-active:  rgba(16,185,129,0.17);
+  }
+
+  /* ── OCÉAN PROFOND ───────────────────────────────────── */
+  [data-theme="ocean"] {
+    --t-desk:    radial-gradient(ellipse at 50% 100%,#001840 0%,#020614 60%,#020a1e 100%);
+    --t-taskbar: rgba(1,4,14,0.95); --t-taskbar-rgb:1,4,14; --t-taskbar-b:rgba(6,182,212,0.24);
+    --t-win:     rgba(2,6,20,0.97); --t-win-b:rgba(6,182,212,0.16);
+    --t-win-sh:  0 8px 44px rgba(6,182,212,0.10);
+    --t-win-hdr: rgba(6,182,212,0.04);
+    --t-start:   rgba(1,4,14,0.97); --t-panel:rgba(1,4,14,0.97); --t-panel-b:rgba(6,182,212,0.22);
+    --t-a1:#06b6d4; --t-a2:#3b82f6;
+    --t-agrad:   linear-gradient(135deg,#06b6d4 0%,#3b82f6 100%);
+    --t-aglow:   rgba(6,182,212,0.58);
+    --t-asub:    rgba(6,182,212,0.10); --t-asub-h:rgba(6,182,212,0.22);
+    --t-active:  rgba(6,182,212,0.17);
+  }
+
+  /* ── SAKURA ──────────────────────────────────────────── */
+  [data-theme="sakura"] {
+    --t-desk:    radial-gradient(ellipse at 60% 25%,#1a0330 0%,#0d0218 50%,#120220 100%);
+    --t-taskbar: rgba(10,2,16,0.95); --t-taskbar-rgb:10,2,16; --t-taskbar-b:rgba(236,72,153,0.26);
+    --t-win:     rgba(14,3,24,0.97); --t-win-b:rgba(236,72,153,0.17);
+    --t-win-sh:  0 8px 44px rgba(236,72,153,0.14);
+    --t-win-hdr: rgba(236,72,153,0.05);
+    --t-start:   rgba(10,2,16,0.97); --t-panel:rgba(10,2,16,0.97); --t-panel-b:rgba(236,72,153,0.24);
+    --t-a1:#ec4899; --t-a2:#a855f7;
+    --t-agrad:   linear-gradient(135deg,#ec4899 0%,#a855f7 100%);
+    --t-aglow:   rgba(236,72,153,0.60);
+    --t-asub:    rgba(236,72,153,0.10); --t-asub-h:rgba(236,72,153,0.22);
+    --t-active:  rgba(236,72,153,0.17);
+  }
+
+  /* Zone glisser-déposer fond d'écran */
+  #wp-drop-zone:hover, #wp-drop-zone.drag-over {
+    border-color: var(--t-a1) !important;
+    background: var(--t-asub) !important;
+  }
+  #wp-drop-zone.drag-over { transform: scale(1.01); }
+
+  /* ════ THEME PICKER ════ */
+  #theme-picker {
+    display:none; position:fixed; bottom:66px; right:12px; z-index:9900;
+    width:330px;
+    background:var(--t-panel); border:1px solid var(--t-panel-b);
+    border-radius:20px; padding:20px;
+    box-shadow:0 28px 72px rgba(0,0,0,0.75), 0 0 0 1px rgba(255,255,255,0.04);
+    backdrop-filter:blur(30px);
+    animation:tpIn .22s cubic-bezier(.25,.8,.25,1);
+  }
+  #theme-picker.show { display:block; }
+  @keyframes tpIn {
+    from { opacity:0; transform:translateY(16px) scale(.95); }
+    to   { opacity:1; transform:translateY(0) scale(1); }
+  }
+  .tp-hdr { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+  .tp-title { font-size:13.5px; font-weight:700; color:#fff; letter-spacing:.2px; }
+  .tp-sub { font-size:11px; color:#556; margin-top:2px; }
+  .tp-close {
+    background:none; border:none; color:#555; font-size:19px;
+    cursor:pointer; padding:0 3px; line-height:1; transition:color .15s;
+  }
+  .tp-close:hover { color:#f5574f; }
+  .tp-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+  .tp-btn {
+    background:none; border:2px solid rgba(255,255,255,0.08);
+    border-radius:13px; padding:0; cursor:pointer; overflow:hidden;
+    transition:border-color .2s, transform .16s, box-shadow .2s;
+    display:flex; flex-direction:column; align-items:center;
+  }
+  .tp-btn:hover { transform:translateY(-3px); border-color:rgba(255,255,255,0.24); }
+  .tp-btn.tp-active { border-color:var(--t-a1); box-shadow:0 0 0 2px var(--t-aglow); }
+  .tp-preview { width:100%; height:54px; position:relative; overflow:hidden; }
+  .tp-preview::after {
+    content:''; position:absolute; bottom:7px; left:50%; transform:translateX(-50%);
+    width:32px; height:4px; border-radius:4px;
+  }
+  .tp-label {
+    font-size:9.5px; font-weight:600; color:#888; padding:5px 3px 7px;
+    letter-spacing:.3px; text-align:center; white-space:nowrap;
+    overflow:hidden; text-overflow:ellipsis; width:100%;
+  }
+  .tp-btn.tp-active .tp-label { color:var(--t-a1); }
+
+  /* Per-theme preview fills */
+  [data-tptheme="cosmos"]    .tp-preview { background:linear-gradient(135deg,#0f0c29,#302b63,#24243e); }
+  [data-tptheme="cosmos"]    .tp-preview::after { background:linear-gradient(90deg,#667eea,#764ba2); box-shadow:0 0 8px rgba(102,126,234,.7); }
+  [data-tptheme="cyberpunk"] .tp-preview { background:radial-gradient(ellipse at 30% 80%,#0d0020,#05040a); }
+  [data-tptheme="cyberpunk"] .tp-preview::after { background:linear-gradient(90deg,#ff0080,#7700ff); box-shadow:0 0 8px rgba(255,0,128,.7); }
+  [data-tptheme="aurore"]    .tp-preview { background:radial-gradient(ellipse at 25% 55%,#001a2e,#020d18); }
+  [data-tptheme="aurore"]    .tp-preview::after { background:linear-gradient(90deg,#00d4aa,#7c3aed); box-shadow:0 0 8px rgba(0,212,170,.7); }
+  [data-tptheme="solaire"]   .tp-preview { background:radial-gradient(ellipse at 75% 15%,#220e00,#0d0600); }
+  [data-tptheme="solaire"]   .tp-preview::after { background:linear-gradient(90deg,#f59e0b,#ef4444); box-shadow:0 0 8px rgba(245,158,11,.7); }
+  [data-tptheme="emeraude"]  .tp-preview { background:radial-gradient(ellipse at 15% 80%,#001a0e,#030e06); }
+  [data-tptheme="emeraude"]  .tp-preview::after { background:linear-gradient(90deg,#10b981,#34d399); box-shadow:0 0 8px rgba(16,185,129,.7); }
+  [data-tptheme="ocean"]     .tp-preview { background:radial-gradient(ellipse at 50% 100%,#001840,#020614); }
+  [data-tptheme="ocean"]     .tp-preview::after { background:linear-gradient(90deg,#06b6d4,#3b82f6); box-shadow:0 0 8px rgba(6,182,212,.7); }
+  [data-tptheme="sakura"]    .tp-preview { background:radial-gradient(ellipse at 60% 25%,#1a0330,#0d0218); }
+  [data-tptheme="sakura"]    .tp-preview::after { background:linear-gradient(90deg,#ec4899,#a855f7); box-shadow:0 0 8px rgba(236,72,153,.7); }
+
+  /* Bouton thème dans la barre des tâches */
+  #tb-theme-btn {
+    background:none; border:none; cursor:pointer; padding:5px 8px;
+    border-radius:8px; font-size:15px; line-height:1; color:#aaa;
+    transition:background .15s, color .15s, box-shadow .2s;
+  }
+  #tb-theme-btn:hover { background:rgba(255,255,255,0.10); color:#fff; }
+  #tb-theme-btn.t-active { color:var(--t-a1); background:var(--t-asub); box-shadow:0 0 8px var(--t-aglow); }
 </style>
 </head>
 <body>
@@ -2637,8 +2855,69 @@
       </div>
       <span id="tb-bat-pct">--%</span>
     </div>
+    <button id="tb-fin-btn" onclick="finToggle()" title="Panneau financier">💰</button>
+    <button id="tb-theme-btn" onclick="themeTogglePicker()" title="Changer de thème">🎨</button>
     <div id="clock"></div>
   </div>
+</div>
+
+<!-- ═══ THEME PICKER ═══ -->
+<div id="theme-picker">
+  <div class="tp-hdr">
+    <div>
+      <div class="tp-title">🎨 Thème du bureau</div>
+      <div class="tp-sub">7 ambiances disponibles</div>
+    </div>
+    <button class="tp-close" onclick="themeClosePicker()">✕</button>
+  </div>
+  <div class="tp-grid">
+    <button class="tp-btn tp-active" data-tptheme="cosmos"    onclick="themeApply('cosmos')">
+      <div class="tp-preview"></div><div class="tp-label">Cosmos</div>
+    </button>
+    <button class="tp-btn" data-tptheme="cyberpunk" onclick="themeApply('cyberpunk')">
+      <div class="tp-preview"></div><div class="tp-label">Cyberpunk</div>
+    </button>
+    <button class="tp-btn" data-tptheme="aurore"    onclick="themeApply('aurore')">
+      <div class="tp-preview"></div><div class="tp-label">Aurore</div>
+    </button>
+    <button class="tp-btn" data-tptheme="solaire"   onclick="themeApply('solaire')">
+      <div class="tp-preview"></div><div class="tp-label">Solaire</div>
+    </button>
+    <button class="tp-btn" data-tptheme="emeraude"  onclick="themeApply('emeraude')">
+      <div class="tp-preview"></div><div class="tp-label">Émeraude</div>
+    </button>
+    <button class="tp-btn" data-tptheme="ocean"     onclick="themeApply('ocean')">
+      <div class="tp-preview"></div><div class="tp-label">Océan</div>
+    </button>
+    <button class="tp-btn" data-tptheme="sakura"    onclick="themeApply('sakura')">
+      <div class="tp-preview"></div><div class="tp-label">Sakura</div>
+    </button>
+  </div>
+</div>
+
+<!-- ═══ OVERLAY + PANNEAU FINANCIER DROIT ═══ -->
+<div id="fin-overlay" onclick="finClose()"></div>
+<div id="fin-panel">
+
+  <!-- Poignée de redimensionnement gauche -->
+  <div id="fin-resize-handle" title="Redimensionner le panneau"></div>
+
+  <!-- En-tête -->
+  <div class="fin-hdr">
+    <div class="fin-hdr-top">
+      <div class="fin-title">💰 Finances</div>
+      <button class="fin-close-btn" onclick="finClose()">✕</button>
+    </div>
+    <div class="fin-tabs">
+      <button class="fin-tab active" id="ftab-saisie"    onclick="finTab('saisie')">📝 Saisie</button>
+      <button class="fin-tab"        id="ftab-graphes"   onclick="finTab('graphes')">📊 Graphes</button>
+      <button class="fin-tab"        id="ftab-bilan"     onclick="finTab('bilan')">📋 Bilan</button>
+      <button class="fin-tab"        id="ftab-mensuel"   onclick="finTab('mensuel')">📅 Mensuel</button>
+    </div>
+  </div>
+
+  <!-- Corps -->
+  <div class="fin-body" id="fin-body"></div>
 </div>
 
 <div id="start-menu">
@@ -2719,6 +2998,15 @@
         <input type="text" id="mod-icon" class="mm-emoji-input"
           placeholder="📦" maxlength="2">
         <span class="mm-emoji-hint">Emoji affiché si le favicon du site ne se charge pas. Laissez vide pour utiliser le favicon automatique.</span>
+      </div>
+
+      <div id="mod-refresh-row" style="display:none; margin-top:6px;">
+        <button type="button" onclick="previewModuleUrl(true)"
+          style="display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:9px;border:1px solid rgba(102,126,234,0.35);background:rgba(102,126,234,0.10);color:#a0aeff;cursor:pointer;font-size:12px;font-family:inherit;transition:background .15s;"
+          onmouseover="this.style.background='rgba(102,126,234,0.22)'" onmouseout="this.style.background='rgba(102,126,234,0.10)'">
+          🔄 Rafraîchir l'icône
+        </button>
+        <span style="font-size:11px;color:rgba(255,255,255,0.45);margin-left:8px;">L'icône ne s'est pas chargée correctement ?</span>
       </div>
 
       <div class="modal-btns">
@@ -3625,10 +3913,12 @@
       w.el.style.left = '0';
       w.el.style.top = '0';
       w.el.style.borderRadius = '0';
+      w.el.style.animation = 'none';
       w.maximized = true;
     } else {
       Object.assign(w.el.style, w.prev);
-      w.el.style.borderRadius = '14px';
+      w.el.style.borderRadius = '18px';
+      w.el.style.animation = '';
       w.maximized = false;
     }
   }
@@ -4097,35 +4387,73 @@
         return `<div class="settings-panel">
           <h3>⚙️ Paramètres du Bureau</h3>
           <div class="setting-group">
-            <label>🎨 Fond d'écran</label>
+            <label>🖼️ Fond d'écran</label>
+
+            <!-- Aperçu du fond actuel -->
+            <div id="wp-current-preview" style="
+              width:100%; height:72px; border-radius:12px; margin-bottom:14px;
+              background:var(--t-desk); border:1px solid rgba(255,255,255,0.10);
+              display:flex; align-items:center; justify-content:center;
+              font-size:11px; color:rgba(255,255,255,0.4); letter-spacing:.5px;
+              position:relative; overflow:hidden;
+            ">
+              <span id="wp-current-label" style="background:rgba(0,0,0,0.4);padding:3px 10px;border-radius:6px;">Thème actif</span>
+              <button onclick="wpReset()" title="Retirer le fond d'écran personnalisé"
+                style="position:absolute;top:6px;right:8px;background:rgba(0,0,0,0.4);border:none;color:#ccc;
+                       border-radius:6px;padding:2px 8px;font-size:11px;cursor:pointer;">✕ Retirer</button>
+            </div>
+
             <div class="wp-sec">Dégradés</div>
             <div class="color-options" id="wp-options"></div>
+
             <div class="wp-sec">Couleurs unies</div>
             <div class="wp-color-row" id="wp-color-presets"></div>
-            <div class="wp-color-row" style="margin-top:8px;">
+            <div class="wp-color-row" style="margin-top:8px;align-items:center;gap:10px;">
               <input type="color" id="wp-color-inp" value="#16213e" class="wp-color-input" oninput="wpSetColor(this.value)" title="Couleur personnalisée">
               <span style="color:#888;font-size:12px;">Couleur personnalisée</span>
             </div>
+
             <div class="wp-sec">Images</div>
-            <div class="wp-img-actions">
-              <button class="wp-btn wp-btn-p" onclick="wpUpload()">🖼️ Importer une image</button>
-              <input type="text" id="wp-url-inp" class="wp-url-inp" placeholder="https://exemple.com/image.jpg">
-              <button class="wp-btn" onclick="wpSetUrl()">Appliquer l'URL</button>
+            <!-- Zone glisser-déposer -->
+            <div id="wp-drop-zone"
+              ondragover="event.preventDefault();this.classList.add('drag-over')"
+              ondragleave="this.classList.remove('drag-over')"
+              ondrop="this.classList.remove('drag-over');wpHandleDrop(event)"
+              onclick="wpUpload()"
+              style="
+                border:2px dashed rgba(255,255,255,0.18); border-radius:12px;
+                padding:18px 12px; text-align:center; cursor:pointer;
+                color:#666; font-size:12.5px; margin-bottom:10px;
+                transition:border-color .2s, background .2s;
+              ">
+              <div style="font-size:26px;margin-bottom:6px;">🖼️</div>
+              <div style="color:#aaa;font-weight:500;">Glissez une image ici</div>
+              <div style="color:#555;margin-top:3px;font-size:11px;">ou cliquez pour choisir un fichier</div>
+            </div>
+            <!-- URL input amélioré -->
+            <div style="display:flex;gap:6px;margin-bottom:12px;">
+              <input type="text" id="wp-url-inp" class="wp-url-inp"
+                placeholder="https://… URL d'une image"
+                autocapitalize="none" autocorrect="off" spellcheck="false"
+                style="flex:1;"
+                onkeydown="if(event.key==='Enter')wpSetUrl()">
+              <button class="wp-btn wp-btn-p" onclick="wpSetUrl()" style="white-space:nowrap;flex-shrink:0;">
+                Appliquer
+              </button>
             </div>
             <div class="wp-thumbs" id="wp-img-presets"></div>
             <div id="wp-custom-wrap" style="display:none;">
               <div class="wp-sec" style="margin-top:12px;">Mes images importées</div>
               <div class="wp-thumbs" id="wp-custom-list"></div>
             </div>
-            <button class="wp-btn" style="margin-top:14px;" onclick="wpReset()">↺ Fond par défaut</button>
           </div>
           <div class="setting-group">
             <label>Opacité de la barre des tâches</label>
-            <input type="range" min="50" max="100" value="92" oninput="setTaskbarOpacity(this.value)">
+            <input id="tb-opacity-slider" type="range" min="50" max="100" value="92" oninput="setTaskbarOpacity(this.value)">
           </div>
           <div class="setting-group">
             <label>Taille des icônes du bureau</label>
-            <input type="range" min="60" max="120" value="90" oninput="setIconSize(this.value)">
+            <input id="icon-size-slider" type="range" min="60" max="120" value="96" oninput="setIconSize(this.value)">
           </div>
           <div class="setting-group" style="margin-top:20px;">
             <label>Affichage</label>
@@ -4292,6 +4620,52 @@
     calc2SetMode(calc2.mode || 'std');
   }
 
+  // ====== SYSTÈME DE THÈMES ======
+  let _currentTheme = 'cosmos';
+
+  function themeApply(name) {
+    _currentTheme = name;
+    // Apply data-theme on <html> so CSS [data-theme] selectors fire
+    if (name === 'cosmos') document.documentElement.removeAttribute('data-theme');
+    else document.documentElement.setAttribute('data-theme', name);
+    // Persist
+    localStorage.setItem('vd_theme', name);
+    // Update picker buttons
+    document.querySelectorAll('.tp-btn').forEach(b => {
+      b.classList.toggle('tp-active', b.dataset.tptheme === name);
+    });
+    // Update taskbar button glow
+    const tbBtn = document.getElementById('tb-theme-btn');
+    if (tbBtn) tbBtn.classList.toggle('t-active', name !== 'cosmos');
+  }
+
+  function themeTogglePicker() {
+    const p = document.getElementById('theme-picker');
+    if (!p) return;
+    const open = p.classList.toggle('show');
+    const tbBtn = document.getElementById('tb-theme-btn');
+    if (tbBtn) tbBtn.classList.toggle('t-active', open || _currentTheme !== 'cosmos');
+  }
+
+  function themeClosePicker() {
+    const p = document.getElementById('theme-picker');
+    if (p) p.classList.remove('show');
+    const tbBtn = document.getElementById('tb-theme-btn');
+    if (tbBtn) tbBtn.classList.toggle('t-active', _currentTheme !== 'cosmos');
+  }
+
+  function themeInit() {
+    const saved = localStorage.getItem('vd_theme') || 'cosmos';
+    themeApply(saved);
+  }
+
+  // Close picker on outside click
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('#theme-picker') && !e.target.closest('#tb-theme-btn')) {
+      themeClosePicker();
+    }
+  });
+
   function initSysMonitor() {
     updateSysMonitor();
     const interval = setInterval(() => {
@@ -4356,17 +4730,34 @@
     // Sync fullscreen toggle
     const fsToggle = document.getElementById('fs-default-toggle');
     if (fsToggle) fsToggle.checked = localStorage.getItem(FS_PREF_KEY) === '1';
+    // Sync appearance sliders to current saved values
+    const tbOpSlider = document.getElementById('tb-opacity-slider');
+    if (tbOpSlider) tbOpSlider.value = localStorage.getItem('vd_tb_opacity') || 92;
+    const icSzSlider = document.getElementById('icon-size-slider');
+    if (icSzSlider) icSzSlider.value = localStorage.getItem('vd_icon_size') || 96;
   }
 
   function setTaskbarOpacity(val) {
-    document.getElementById('taskbar').style.background = `rgba(15,12,41,${val/100})`;
+    // Override only the alpha channel — colour comes from --t-taskbar-rgb (theme-aware)
+    document.documentElement.style.setProperty('--t-taskbar-a', val / 100);
+    localStorage.setItem('vd_tb_opacity', val);
+    const slider = document.getElementById('tb-opacity-slider');
+    if (slider && slider.value != val) slider.value = val;
   }
 
   function setIconSize(val) {
-    document.querySelectorAll('.desktop-icon').forEach(icon => {
-      icon.style.width = val + 'px';
-      icon.style.height = val + 'px';
-    });
+    // Use a CSS variable so the !important rule in the redesign block still applies
+    document.documentElement.style.setProperty('--icon-size', val + 'px');
+    localStorage.setItem('vd_icon_size', val);
+    const slider = document.getElementById('icon-size-slider');
+    if (slider && slider.value != val) slider.value = val;
+  }
+
+  function restoreAppearanceSettings() {
+    const tbOp = localStorage.getItem('vd_tb_opacity');
+    if (tbOp) document.documentElement.style.setProperty('--t-taskbar-a', tbOp / 100);
+    const icSz = localStorage.getItem('vd_icon_size');
+    if (icSz) document.documentElement.style.setProperty('--icon-size', icSz + 'px');
   }
 
   // ====================================================
@@ -4636,7 +5027,7 @@
   }
 
   // ====== MODULE SYSTEM ======
-  function previewModuleUrl() {
+  function previewModuleUrl(force) {
     const urlInput = document.getElementById('mod-url');
     const preview  = document.getElementById('url-preview');
     const fav      = document.getElementById('url-favicon-container');
@@ -4687,8 +5078,12 @@
       if (updp) { updp.style.background = colorVal; updp.innerHTML = '<span class="mod-loading-spinner">⟳</span>'; }
     }
 
-    // Appel API après délai
-    previewDebounceTimer = setTimeout(() => fetchSiteInfo(fullUrl), 700);
+    // Appel API — immédiat si refresh forcé, sinon avec délai anti-rebond
+    previewDebounceTimer = setTimeout(() => fetchSiteInfo(fullUrl), force ? 0 : 700);
+
+    // Afficher le bouton de rafraîchissement après la 1re tentative
+    const refreshRow = document.getElementById('mod-refresh-row');
+    if (refreshRow) refreshRow.style.display = 'flex';
   }
 
   // Timeout-safe fetch (évite AbortSignal.timeout non supporté partout)
@@ -5049,6 +5444,9 @@
     clearTimeout(previewDebounceTimer);
     fetchedFaviconUrl = null;
     fetchedSiteName   = null;
+    // Hide refresh row until next URL preview
+    const rr = document.getElementById('mod-refresh-row');
+    if (rr) rr.style.display = 'none';
   }
 
   function addModule() {
@@ -8414,6 +8812,7 @@
     apps = apps.filter(a => a.type === 'builtin');
     loadModules();
     if (typeof wpApplySaved === 'function') wpApplySaved();
+    if (typeof themeInit === 'function') themeInit();
     if (typeof tkLoad === 'function') { tkLoad(); if (openWindows['tasks'] && document.getElementById('tk-content')) tkRender(); }
     if (typeof ctLoad === 'function') { ctLoad(); if (openWindows['contacts'] && document.getElementById('ct-content')) ctRender(); }
     renderDesktopIcons();
@@ -8853,6 +9252,496 @@
 .ct-link { color:#a0c4ff; text-decoration:none; }
 .ct-link:hover { text-decoration:underline; }
 @media (max-width:760px){ .tk-kanban { grid-template-columns:1fr; } }
+
+/* ════════════════════════════════════════════════════════
+   REFONTE ICÔNES & FENÊTRES — Design Pro
+════════════════════════════════════════════════════════ */
+
+/* ── ICÔNES DU BUREAU ────────────────────────────────── */
+.desktop-icon {
+  width: var(--icon-size, 96px) !important;
+  height: var(--icon-size, 96px) !important;
+  border-radius: 16px !important;
+  gap: 7px !important;
+  padding: 10px 6px 8px !important;
+  transition: background .22s, box-shadow .22s, transform .22s !important;
+  cursor: grab !important;
+}
+.desktop-icon:hover {
+  background: rgba(255,255,255,0.10) !important;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.12) !important;
+  transform: translateY(-3px) scale(1.04) !important;
+  backdrop-filter: blur(8px) !important;
+}
+.desktop-icon:active {
+  transform: scale(0.97) !important;
+}
+.desktop-icon.dragging {
+  transform: scale(1.08) rotate(2deg) !important;
+  box-shadow: 0 20px 56px rgba(0,0,0,0.55) !important;
+  opacity: 0.92 !important;
+}
+
+/* Bubble (image de l'icône) */
+.desktop-icon .icon-img {
+  width: 52px !important;
+  height: 52px !important;
+  border-radius: 14px !important;
+  font-size: 26px !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.20) !important;
+  position: relative !important;
+}
+/* Reflet brillant sur la bubble */
+.desktop-icon .icon-img::after {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 50%;
+  border-radius: 14px 14px 0 0;
+  background: linear-gradient(180deg, rgba(255,255,255,0.18) 0%, transparent 100%);
+  pointer-events: none;
+}
+
+/* Label amélioré */
+.desktop-icon .icon-label {
+  font-size: 11.5px !important;
+  font-weight: 500 !important;
+  color: #fff !important;
+  text-shadow: 0 1px 6px rgba(0,0,0,0.8), 0 0 12px rgba(0,0,0,0.6) !important;
+  letter-spacing: .1px !important;
+  max-width: 84px !important;
+  background: rgba(0,0,0,0.28);
+  padding: 2px 7px;
+  border-radius: 5px;
+  backdrop-filter: blur(4px);
+}
+
+/* Badge lien (🔗) — suit l'accent du thème */
+.desktop-icon .link-badge {
+  background: var(--t-agrad) !important;
+  width: 17px !important; height: 17px !important;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.4) !important;
+}
+
+/* Glow accent sur hover — bulle */
+.desktop-icon:hover .icon-img {
+  box-shadow: 0 6px 22px rgba(0,0,0,0.45), 0 0 0 2px rgba(255,255,255,0.12),
+              inset 0 1px 0 rgba(255,255,255,0.22) !important;
+}
+
+/* ── FENÊTRES ─────────────────────────────────────────── */
+.window {
+  border-radius: 18px !important;
+  box-shadow:
+    0 2px 0 rgba(255,255,255,0.04) inset,
+    0 24px 60px rgba(0,0,0,0.55),
+    0 4px 16px rgba(0,0,0,0.3),
+    0 0 0 1px rgba(255,255,255,0.06) !important;
+  backdrop-filter: blur(28px) !important;
+  overflow: visible !important;
+}
+/* Clip overflow intérieur sans cacher le shadow extérieur */
+.window > .window-titlebar,
+.window > .window-body {
+  border-radius: 0;
+}
+.window > .window-titlebar:first-child {
+  border-radius: 18px 18px 0 0;
+  overflow: hidden;
+}
+.window > .window-body:last-of-type {
+  border-radius: 0 0 18px 18px;
+  overflow: hidden;
+}
+
+/* Barre de titre */
+.window-titlebar {
+  height: 48px !important;
+  padding: 0 16px 0 18px !important;
+  background: rgba(255,255,255,0.055) !important;
+  border-bottom: 1px solid rgba(255,255,255,0.07) !important;
+  position: relative;
+  flex-shrink: 0 !important;
+}
+/* Ligne accent colorée au sommet */
+.window-titlebar::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2.5px;
+  background: var(--t-agrad);
+  border-radius: 18px 18px 0 0;
+  opacity: 0.7;
+}
+
+/* Titre de la fenêtre */
+.window-titlebar .wt-title {
+  font-size: 13.5px !important;
+  font-weight: 600 !important;
+  color: #f0f0f8 !important;
+  letter-spacing: .1px !important;
+}
+
+/* Icône dans le titre */
+.window-titlebar .wt-icon img.titlebar-favicon {
+  width: 20px !important;
+  height: 20px !important;
+}
+
+/* Boutons de contrôle — plus grands, avec icônes */
+.wt-ctrl-btn {
+  width: 16px !important;
+  height: 16px !important;
+  border-radius: 50% !important;
+  position: relative;
+  box-shadow: inset 0 -1px 0 rgba(0,0,0,0.22) !important;
+  transition: opacity .15s, transform .12s, box-shadow .15s !important;
+}
+.wt-ctrl-btn:hover {
+  opacity: 1 !important;
+  transform: scale(1.18) !important;
+}
+.wt-ctrl-btn.minimize { background: #f5c542 !important; box-shadow: 0 0 6px rgba(245,197,66,.4), inset 0 -1px 0 rgba(0,0,0,0.2) !important; }
+.wt-ctrl-btn.maximize { background: #44d17a !important; box-shadow: 0 0 6px rgba(68,209,122,.4), inset 0 -1px 0 rgba(0,0,0,0.2) !important; }
+.wt-ctrl-btn.close    { background: #f5574f !important; box-shadow: 0 0 6px rgba(245,87,79,.4),  inset 0 -1px 0 rgba(0,0,0,0.2) !important; }
+
+/* Corps de la fenêtre */
+.window-body {
+  background: transparent !important;
+}
+
+/* Poignée de redimensionnement */
+.window .resize-handle {
+  width: 22px !important;
+  height: 22px !important;
+  background: linear-gradient(135deg, transparent 50%, rgba(255,255,255,0.14) 50%) !important;
+  border-radius: 0 0 18px 0 !important;
+  z-index: 10;
+}
+.window .resize-handle:hover {
+  background: linear-gradient(135deg, transparent 50%, var(--t-asub-h) 50%) !important;
+}
+
+/* Scrollbar dans les fenêtres */
+.window-body::-webkit-scrollbar { width: 6px; height: 6px; }
+.window-body::-webkit-scrollbar-track { background: transparent; }
+.window-body::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.15);
+  border-radius: 6px;
+}
+.window-body::-webkit-scrollbar-thumb:hover {
+  background: rgba(255,255,255,0.28);
+}
+
+/* Animation d'ouverture des fenêtres */
+@keyframes winOpen {
+  from { opacity:0; transform:scale(0.94) translateY(10px); }
+  to   { opacity:1; transform:scale(1) translateY(0); }
+}
+.window { animation: winOpen .22s cubic-bezier(.25,.8,.25,1); }
+
+/* Lien dans la barre de titre */
+.window-titlebar .wt-link {
+  font-size: 11px !important;
+  padding: 5px 10px !important;
+  border-radius: 8px !important;
+  border: 1px solid rgba(255,255,255,0.08) !important;
+}
+
+/* ══════════════════════════════════════════════════════
+   PANNEAU FINANCIER DROIT
+══════════════════════════════════════════════════════ */
+#fin-panel {
+  position: fixed;
+  top: 0; right: 0; bottom: 0;
+  width: 390px;
+  background: rgba(13,11,38,0.97);
+  border-left: 1px solid rgba(255,255,255,0.09);
+  backdrop-filter: blur(28px);
+  display: flex; flex-direction: column;
+  z-index: 3500;
+  transform: translateX(100%);
+  transition: transform .32s cubic-bezier(.4,0,.2,1);
+  box-shadow: -12px 0 48px rgba(0,0,0,0.55);
+}
+#fin-panel.open { transform: translateX(0); }
+
+/* Bouton d'ouverture dans la taskbar */
+#tb-fin-btn {
+  background: none; border: none; cursor: pointer;
+  color: rgba(255,255,255,0.7); font-size: 16px;
+  padding: 4px 8px; border-radius: 8px;
+  transition: background .15s, color .15s;
+}
+#tb-fin-btn:hover  { background: rgba(255,255,255,0.10); color:#fff; }
+#tb-fin-btn.active { color: var(--t-a1); background: var(--t-asub); box-shadow:0 0 8px var(--t-aglow); }
+
+/* En-tête panneau */
+.fin-hdr {
+  padding: 16px 18px 0;
+  flex-shrink: 0;
+}
+.fin-hdr-top {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 14px;
+}
+.fin-title {
+  font-size: 15px; font-weight: 700; color: #f0f0f8;
+  display: flex; align-items: center; gap: 8px;
+}
+.fin-close-btn {
+  background: none; border: none; color: rgba(255,255,255,0.45);
+  font-size: 18px; cursor: pointer; padding: 4px 7px; border-radius: 7px;
+  transition: background .15s, color .15s;
+}
+.fin-close-btn:hover { background: rgba(255,255,255,0.08); color: #fff; }
+
+/* Onglets */
+.fin-tabs {
+  display: flex; gap: 0;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  margin-bottom: 0;
+}
+.fin-tab {
+  flex: 1; padding: 8px 4px; font-size: 11px; font-weight: 600;
+  text-align: center; cursor: pointer; border: none; background: none;
+  color: rgba(255,255,255,0.45); border-bottom: 2px solid transparent;
+  transition: color .15s, border-color .15s;
+  text-transform: uppercase; letter-spacing: .4px;
+}
+.fin-tab:hover  { color: rgba(255,255,255,0.75); }
+.fin-tab.active { color: var(--t-a1); border-bottom-color: var(--t-a1); }
+
+/* Corps scrollable */
+.fin-body {
+  flex: 1; overflow-y: auto; padding: 18px;
+  scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.12) transparent;
+}
+.fin-body::-webkit-scrollbar { width: 5px; }
+.fin-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.13); border-radius: 4px; }
+
+/* ── Onglet Saisie ── */
+.fin-section-title {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .6px; color: rgba(255,255,255,0.38); margin: 16px 0 8px;
+}
+.fin-section-title:first-child { margin-top: 0; }
+
+.fin-type-row {
+  display: flex; gap: 6px; margin-bottom: 14px;
+}
+.fin-type-btn {
+  flex: 1; padding: 8px 6px; border-radius: 9px; border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.55);
+  font-size: 12px; font-weight: 600; cursor: pointer; transition: all .15s;
+  font-family: inherit;
+}
+.fin-type-btn.active-income  { background:rgba(16,185,129,0.15); border-color:rgba(16,185,129,0.45); color:#10b981; }
+.fin-type-btn.active-expense { background:rgba(245,87,79,0.13);  border-color:rgba(245,87,79,0.40);  color:#f5574f; }
+.fin-type-btn.active-payment { background:rgba(102,126,234,0.15);border-color:rgba(102,126,234,0.4); color:#667eea; }
+
+.fin-input {
+  width: 100%; background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.09); border-radius: 10px;
+  color: #f0f0f8; padding: 9px 12px; font-size: 13px;
+  font-family: inherit; outline: none; box-sizing: border-box;
+  transition: border-color .15s;
+}
+.fin-input:focus { border-color: var(--t-a1); }
+.fin-input::placeholder { color: rgba(255,255,255,0.25); }
+
+.fin-row2 { display: grid; grid-template-columns:1fr 1fr; gap: 8px; margin-bottom: 10px; }
+.fin-mb10 { margin-bottom: 10px; }
+.fin-mb14 { margin-bottom: 14px; }
+
+.fin-install-row {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 10px;
+}
+.fin-install-preview {
+  background: rgba(102,126,234,0.07); border: 1px solid rgba(102,126,234,0.18);
+  border-radius: 10px; padding: 10px 12px; font-size: 12px;
+  color: rgba(255,255,255,0.6); margin-bottom: 12px; display: none;
+}
+.fin-install-preview.visible { display: block; }
+.fin-install-preview-row {
+  display: flex; justify-content: space-between; padding: 3px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.fin-install-preview-row:last-child { border-bottom: none; }
+
+.fin-submit-btn {
+  width: 100%; padding: 11px; border-radius: 11px; border: none;
+  background: var(--t-agrad); color: #fff; font-size: 13px;
+  font-weight: 700; cursor: pointer; font-family: inherit;
+  transition: opacity .15s, transform .1s;
+}
+.fin-submit-btn:hover { opacity: .88; transform: translateY(-1px); }
+
+/* ── Onglet Graphiques ── */
+.fin-chart-toolbar {
+  display: flex; gap: 6px; margin-bottom: 14px;
+}
+.fin-chart-btn {
+  flex: 1; padding: 7px 4px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.5);
+  font-size: 11px; font-weight: 600; cursor: pointer; transition: all .15s;
+  font-family: inherit;
+}
+.fin-chart-btn.active { background: var(--t-asub); color: var(--t-a1); border-color: var(--t-a1); }
+
+.fin-period-row {
+  display: flex; gap: 5px; margin-bottom: 14px;
+}
+.fin-period-btn {
+  flex: 1; padding: 6px 2px; border-radius: 7px; border: none;
+  background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.45);
+  font-size: 10px; font-weight: 700; cursor: pointer; transition: all .15s;
+  text-transform: uppercase; letter-spacing: .4px; font-family: inherit;
+}
+.fin-period-btn.active { background: rgba(102,126,234,0.18); color: var(--t-a1); }
+
+#fin-chart-canvas {
+  width: 100%; border-radius: 12px; display: block;
+  background: rgba(255,255,255,0.025);
+}
+
+.fin-chart-legend {
+  display: flex; gap: 14px; justify-content: center;
+  flex-wrap: wrap; margin-top: 10px; font-size: 11px;
+  color: rgba(255,255,255,0.5);
+}
+.fin-legend-dot {
+  width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 5px;
+}
+
+/* ── Onglet Bilan ── */
+.fin-bilan-kpi {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px;
+}
+.fin-kpi-card {
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 12px; padding: 12px 14px;
+}
+.fin-kpi-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: rgba(255,255,255,0.38); margin-bottom: 5px; }
+.fin-kpi-value { font-size: 17px; font-weight: 700; }
+.fin-kpi-sub   { font-size: 10px; color: rgba(255,255,255,0.38); margin-top: 3px; }
+
+.fin-bilan-table {
+  background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 12px; overflow: hidden;
+}
+.fin-bilan-row {
+  display: flex; align-items: center; padding: 9px 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 12px;
+}
+.fin-bilan-row:last-child { border-bottom: none; }
+.fin-bilan-cat { flex: 1; color: rgba(255,255,255,0.65); display: flex; align-items: center; gap: 7px; }
+.fin-bilan-amount { font-weight: 600; }
+
+/* ── Onglet Mensualités ── */
+.fin-inst-card {
+  background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 12px; margin-bottom: 10px; overflow: hidden;
+}
+.fin-inst-head {
+  display: flex; align-items: center; padding: 11px 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.05); gap: 10px;
+}
+.fin-inst-label { flex: 1; font-size: 13px; font-weight: 600; color: #f0f0f8; }
+.fin-inst-total { font-size: 12px; color: rgba(255,255,255,0.5); }
+.fin-inst-row {
+  display: flex; align-items: center; padding: 8px 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 12px;
+}
+.fin-inst-row:last-child { border-bottom: none; }
+.fin-inst-date { flex: 1; color: rgba(255,255,255,0.5); }
+.fin-inst-amt  { font-weight: 600; min-width: 70px; text-align: right; }
+.fin-pay-btn {
+  margin-left: 8px; padding: 3px 9px; border-radius: 6px;
+  border: 1px solid rgba(16,185,129,0.4); background: rgba(16,185,129,0.12);
+  color: #10b981; font-size: 10px; font-weight: 700; cursor: pointer;
+  font-family: inherit; transition: background .12s;
+}
+.fin-pay-btn:hover { background: rgba(16,185,129,0.25); }
+.fin-pay-btn.paid {
+  border-color: rgba(255,255,255,0.1); background: none;
+  color: rgba(255,255,255,0.3); cursor: default;
+}
+
+.fin-rav-banner {
+  background: linear-gradient(135deg,rgba(16,185,129,0.12),rgba(6,182,212,0.08));
+  border: 1px solid rgba(16,185,129,0.22); border-radius: 13px;
+  padding: 14px 16px; margin-bottom: 16px;
+}
+.fin-rav-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: rgba(16,185,129,0.8); margin-bottom: 6px; }
+.fin-rav-value { font-size: 22px; font-weight: 800; color: #10b981; }
+.fin-rav-sub   { font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 4px; }
+
+/* ── Transaction list (Saisie bas) ── */
+.fin-tx-list { margin-top: 18px; }
+.fin-tx-item {
+  display: flex; align-items: center; gap: 10px; padding: 9px 12px;
+  border-radius: 10px; margin-bottom: 5px;
+  background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05);
+  font-size: 12px;
+}
+.fin-tx-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.fin-tx-label  { flex: 1; color: rgba(255,255,255,0.75); }
+.fin-tx-date   { color: rgba(255,255,255,0.3); font-size: 10px; }
+.fin-tx-amount { font-weight: 700; }
+.fin-tx-del { background:none; border:none; cursor:pointer; color:rgba(255,255,255,0.25); font-size:14px; padding:0 2px; }
+.fin-tx-del:hover { color: #f5574f; }
+
+/* Overlay sombre quand le panneau est ouvert */
+#fin-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.35); z-index: 3490;
+}
+#fin-overlay.visible { display: block; }
+
+/* ── Poignée de redimensionnement (bord gauche) ── */
+#fin-resize-handle {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 7px;
+  cursor: ew-resize;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background .18s;
+}
+#fin-resize-handle:hover,
+#fin-resize-handle.dragging {
+  background: rgba(102,126,234,0.18);
+}
+/* Trait vertical central */
+#fin-resize-handle::after {
+  content: '';
+  width: 2px; height: 48px;
+  border-radius: 2px;
+  background: rgba(102,126,234,0.55);
+  opacity: 0;
+  transition: opacity .18s, height .18s;
+}
+#fin-resize-handle:hover::after,
+#fin-resize-handle.dragging::after {
+  opacity: 1;
+  height: 64px;
+}
+
+/* ── Fix select dropdown natif ── */
+.fin-input option {
+  background: #13103d;
+  color: #f0f0f8;
+}
+select.fin-input {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='rgba(255,255,255,0.4)' d='M6 8L0 0h12z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 30px;
+  cursor: pointer;
+}
 </style>
 
 <script>
@@ -8872,12 +9761,59 @@ function wpApply(css, silent) {
   try { localStorage.setItem(WP_KEY, css); } catch(e) {}
   if (typeof ghMarkDirty === 'function') ghMarkDirty();
   wpMarkSelected();
+  wpUpdatePreview(css);
   if (!silent) notify('🎨 Fond d\'écran appliqué');
+}
+
+function wpUpdatePreview(css) {
+  const prev = document.getElementById('wp-current-preview');
+  const lbl  = document.getElementById('wp-current-label');
+  if (!prev) return;
+  if (css) {
+    prev.style.background = css;
+    if (lbl) lbl.textContent = css.startsWith('url(') ? '📷 Image' : css.startsWith('linear') || css.startsWith('radial') ? '🎨 Dégradé' : '🟦 Couleur';
+  } else {
+    prev.style.background = '';  // laisse var(--t-desk)
+    if (lbl) lbl.textContent = 'Thème actif';
+  }
+}
+
+function wpHandleDrop(e) {
+  e.preventDefault();
+  const file = e.dataTransfer?.files?.[0];
+  if (!file || !file.type.startsWith('image/')) { notify('⚠️ Fichier image requis'); return; }
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const img = new Image();
+    img.onload = () => {
+      const MAX = 1600;
+      let w = img.width, h = img.height;
+      if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; }
+      const c = document.createElement('canvas');
+      c.width = w; c.height = h;
+      c.getContext('2d').drawImage(img, 0, 0, w, h);
+      let q = 0.82, data = c.toDataURL('image/jpeg', q);
+      while (data.length > 1200000 && q > 0.3) { q -= 0.12; data = c.toDataURL('image/jpeg', q); }
+      if (data.length > 1500000) { notify('❌ Image trop lourde'); return; }
+      let list = wpGetImgs();
+      list.unshift({ id: 'wpi-' + Date.now(), name: file.name, data });
+      list = list.slice(0, 4);
+      try { localStorage.setItem(WP_IMGS_KEY, JSON.stringify(list)); }
+      catch(err) { notify('⚠️ Stockage insuffisant'); return; }
+      wpRenderCustom();
+      wpApply(wpImgCss(data));
+      notify('🖼️ Image glissée appliquée en fond d\'écran');
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
 }
 
 function wpApplySaved() {
   const s = localStorage.getItem(WP_KEY);
-  if (s) document.getElementById('desktop').style.background = s;
+  const desk = document.getElementById('desktop');
+  if (s) desk.style.background = s;
+  else desk.style.background = ''; // laisse le thème CSS s'appliquer
 }
 
 /* Remplace la version d'origine : persiste le choix + évite de retomber sur le même fond */
@@ -8948,9 +9884,19 @@ function wpDeleteImg(id) {
   notify('🗑️ Image supprimée de la galerie');
 }
 
-function wpReset() { wpApply(wallpapers[0], true); notify('↺ Fond d\'écran par défaut restauré'); }
+function wpReset() {
+  localStorage.removeItem(WP_KEY);
+  document.getElementById('desktop').style.background = '';
+  wpMarkSelected();
+  wpUpdatePreview(null);
+  notify('↺ Fond d\'écran retiré — thème actif affiché');
+}
 
 function wpInitSettings() {
+  // Initialise l'aperçu du fond actuel
+  const savedWp = localStorage.getItem(WP_KEY);
+  wpUpdatePreview(savedWp || null);
+
   const grads = document.getElementById('wp-options');
   if (grads) {
     grads.innerHTML = '';
@@ -9497,8 +10443,678 @@ function ctExportCsv() {
   notify('📤 Contacts exportés en CSV');
 }
 
+/* ══════════════════════════════════════════════════════════════
+   MODULE FINANCIER — Panneau latéral droit
+   Données : localStorage  fin_tx  (transactions)
+                           fin_inst (mensualités)
+══════════════════════════════════════════════════════════════ */
+(function() {
+
+  /* ── Constantes & état ── */
+  const FIN_TX   = 'fin_tx';
+  const FIN_INST = 'fin_inst';
+
+  const CAT_INCOME  = ['Salaire','Freelance','Vente','Investissement','Prime','Autre'];
+  const CAT_EXPENSE = ['Logement','Alimentation','Transport','Loisirs','Santé','Abonnement','Autre'];
+  const CAT_PAYMENT = ['Facture client','Crédit','Mensualité','Abonnement','Autre'];
+
+  const COL_INCOME  = '#10b981';
+  const COL_EXPENSE = '#f5574f';
+  const COL_PAYMENT = '#667eea';
+
+  let finTx     = [];  // { id, type, label, category, amount, date }
+  let finInst   = [];  // { id, parentTx, label, amount, dueDate, paid, paidDate }
+  let finActiveTab   = 'saisie';
+  let finChartType   = 'bar';
+  let finChartPeriod = 'month';
+  let finTxType      = 'income';
+  let finNbMonths    = 1;
+
+  /* ── Persistence ── */
+  function finLoadData() {
+    try { finTx   = JSON.parse(localStorage.getItem(FIN_TX)   || '[]'); } catch { finTx   = []; }
+    try { finInst = JSON.parse(localStorage.getItem(FIN_INST) || '[]'); } catch { finInst = []; }
+  }
+  function finSaveTx()   { localStorage.setItem(FIN_TX,   JSON.stringify(finTx));   }
+  function finSaveInst() { localStorage.setItem(FIN_INST, JSON.stringify(finInst)); }
+
+  /* ── Helpers ── */
+  const finId    = ()  => Math.random().toString(36).slice(2,9);
+  const finEur   = n   => new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR'}).format(n||0);
+  const finToday = ()  => new Date().toISOString().split('T')[0];
+  const finAddDays = (d,n) => { const x=new Date(d); x.setDate(x.getDate()+n); return x.toISOString().split('T')[0]; };
+  const finFmtDate = d => d ? new Date(d).toLocaleDateString('fr-FR') : '—';
+  const finEsc     = s => (s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+  /* ═══════════════════════════════════════
+     TOGGLE & NAVIGATION
+  ═══════════════════════════════════════ */
+  window.finToggle = function() {
+    const panel = document.getElementById('fin-panel');
+    if (panel.classList.contains('open')) { finClose(); }
+    else { finOpen(); }
+  };
+
+  window.finOpen = function() {
+    finLoadData();
+    const panel = document.getElementById('fin-panel');
+    const overlay = document.getElementById('fin-overlay');
+    const btn = document.getElementById('tb-fin-btn');
+    panel.classList.add('open');
+    overlay.classList.add('visible');
+    if (btn) btn.classList.add('active');
+    finRender();
+  };
+
+  window.finClose = function() {
+    document.getElementById('fin-panel').classList.remove('open');
+    document.getElementById('fin-overlay').classList.remove('visible');
+    const btn = document.getElementById('tb-fin-btn');
+    if (btn) btn.classList.remove('active');
+  };
+
+  window.finTab = function(tab) {
+    finActiveTab = tab;
+    document.querySelectorAll('.fin-tab').forEach(b => b.classList.remove('active'));
+    const bt = document.getElementById('ftab-' + tab);
+    if (bt) bt.classList.add('active');
+    finRender();
+  };
+
+  function finRender() {
+    const body = document.getElementById('fin-body');
+    if (!body) return;
+    switch (finActiveTab) {
+      case 'saisie':  body.innerHTML = finHtmlSaisie();  finBindSaisie();  break;
+      case 'graphes': body.innerHTML = finHtmlGraphes(); finBindGraphes(); break;
+      case 'bilan':   body.innerHTML = finHtmlBilan();   break;
+      case 'mensuel': body.innerHTML = finHtmlMensuel(); finBindMensuel(); break;
+    }
+  }
+
+  /* ═══════════════════════════════════════
+     ONGLET SAISIE
+  ═══════════════════════════════════════ */
+  function finHtmlSaisie() {
+    const cats = finTxType === 'income' ? CAT_INCOME : finTxType === 'expense' ? CAT_EXPENSE : CAT_PAYMENT;
+    const showInstall = finTxType === 'payment';
+    const recent = [...finTx].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,8);
+
+    return `
+      <div class="fin-section-title">Type de transaction</div>
+      <div class="fin-type-row">
+        <button class="fin-type-btn ${finTxType==='income'?'active-income':''}" onclick="finSetType('income')">↑ Revenu</button>
+        <button class="fin-type-btn ${finTxType==='expense'?'active-expense':''}" onclick="finSetType('expense')">↓ Dépense</button>
+        <button class="fin-type-btn ${finTxType==='payment'?'active-payment':''}" onclick="finSetType('payment')">↔ Paiement</button>
+      </div>
+
+      <div class="fin-section-title">Détails</div>
+      <input class="fin-input fin-mb10" id="fin-f-label" type="text" placeholder="Intitulé" autocapitalize="none" autocorrect="off">
+      <div class="fin-row2">
+        <input class="fin-input" id="fin-f-amount" type="number" step="0.01" min="0.01" placeholder="Montant (€)">
+        <input class="fin-input" id="fin-f-date" type="date" value="${finToday()}">
+      </div>
+      <select class="fin-input fin-mb14" id="fin-f-cat">
+        ${cats.map(c=>`<option value="${finEsc(c)}">${finEsc(c)}</option>`).join('')}
+      </select>
+
+      ${showInstall ? `
+        <div class="fin-section-title">Mensualisation</div>
+        <div class="fin-install-row">
+          <input class="fin-input" id="fin-f-months" type="number" min="1" max="60" value="${finNbMonths}"
+            style="width:80px;" oninput="finUpdateInstallPreview()">
+          <span style="color:rgba(255,255,255,0.45);font-size:12px;">mensualité(s) · ~30 j d'intervalle</span>
+        </div>
+        <div class="fin-install-preview ${finNbMonths>1?'visible':''}" id="fin-inst-preview"></div>
+      ` : ''}
+
+      <button class="fin-submit-btn" id="fin-submit">
+        ${finTxType==='income'?'+ Enregistrer le revenu':finTxType==='expense'?'+ Enregistrer la dépense':'+ Enregistrer le paiement'}
+      </button>
+
+      <div class="fin-section-title" style="margin-top:20px;">Transactions récentes</div>
+      <div class="fin-tx-list">
+        ${recent.length === 0 ? '<div style="color:rgba(255,255,255,0.3);font-size:12px;text-align:center;padding:20px 0;">Aucune transaction</div>' :
+          recent.map(tx => {
+            const col = tx.type==='income' ? COL_INCOME : tx.type==='expense' ? COL_EXPENSE : COL_PAYMENT;
+            const sign = tx.type==='income' ? '+' : '−';
+            return `<div class="fin-tx-item">
+              <div class="fin-tx-dot" style="background:${col}"></div>
+              <div class="fin-tx-label">${finEsc(tx.label||tx.category)}</div>
+              <div class="fin-tx-date">${finFmtDate(tx.date)}</div>
+              <div class="fin-tx-amount" style="color:${col}">${sign}${finEur(tx.amount)}</div>
+              <button class="fin-tx-del" onclick="finDelTx('${tx.id}')" title="Supprimer">🗑</button>
+            </div>`;
+          }).join('')
+        }
+      </div>
+    `;
+  }
+
+  function finBindSaisie() {
+    const btn = document.getElementById('fin-submit');
+    if (btn) btn.addEventListener('click', finSubmitTx);
+    finUpdateInstallPreview();
+  }
+
+  window.finSetType = function(type) {
+    finTxType = type;
+    finRender();
+  };
+
+  window.finUpdateInstallPreview = function() {
+    const inp = document.getElementById('fin-f-months');
+    if (!inp) return;
+    finNbMonths = Math.max(1, Math.min(60, parseInt(inp.value) || 1));
+    const prev = document.getElementById('fin-inst-preview');
+    if (!prev) return;
+    const amtInp = document.getElementById('fin-f-amount');
+    const dateInp = document.getElementById('fin-f-date');
+    const amount = parseFloat(amtInp?.value) || 0;
+    const date   = dateInp?.value || finToday();
+    const unit   = amount / finNbMonths;
+
+    if (finNbMonths <= 1) { prev.classList.remove('visible'); return; }
+    prev.classList.add('visible');
+    const rows = Array.from({length: Math.min(finNbMonths, 5)}, (_,i) => {
+      const isLast = i === finNbMonths - 1;
+      const amt = isLast ? amount - Math.round(unit*100)/100*(finNbMonths-1) : Math.round(unit*100)/100;
+      return `<div class="fin-install-preview-row">
+        <span>Éch. ${i+1} · ${finFmtDate(finAddDays(date, i*30))}</span>
+        <span style="color:#f0f0f8;font-weight:600;">${finEur(amt)}</span>
+      </div>`;
+    }).join('');
+    prev.innerHTML = rows + (finNbMonths>5 ? `<div style="color:rgba(255,255,255,0.35);font-size:11px;padding-top:4px;">+ ${finNbMonths-5} autres…</div>`:'');
+  };
+
+  function finSubmitTx() {
+    const label  = document.getElementById('fin-f-label')?.value.trim();
+    const amount = parseFloat(document.getElementById('fin-f-amount')?.value);
+    const date   = document.getElementById('fin-f-date')?.value || finToday();
+    const cat    = document.getElementById('fin-f-cat')?.value;
+    if (!amount || amount <= 0) { notify('Veuillez saisir un montant valide.'); return; }
+
+    const tx = { id: finId(), type: finTxType, label: label || cat, category: cat, amount, date };
+    finTx.push(tx);
+    finSaveTx();
+
+    // Générer les mensualités si paiement en plusieurs fois
+    if (finTxType === 'payment' && finNbMonths > 1) {
+      const unit = Math.round((amount / finNbMonths) * 100) / 100;
+      for (let i = 0; i < finNbMonths; i++) {
+        const isLast = i === finNbMonths - 1;
+        const instAmt = isLast ? Math.round((amount - unit*(finNbMonths-1))*100)/100 : unit;
+        finInst.push({
+          id: finId(), parentTx: tx.id, label: tx.label||cat,
+          amount: instAmt, dueDate: finAddDays(date, i*30),
+          paid: false, paidDate: null,
+        });
+      }
+      finSaveInst();
+      notify(`💳 ${finNbMonths} mensualités générées (${finEur(amount)})`);
+    } else {
+      notify(`✅ ${tx.type==='income'?'Revenu':tx.type==='expense'?'Dépense':'Paiement'} enregistré — ${finEur(amount)}`);
+    }
+    finRender();
+  }
+
+  window.finDelTx = function(id) {
+    finTx   = finTx.filter(t => t.id !== id);
+    finInst = finInst.filter(i => i.parentTx !== id);
+    finSaveTx(); finSaveInst();
+    finRender();
+  };
+
+  /* ═══════════════════════════════════════
+     ONGLET GRAPHIQUES (Canvas natif)
+  ═══════════════════════════════════════ */
+  function finHtmlGraphes() {
+    return `
+      <div class="fin-chart-toolbar">
+        <button class="fin-chart-btn ${finChartType==='bar'?'active':''}"   onclick="finSetChart('bar')">▐▌ Barres</button>
+        <button class="fin-chart-btn ${finChartType==='line'?'active':''}"  onclick="finSetChart('line')">╱ Courbe</button>
+        <button class="fin-chart-btn ${finChartType==='pie'?'active':''}"   onclick="finSetChart('pie')">◕ Camem.</button>
+      </div>
+      <div class="fin-period-row">
+        <button class="fin-period-btn ${finChartPeriod==='week'?'active':''}"  onclick="finSetPeriod('week')">7 jours</button>
+        <button class="fin-period-btn ${finChartPeriod==='month'?'active':''}" onclick="finSetPeriod('month')">12 mois</button>
+        <button class="fin-period-btn ${finChartPeriod==='year'?'active':''}"  onclick="finSetPeriod('year')">5 ans</button>
+      </div>
+      <canvas id="fin-chart-canvas" height="220"></canvas>
+      <div class="fin-chart-legend" id="fin-chart-legend"></div>
+    `;
+  }
+
+  function finBindGraphes() {
+    setTimeout(() => finDrawChart(), 30);
+  }
+
+  window.finSetChart  = function(t) { finChartType   = t; finRender(); };
+  window.finSetPeriod = function(p) { finChartPeriod = p; finRender(); };
+
+  function finGetChartData() {
+    const now = new Date();
+    let labels = [], incomes = [], expenses = [], balances = [];
+
+    if (finChartPeriod === 'week') {
+      labels   = Array.from({length:7},(_,i)=>{ const d=new Date(now); d.setDate(d.getDate()-6+i); return d.toLocaleDateString('fr-FR',{weekday:'short'}); });
+      const dates = Array.from({length:7},(_,i)=>{ const d=new Date(now); d.setDate(d.getDate()-6+i); return d.toISOString().split('T')[0]; });
+      incomes  = dates.map(d => finTx.filter(t=>t.type==='income'  && t.date===d).reduce((s,t)=>s+t.amount,0));
+      expenses = dates.map(d => finTx.filter(t=>t.type!=='income'  && t.date===d).reduce((s,t)=>s+t.amount,0));
+    } else if (finChartPeriod === 'month') {
+      const MONTHS = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
+      labels   = Array.from({length:12},(_,i)=>MONTHS[i]);
+      incomes  = Array.from({length:12},(_,i)=>finTx.filter(t=>{ const d=new Date(t.date); return d.getFullYear()===now.getFullYear()&&d.getMonth()===i&&t.type==='income'; }).reduce((s,t)=>s+t.amount,0));
+      expenses = Array.from({length:12},(_,i)=>finTx.filter(t=>{ const d=new Date(t.date); return d.getFullYear()===now.getFullYear()&&d.getMonth()===i&&t.type!=='income'; }).reduce((s,t)=>s+t.amount,0));
+    } else {
+      const yr = now.getFullYear();
+      labels   = Array.from({length:5},(_,i)=>String(yr-4+i));
+      incomes  = Array.from({length:5},(_,i)=>finTx.filter(t=>{ const d=new Date(t.date); return d.getFullYear()===(yr-4+i)&&t.type==='income'; }).reduce((s,t)=>s+t.amount,0));
+      expenses = Array.from({length:5},(_,i)=>finTx.filter(t=>{ const d=new Date(t.date); return d.getFullYear()===(yr-4+i)&&t.type!=='income'; }).reduce((s,t)=>s+t.amount,0));
+    }
+
+    balances = incomes.map((v,i) => v - expenses[i]);
+    return { labels, incomes, expenses, balances };
+  }
+
+  function finDrawChart() {
+    const canvas = document.getElementById('fin-chart-canvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const W = canvas.offsetWidth || 350;
+    canvas.width  = W * 2; canvas.height = 440;
+    canvas.style.height = '220px';
+    ctx.scale(2, 2);
+    const w = W, h = 220;
+    ctx.clearRect(0, 0, w, h);
+
+    const { labels, incomes, expenses, balances } = finGetChartData();
+    const n = labels.length;
+    const legend = document.getElementById('fin-chart-legend');
+
+    if (finChartType === 'pie') {
+      finDrawPie(ctx, w, h, incomes, expenses);
+      if (legend) legend.innerHTML = `
+        <span><span class="fin-legend-dot" style="background:${COL_INCOME}"></span>Revenus</span>
+        <span><span class="fin-legend-dot" style="background:${COL_EXPENSE}"></span>Dépenses</span>`;
+      return;
+    }
+
+    // Axes & grid
+    const padL=38, padR=10, padT=14, padB=32;
+    const chartW = w - padL - padR;
+    const chartH = h - padT - padB;
+
+    const allVals = finChartType === 'line' ? balances : [...incomes, ...expenses];
+    const maxVal  = Math.max(...allVals, 1);
+    const minVal  = finChartType === 'line' ? Math.min(...balances, 0) : 0;
+    const range   = maxVal - minVal || 1;
+
+    const toY = v => padT + chartH - ((v - minVal) / range) * chartH;
+    const toX = i => padL + (i / (n-1 || 1)) * chartW;
+
+    // Grid lines (5)
+    ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+    ctx.lineWidth = 1;
+    for (let g = 0; g <= 4; g++) {
+      const y = padT + (g / 4) * chartH;
+      ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(w - padR, y); ctx.stroke();
+      const val = maxVal - (g / 4) * range;
+      ctx.fillStyle = 'rgba(255,255,255,0.3)';
+      ctx.font = '9px system-ui';
+      ctx.textAlign = 'right';
+      ctx.fillText(val>=1000?`${(val/1000).toFixed(1)}k`:`${Math.round(val)}`, padL-4, y+3);
+    }
+
+    // X labels
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    ctx.font = '9px system-ui';
+    ctx.textAlign = 'center';
+
+    if (finChartType === 'bar') {
+      // Bar chart — grouped bars (income vs expense)
+      const barW = (chartW / n) * 0.35;
+      const gap  = 2;
+      const zeroY = toY(0);
+      labels.forEach((lbl, i) => {
+        const x = padL + (i + 0.5) / n * chartW;
+        // Income bar
+        const ih = Math.max(1, ((incomes[i] - minVal) / range) * chartH);
+        const iy = toY(incomes[i]);
+        ctx.fillStyle = COL_INCOME;
+        finRoundRect(ctx, x - barW - gap/2, iy, barW, ih, 3);
+        ctx.fill();
+        // Expense bar
+        const eh = Math.max(1, ((expenses[i] - minVal) / range) * chartH);
+        const ey = toY(expenses[i]);
+        ctx.fillStyle = COL_EXPENSE;
+        finRoundRect(ctx, x + gap/2, ey, barW, eh, 3);
+        ctx.fill();
+        ctx.fillStyle = 'rgba(255,255,255,0.35)';
+        ctx.fillText(lbl, x, h - padB + 12);
+      });
+      if (legend) legend.innerHTML = `
+        <span><span class="fin-legend-dot" style="background:${COL_INCOME}"></span>Revenus</span>
+        <span><span class="fin-legend-dot" style="background:${COL_EXPENSE}"></span>Dépenses</span>`;
+
+    } else {
+      // Line chart — balance
+      const pts = balances.map((v,i) => ({ x: toX(i), y: toY(v) }));
+      // Gradient fill
+      const grad = ctx.createLinearGradient(0, padT, 0, padT + chartH);
+      grad.addColorStop(0,   'rgba(102,126,234,0.35)');
+      grad.addColorStop(1,   'rgba(102,126,234,0.00)');
+      ctx.beginPath();
+      ctx.moveTo(pts[0].x, toY(0));
+      pts.forEach(p => ctx.lineTo(p.x, p.y));
+      ctx.lineTo(pts[pts.length-1].x, toY(0));
+      ctx.closePath();
+      ctx.fillStyle = grad;
+      ctx.fill();
+      // Line
+      ctx.beginPath();
+      pts.forEach((p,i) => i===0 ? ctx.moveTo(p.x,p.y) : ctx.lineTo(p.x,p.y));
+      ctx.strokeStyle = COL_PAYMENT;
+      ctx.lineWidth = 2.5;
+      ctx.lineJoin = 'round';
+      ctx.stroke();
+      // Dots
+      pts.forEach(p => {
+        ctx.beginPath(); ctx.arc(p.x, p.y, 3.5, 0, Math.PI*2);
+        ctx.fillStyle = COL_PAYMENT; ctx.fill();
+        ctx.strokeStyle = '#0d0b26'; ctx.lineWidth=1.5; ctx.stroke();
+      });
+      // Zero line
+      if (minVal < 0) {
+        ctx.strokeStyle = 'rgba(255,255,255,0.18)'; ctx.lineWidth = 1;
+        ctx.setLineDash([4,4]);
+        ctx.beginPath(); ctx.moveTo(padL, toY(0)); ctx.lineTo(w-padR, toY(0)); ctx.stroke();
+        ctx.setLineDash([]);
+      }
+      labels.forEach((lbl,i) => ctx.fillText(lbl, toX(i), h - padB + 12));
+      if (legend) legend.innerHTML = `<span><span class="fin-legend-dot" style="background:${COL_PAYMENT}"></span>Solde (Revenus − Dépenses)</span>`;
+    }
+  }
+
+  function finDrawPie(ctx, w, h, incomes, expenses) {
+    const totalInc = incomes.reduce((s,v)=>s+v,0);
+    const totalExp = expenses.reduce((s,v)=>s+v,0);
+    const total    = totalInc + totalExp || 1;
+    const cx = w/2, cy = h/2 - 10, r = Math.min(w,h)/2 - 24;
+    const slices = [
+      { label: 'Revenus',  value: totalInc, color: COL_INCOME  },
+      { label: 'Dépenses', value: totalExp, color: COL_EXPENSE },
+    ];
+    let angle = -Math.PI / 2;
+    slices.forEach(s => {
+      const sweep = (s.value / total) * Math.PI * 2;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.arc(cx, cy, r, angle, angle + sweep);
+      ctx.closePath();
+      ctx.fillStyle = s.color;
+      ctx.fill();
+      ctx.strokeStyle = '#0d0b26';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      angle += sweep;
+    });
+    // Centre (donut)
+    ctx.beginPath(); ctx.arc(cx, cy, r*0.52, 0, Math.PI*2);
+    ctx.fillStyle = 'rgba(13,11,38,0.97)'; ctx.fill();
+    // Solde au centre
+    const solde = totalInc - totalExp;
+    ctx.fillStyle = solde >= 0 ? COL_INCOME : COL_EXPENSE;
+    ctx.font = `bold 15px system-ui`;
+    ctx.textAlign = 'center';
+    ctx.fillText(finEur(solde), cx, cy + 2);
+    ctx.fillStyle = 'rgba(255,255,255,0.35)'; ctx.font = '10px system-ui';
+    ctx.fillText('Solde net', cx, cy + 15);
+  }
+
+  function finRoundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x+r, y); ctx.lineTo(x+w-r, y);
+    ctx.quadraticCurveTo(x+w, y, x+w, y+r);
+    ctx.lineTo(x+w, y+h); ctx.lineTo(x, y+h); ctx.lineTo(x, y+r);
+    ctx.quadraticCurveTo(x, y, x+r, y);
+    ctx.closePath();
+  }
+
+  /* ═══════════════════════════════════════
+     ONGLET BILAN
+  ═══════════════════════════════════════ */
+  function finHtmlBilan() {
+    const PERIODS = [
+      { id:'day',   label:'Aujourd\'hui',  filter: t => t.date === finToday() },
+      { id:'week',  label:'7 derniers jours', filter: t => { const d=new Date(t.date); const w=new Date(); w.setDate(w.getDate()-7); return d>=w; } },
+      { id:'month', label:'Ce mois',       filter: t => { const d=new Date(t.date),n=new Date(); return d.getMonth()===n.getMonth()&&d.getFullYear()===n.getFullYear(); } },
+      { id:'year',  label:'Cette année',   filter: t => new Date(t.date).getFullYear()===new Date().getFullYear() },
+      { id:'all',   label:'Tout',          filter: _ => true },
+    ];
+
+    const html = PERIODS.map(p => {
+      const txs     = finTx.filter(p.filter);
+      const income  = txs.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+      const expense = txs.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+      const payment = txs.filter(t=>t.type==='payment').reduce((s,t)=>s+t.amount,0);
+      const solde   = income - expense - payment;
+      const kpiCol  = solde >= 0 ? '#10b981' : '#f5574f';
+
+      // Répartition dépenses par catégorie
+      const catBreakdown = {};
+      txs.filter(t=>t.type!=='income').forEach(t => { catBreakdown[t.category]=(catBreakdown[t.category]||0)+t.amount; });
+      const topCats = Object.entries(catBreakdown).sort((a,b)=>b[1]-a[1]).slice(0,5);
+
+      return `
+        <div style="margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid rgba(255,255,255,0.06);">
+          <div class="fin-section-title">${p.label}</div>
+          <div class="fin-bilan-kpi">
+            <div class="fin-kpi-card">
+              <div class="fin-kpi-label">Revenus</div>
+              <div class="fin-kpi-value" style="color:#10b981">${finEur(income)}</div>
+            </div>
+            <div class="fin-kpi-card">
+              <div class="fin-kpi-label">Sorties</div>
+              <div class="fin-kpi-value" style="color:#f5574f">${finEur(expense+payment)}</div>
+            </div>
+            <div class="fin-kpi-card" style="grid-column:1/-1;">
+              <div class="fin-kpi-label">Solde net</div>
+              <div class="fin-kpi-value" style="color:${kpiCol}">${finEur(solde)}</div>
+              <div class="fin-kpi-sub">${txs.length} transaction(s)</div>
+            </div>
+          </div>
+          ${topCats.length ? `
+            <div class="fin-bilan-table">
+              ${topCats.map(([cat,amt])=>`
+                <div class="fin-bilan-row">
+                  <div class="fin-bilan-cat">
+                    <div style="width:6px;height:6px;border-radius:50%;background:${COL_EXPENSE};flex-shrink:0;"></div>
+                    ${finEsc(cat)}
+                  </div>
+                  <div class="fin-bilan-amount" style="color:#f5574f">${finEur(amt)}</div>
+                </div>`).join('')}
+            </div>` : '<div style="color:rgba(255,255,255,0.25);font-size:12px;padding:8px 0;">Aucune donnée</div>'}
+        </div>`;
+    }).join('');
+
+    return html;
+  }
+
+  /* ═══════════════════════════════════════
+     ONGLET MENSUALITÉS
+  ═══════════════════════════════════════ */
+  function finHtmlMensuel() {
+    const today   = finToday();
+    const thisMonth = today.slice(0,7);
+
+    // Reste à vivre ce mois
+    const monthIncome  = finTx.filter(t=>{ const d=new Date(t.date),n=new Date(); return t.type==='income'&&d.getMonth()===n.getMonth()&&d.getFullYear()===n.getFullYear(); }).reduce((s,t)=>s+t.amount,0);
+    const monthInstDue = finInst.filter(i=>i.dueDate.startsWith(thisMonth)).reduce((s,i)=>s+i.amount,0);
+    const rav          = monthIncome - monthInstDue;
+
+    // Grouper les mensualités par facture source
+    const byParent = {};
+    finInst.forEach(i => {
+      if (!byParent[i.parentTx]) byParent[i.parentTx] = [];
+      byParent[i.parentTx].push(i);
+    });
+
+    const cards = Object.entries(byParent).map(([parentId, items]) => {
+      const tx      = finTx.find(t=>t.id===parentId);
+      const total   = items.reduce((s,i)=>s+i.amount,0);
+      const paid    = items.filter(i=>i.paid).length;
+      const pctDone = Math.round((paid/items.length)*100);
+      const sortedItems = [...items].sort((a,b)=>a.dueDate.localeCompare(b.dueDate));
+
+      return `
+        <div class="fin-inst-card">
+          <div class="fin-inst-head">
+            <div>
+              <div class="fin-inst-label">${finEsc(tx?.label||tx?.category||'Paiement')}</div>
+              <div style="font-size:10px;color:rgba(255,255,255,0.35);margin-top:2px;">${paid}/${items.length} payée(s) · ${pctDone}%</div>
+            </div>
+            <div class="fin-inst-total">${finEur(total)}</div>
+          </div>
+          <div style="height:3px;background:rgba(255,255,255,0.06);">
+            <div style="height:100%;width:${pctDone}%;background:linear-gradient(90deg,#10b981,#06b6d4);border-radius:3px;transition:width .3s;"></div>
+          </div>
+          ${sortedItems.slice(0,5).map(i=>{
+            const overdue = !i.paid && i.dueDate < today;
+            const col = i.paid ? '#10b981' : overdue ? '#f5574f' : '#f5c542';
+            return `<div class="fin-inst-row">
+              <div class="fin-inst-date" style="color:${col}">
+                ${overdue?'⚠️ ':i.paid?'✅ ':''} ${finFmtDate(i.dueDate)}
+              </div>
+              <div class="fin-inst-amt" style="color:${col}">${finEur(i.amount)}</div>
+              ${i.paid
+                ? `<button class="fin-pay-btn paid" disabled>Payé</button>`
+                : `<button class="fin-pay-btn" onclick="finPayInst('${i.id}')">Payer</button>`
+              }
+            </div>`;
+          }).join('')}
+          ${sortedItems.length > 5 ? `<div style="font-size:11px;color:rgba(255,255,255,0.3);padding:6px 14px;">+ ${sortedItems.length-5} autres</div>`:''}
+        </div>`;
+    }).join('');
+
+    return `
+      <div class="fin-rav-banner">
+        <div class="fin-rav-label">💶 Reste à vivre ce mois</div>
+        <div class="fin-rav-value" style="color:${rav>=0?'#10b981':'#f5574f'}">${finEur(rav)}</div>
+        <div class="fin-rav-sub">Revenus (${finEur(monthIncome)}) − mensualités dues (${finEur(monthInstDue)})</div>
+      </div>
+      ${Object.keys(byParent).length === 0
+        ? `<div style="text-align:center;color:rgba(255,255,255,0.3);font-size:13px;padding:40px 0;">
+            Aucune mensualisation en cours.<br>
+            <span style="font-size:11px;">Créez un paiement échelonné depuis l'onglet Saisie.</span>
+          </div>`
+        : cards
+      }`;
+  }
+
+  function finBindMensuel() {
+    // binding dynamique via onclick inline
+  }
+
+  window.finPayInst = function(id) {
+    const inst = finInst.find(i=>i.id===id);
+    if (!inst || inst.paid) return;
+    inst.paid = true;
+    inst.paidDate = finToday();
+    finSaveInst();
+    finRender();
+    notify(`✅ Mensualité de ${finEur(inst.amount)} marquée comme payée`);
+  };
+
+  /* ═══════════════════════════════════════
+     REDIMENSIONNEMENT PAR LE BORD GAUCHE
+  ═══════════════════════════════════════ */
+  const FIN_WIDTH_KEY = 'fin_panel_width';
+  const FIN_MIN_W = 310;
+  const FIN_MAX_W = Math.round(window.innerWidth * 0.72);
+
+  function finApplyWidth(w) {
+    const panel = document.getElementById('fin-panel');
+    if (panel) panel.style.width = Math.min(FIN_MAX_W, Math.max(FIN_MIN_W, w)) + 'px';
+  }
+
+  function finInitResize() {
+    const handle = document.getElementById('fin-resize-handle');
+    const panel  = document.getElementById('fin-panel');
+    if (!handle || !panel) return;
+
+    // Restaurer la largeur sauvegardée
+    const saved = parseInt(localStorage.getItem(FIN_WIDTH_KEY));
+    if (saved && saved >= FIN_MIN_W) finApplyWidth(saved);
+
+    let dragging = false, startX = 0, startW = 0;
+
+    handle.addEventListener('mousedown', e => {
+      dragging = true;
+      startX   = e.clientX;
+      startW   = panel.offsetWidth;
+      handle.classList.add('dragging');
+      document.body.style.cursor     = 'ew-resize';
+      document.body.style.userSelect = 'none';
+      e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', e => {
+      if (!dragging) return;
+      // Tirer vers la gauche = agrandir (startX - clientX > 0 quand on part à gauche)
+      const delta  = startX - e.clientX;
+      const newW   = Math.min(FIN_MAX_W, Math.max(FIN_MIN_W, startW + delta));
+      panel.style.width = newW + 'px';
+    });
+
+    document.addEventListener('mouseup', () => {
+      if (!dragging) return;
+      dragging = false;
+      handle.classList.remove('dragging');
+      document.body.style.cursor     = '';
+      document.body.style.userSelect = '';
+      // Sauvegarder la nouvelle largeur
+      localStorage.setItem(FIN_WIDTH_KEY, panel.offsetWidth);
+    });
+
+    // Touch support (mobile)
+    handle.addEventListener('touchstart', e => {
+      dragging = true;
+      startX   = e.touches[0].clientX;
+      startW   = panel.offsetWidth;
+      handle.classList.add('dragging');
+      e.preventDefault();
+    }, { passive: false });
+
+    document.addEventListener('touchmove', e => {
+      if (!dragging) return;
+      const delta = startX - e.touches[0].clientX;
+      const newW  = Math.min(FIN_MAX_W, Math.max(FIN_MIN_W, startW + delta));
+      panel.style.width = newW + 'px';
+    });
+
+    document.addEventListener('touchend', () => {
+      if (!dragging) return;
+      dragging = false;
+      handle.classList.remove('dragging');
+      localStorage.setItem(FIN_WIDTH_KEY, panel.offsetWidth);
+    });
+  }
+
+  /* ── Initialisation ── */
+  window.finInit = function() {
+    finLoadData();
+    finInitResize();
+  };
+
+  finInit();
+
+})(); // fin IIFE panneau financier
+
 /* ── Démarrage : restaurer le fond d'écran + charger les données ── */
 wpApplySaved();
+themeInit();
+restoreAppearanceSettings();
 tkLoad();
 ctLoad();
 </script>
