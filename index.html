@@ -75,10 +75,12 @@
   }
 
   .desktop-icon .icon-img img.favicon {
-    width: 28px;
-    height: 28px;
-    object-fit: contain;
-    position: absolute;
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 8px;
+    display: block;
+    flex-shrink: 0;
   }
 
   .desktop-icon .icon-label {
@@ -744,6 +746,49 @@
     color: #ccc; font-size: 9px; font-weight: 600;
     max-width: 68px; text-align: center;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+
+  /* ── Sélection d'icône (click-to-pick) ── */
+  .mod-icon-pickable {
+    cursor: pointer;
+    border-radius: inherit;
+    transition: box-shadow .18s, transform .15s;
+    position: relative;
+  }
+  .mod-icon-pickable:hover {
+    transform: scale(1.07);
+  }
+  /* Anneau vert quand sélectionné */
+  .mod-icon-pickable.icon-chosen {
+    box-shadow: 0 0 0 2.5px #10b981, 0 0 14px rgba(16,185,129,0.45) !important;
+  }
+  /* Badge ✓ en haut à droite */
+  .mod-icon-pickable::after {
+    content: '✓';
+    position: absolute; top: -6px; right: -6px;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #10b981; color: #fff;
+    font-size: 10px; font-weight: 800; line-height: 16px;
+    text-align: center; z-index: 5;
+    opacity: 0; transform: scale(0.6);
+    transition: opacity .18s, transform .18s;
+    pointer-events: none;
+  }
+  .mod-icon-pickable.icon-chosen::after {
+    opacity: 1; transform: scale(1);
+  }
+  /* Label sous chaque preview */
+  .mod-icon-pick-label {
+    font-size: 9px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .5px; margin-top: 4px; text-align: center;
+    transition: color .15s;
+    color: rgba(255,255,255,0.25);
+  }
+  .mod-icon-pick-label.chosen { color: #10b981; }
+  /* Wrapper desktop preview quand icône choisie */
+  .up-desktop-preview.chosen-src {
+    border-color: rgba(16,185,129,0.3) !important;
+    background: rgba(16,185,129,0.06) !important;
   }
 
   /* Color swatches */
@@ -2902,17 +2947,20 @@
   <!-- Poignée de redimensionnement gauche -->
   <div id="fin-resize-handle" title="Redimensionner le panneau"></div>
 
-  <!-- En-tête -->
+  <!-- En-tête professionnel -->
   <div class="fin-hdr">
     <div class="fin-hdr-top">
       <div class="fin-title">💰 Finances</div>
-      <button class="fin-close-btn" onclick="finClose()">✕</button>
+      <span class="fin-balance-pill fin-balance-pos" id="fin-balance-pill">—</span>
+      <button class="fin-close-btn" onclick="finClose()" title="Fermer">✕</button>
     </div>
     <div class="fin-tabs">
-      <button class="fin-tab active" id="ftab-saisie"    onclick="finTab('saisie')">📝 Saisie</button>
-      <button class="fin-tab"        id="ftab-graphes"   onclick="finTab('graphes')">📊 Graphes</button>
-      <button class="fin-tab"        id="ftab-bilan"     onclick="finTab('bilan')">📋 Bilan</button>
-      <button class="fin-tab"        id="ftab-mensuel"   onclick="finTab('mensuel')">📅 Mensuel</button>
+      <button class="fin-tab active" id="ftab-saisie"       onclick="finTab('saisie')">✏️ Saisie</button>
+      <button class="fin-tab"        id="ftab-transactions"  onclick="finTab('transactions')">📋 Opérat.</button>
+      <button class="fin-tab"        id="ftab-graphes"       onclick="finTab('graphes')">📊 Graphes</button>
+      <button class="fin-tab"        id="ftab-bilan"         onclick="finTab('bilan')">📈 Bilan</button>
+      <button class="fin-tab"        id="ftab-mensuel"       onclick="finTab('mensuel')">🔄 Échéances</button>
+      <button class="fin-tab"        id="ftab-reglages"      onclick="finTab('reglages')">⚙️</button>
     </div>
   </div>
 
@@ -2972,16 +3020,16 @@
 
       <div class="url-preview" id="url-preview" style="display:none;">
         <div class="up-info">
-          <div class="favicon-big-preview" id="url-favicon-container" style="background:#667eea">📦</div>
+          <div class="favicon-big-preview mod-icon-pickable" id="url-favicon-container" onclick="modPickIcon('left')" title="Utiliser cette icône" style="background:#667eea">📦</div>
           <div style="min-width:0;flex:1">
             <div class="url-preview-domain" id="url-preview-domain"></div>
             <div class="url-preview-text"   id="url-preview-path"></div>
             <div class="url-preview-desc"   id="url-preview-desc"></div>
           </div>
         </div>
-        <div class="up-desktop-preview">
+        <div class="up-desktop-preview" id="up-desktop-preview-wrap">
           <div class="updp-label">Bureau</div>
-          <div class="updp-icon" id="updp-icon" style="background:#667eea">📦</div>
+          <div class="updp-icon mod-icon-pickable icon-chosen" id="updp-icon" onclick="modPickIcon('right')" title="Utiliser cette icône" style="background:#667eea">📦</div>
           <div class="updp-name" id="updp-name">Module</div>
         </div>
       </div>
@@ -3435,11 +3483,33 @@
   }
 
   // Retourne le meilleur favicon disponible pour une app
-  // (favicon stocké via Microlink en priorité, sinon Google)
   function getAppFavicon(app) {
     if (app.type !== 'module' || !app.url) return null;
     return app.faviconUrl || getFaviconUrl(app.url);
   }
+
+  // Gestion du fallback favicon sur le bureau (onerror)
+  window.iconImgFallback = function(img) {
+    if (img.dataset.tried) {
+      // Déjà essayé le fallback → afficher l'emoji
+      img.style.display = 'none';
+      const fb = img.parentElement && img.parentElement.querySelector('.emoji-fallback');
+      if (fb) fb.style.display = 'block';
+    } else {
+      // 1er échec → essayer Google Favicon Service
+      img.dataset.tried = '1';
+      const siteUrl = img.dataset.url || '';
+      const googleUrl = getFaviconUrl(siteUrl);
+      if (googleUrl && googleUrl !== img.src) {
+        img.src = googleUrl;
+      } else {
+        // Aucun fallback possible → emoji
+        img.style.display = 'none';
+        const fb = img.parentElement && img.parentElement.querySelector('.emoji-fallback');
+        if (fb) fb.style.display = 'block';
+      }
+    }
+  };
 
   function getDomain(url) {
     try {
@@ -3474,7 +3544,17 @@
 
   function saveModules() {
     const mods = apps.filter(a => a.type === 'module');
-    localStorage.setItem('vd_modules', JSON.stringify(mods));
+    try {
+      localStorage.setItem('vd_modules', JSON.stringify(mods));
+    } catch(e) {
+      // Quota dépassé (probable si favicons base64 trop lourds) → réessayer sans les base64
+      console.warn('saveModules: quota localStorage, stripping base64 favicons', e);
+      const stripped = mods.map(m => ({
+        ...m,
+        faviconUrl: m.faviconUrl && m.faviconUrl.startsWith('data:') ? null : m.faviconUrl
+      }));
+      try { localStorage.setItem('vd_modules', JSON.stringify(stripped)); } catch(e2) {}
+    }
     ghMarkDirty();
   }
 
@@ -3613,7 +3693,10 @@
 
       const faviconUrl = getAppFavicon(app);
       const iconContent = faviconUrl
-        ? `<img class="favicon" src="${faviconUrl}" alt="" onerror="this.style.display='none';this.parentElement.querySelector('.emoji-fallback').style.display='block'"><span class="emoji-fallback" style="display:none">${app.icon || '📦'}</span>`
+        ? `<img class="favicon" src="${faviconUrl}" alt=""
+            data-url="${app.url||''}"
+            onerror="iconImgFallback(this)"
+          ><span class="emoji-fallback" style="display:none">${app.icon || '📦'}</span>`
         : app.icon;
 
       el.innerHTML = `
@@ -5223,6 +5306,10 @@
     const bgColor   = colorSel ? colorSel.value : '#667eea';
     const googleFav = getFaviconUrl(url);
 
+    // Réinitialiser les variables de sélection pour éviter les valeurs obsolètes
+    _modFavRight = null;
+    _modFavLeft  = null;
+
     let logoUrl    = googleFav;
     let siteTitle  = '';
     let siteDomain = domain;
@@ -5271,7 +5358,7 @@
     if (preview) {
       preview.innerHTML = `
         <div class="up-info">
-          <div class="favicon-big-preview" id="url-favicon-container" style="background:${bgColor}">
+          <div class="favicon-big-preview mod-icon-pickable" id="url-favicon-container" onclick="modPickIcon('left')" title="Utiliser cette icône" style="background:${bgColor}">
             ${iconImgHtml}
           </div>
           <div style="min-width:0;flex:1">
@@ -5280,9 +5367,9 @@
             ${siteDesc ? `<div class="url-preview-desc" id="url-preview-desc">${escHtml(siteDesc)}</div>` : '<div id="url-preview-desc"></div>'}
           </div>
         </div>
-        <div class="up-desktop-preview">
+        <div class="up-desktop-preview chosen-src" id="up-desktop-preview-wrap">
           <div class="updp-label">Bureau</div>
-          <div class="updp-icon" id="updp-icon" style="background:${bgColor}">
+          <div class="updp-icon mod-icon-pickable icon-chosen" id="updp-icon" onclick="modPickIcon('right')" title="Utiliser cette icône" style="background:${bgColor}">
             <img id="updp-fav-img" src="${logoUrl}" alt=""
               onerror="this.style.display='none'"
               style="width:36px;height:36px;object-fit:contain;border-radius:6px;">
@@ -5307,7 +5394,44 @@
 
     fetchedFaviconUrl = logoUrl;
     fetchedSiteName   = siteTitle;
+
+    // Stocker les URLs pour chaque côté (utilisé par modPickIcon)
+    _modFavRight = logoUrl;                    // meilleure icône : b64 si dispo, sinon URL externe
+    _modFavLeft  = googleFav;                  // icône gauche : favicon Google (fallback fiable)
+
+    // Sélection automatique de l'icône droite (bureau) après le fetch complet
+    modPickIcon('right');
   }
+
+  // ── Sélection d'icône : gauche (favicon-big) ou droite (bureau preview) ──
+  let _modIconSide = 'right';
+  let _modFavLeft  = null;   // URL de l'icône gauche (google fallback)
+  let _modFavRight = null;   // URL de l'icône droite (meilleure qualité, b64 si dispo)
+
+  function modPickIcon(side) {
+    _modIconSide = side;
+
+    const left  = document.getElementById('url-favicon-container');
+    const right = document.getElementById('updp-icon');
+    const wrap  = document.getElementById('up-desktop-preview-wrap');
+
+    // Mise à jour des classes visuelles
+    if (left)  left.classList.toggle('icon-chosen',  side === 'left');
+    if (right) right.classList.toggle('icon-chosen', side === 'right');
+    if (wrap)  wrap.classList.toggle('chosen-src',   side === 'right');
+
+    // Mise à jour de fetchedFaviconUrl depuis les variables pré-stockées
+    // (plus fiable que de lire imgEl.src qui peut être cassé ou data:image/svg)
+    if (side === 'right' && _modFavRight) {
+      fetchedFaviconUrl = _modFavRight;
+    } else if (side === 'left' && _modFavLeft) {
+      fetchedFaviconUrl = _modFavLeft;
+    }
+    // Si aucune variable stockée, fetchedFaviconUrl reste tel quel (set par fetchSiteInfo)
+
+    notify(side === 'right' ? '🖼 Icône Bureau sélectionnée' : '🔍 Icône aperçu sélectionnée');
+  }
+  window.modPickIcon = modPickIcon;
 
   // ── Accent colour palette data ────────────────────────
   const MOD_COLORS = [
@@ -5404,6 +5528,11 @@
         if (domEl) domEl.textContent = getDomain(mod.url) || mod.url;
         modUpdateDesktopPreview(undefined, mod.name);
         fetchedFaviconUrl = mod.faviconUrl || null;
+        // Pre-populate icon source vars so modPickIcon() works without a URL re-fetch
+        _modFavRight = mod.faviconUrl || null;
+        _modFavLeft  = mod.faviconUrl || null;
+        // Déclencher un re-fetch automatique pour obtenir la meilleure icône disponible
+        if (mod.url) setTimeout(() => fetchSiteInfo(mod.url.startsWith('http') ? mod.url : 'https://' + mod.url), 300);
       }
       // Update modal header for edit mode
       const h2 = document.querySelector('#module-modal-content .mm-header-text h2');
@@ -5447,6 +5576,10 @@
     // Hide refresh row until next URL preview
     const rr = document.getElementById('mod-refresh-row');
     if (rr) rr.style.display = 'none';
+    // Reset icon selection (default: right / bureau)
+    if (typeof _modIconSide !== 'undefined') _modIconSide = 'right';
+    _modFavLeft  = null;
+    _modFavRight = null;
   }
 
   function addModule() {
@@ -5458,7 +5591,21 @@
     if (!name || !url) { notify('⚠️ Veuillez remplir le nom et l\'URL'); return; }
     if (!url.startsWith('http')) url = 'https://' + url;
 
-    const storedFavicon = fetchedFaviconUrl;
+    // Sélectionner le favicon selon le côté choisi, avec fallbacks robustes
+    function getBestFavicon() {
+      if (_modIconSide === 'right') {
+        if (_modFavRight) return _modFavRight;
+        // Fallback : lire l'image directement dans le DOM (fiable si base64)
+        const img = document.getElementById('updp-fav-img');
+        if (img && img.src && (img.src.startsWith('data:') || img.src.startsWith('http'))) return img.src;
+      } else {
+        if (_modFavLeft) return _modFavLeft;
+        const img = document.getElementById('prev-fav-img');
+        if (img && img.src && (img.src.startsWith('data:') || img.src.startsWith('http'))) return img.src;
+      }
+      return fetchedFaviconUrl; // dernier recours
+    }
+    const storedFavicon = getBestFavicon();
 
     // ── EDIT MODE ──────────────────────────────────────────
     if (modEditingId) {
@@ -9449,284 +9596,335 @@
 /* ══════════════════════════════════════════════════════
    PANNEAU FINANCIER DROIT
 ══════════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════════
+   PANNEAU FINANCIER v2 — redesign professionnel
+══════════════════════════════════════════════════════════ */
 #fin-panel {
   position: fixed;
   top: 0; right: 0; bottom: 0;
-  width: 390px;
-  background: rgba(13,11,38,0.97);
-  border-left: 1px solid rgba(255,255,255,0.09);
-  backdrop-filter: blur(28px);
+  width: 420px;
+  background: linear-gradient(180deg,rgba(10,8,32,0.99) 0%,rgba(13,11,38,0.97) 100%);
+  border-left: 1px solid rgba(255,255,255,0.07);
+  backdrop-filter: blur(32px);
   display: flex; flex-direction: column;
   z-index: 3500;
   transform: translateX(100%);
-  transition: transform .32s cubic-bezier(.4,0,.2,1);
-  box-shadow: -12px 0 48px rgba(0,0,0,0.55);
+  transition: transform .34s cubic-bezier(.4,0,.2,1);
+  box-shadow: -20px 0 72px rgba(0,0,0,0.7);
 }
 #fin-panel.open { transform: translateX(0); }
 
-/* Bouton d'ouverture dans la taskbar */
+/* Bouton taskbar */
 #tb-fin-btn {
   background: none; border: none; cursor: pointer;
   color: rgba(255,255,255,0.7); font-size: 16px;
-  padding: 4px 8px; border-radius: 8px;
-  transition: background .15s, color .15s;
+  padding: 4px 8px; border-radius: 8px; transition: background .15s, color .15s;
 }
 #tb-fin-btn:hover  { background: rgba(255,255,255,0.10); color:#fff; }
 #tb-fin-btn.active { color: var(--t-a1); background: var(--t-asub); box-shadow:0 0 8px var(--t-aglow); }
 
-/* En-tête panneau */
+/* ── Header ── */
 .fin-hdr {
-  padding: 16px 18px 0;
-  flex-shrink: 0;
+  background: linear-gradient(135deg,rgba(102,126,234,0.10) 0%,rgba(118,75,162,0.06) 100%);
+  border-bottom: 1px solid rgba(255,255,255,0.07); padding: 14px 16px 0; flex-shrink: 0;
 }
-.fin-hdr-top {
-  display: flex; align-items: center; justify-content: space-between;
-  margin-bottom: 14px;
+.fin-hdr-top { display: flex; align-items: center; gap: 8px; margin-bottom: 11px; }
+.fin-title { font-size: 14px; font-weight: 800; color: #f0f0f8; letter-spacing:.2px; flex:1; }
+.fin-balance-pill {
+  padding: 3px 11px; border-radius: 20px; font-size: 11px; font-weight: 700; border: 1px solid; flex-shrink:0;
 }
-.fin-title {
-  font-size: 15px; font-weight: 700; color: #f0f0f8;
-  display: flex; align-items: center; gap: 8px;
-}
+.fin-balance-pos { background:rgba(16,185,129,0.12); border-color:rgba(16,185,129,0.3); color:#10b981; }
+.fin-balance-neg { background:rgba(245,87,79,0.12);  border-color:rgba(245,87,79,0.3);  color:#f5574f; }
 .fin-close-btn {
-  background: none; border: none; color: rgba(255,255,255,0.45);
-  font-size: 18px; cursor: pointer; padding: 4px 7px; border-radius: 7px;
-  transition: background .15s, color .15s;
+  background:none; border:none; color:rgba(255,255,255,0.32); font-size:16px;
+  cursor:pointer; padding:5px 8px; border-radius:8px; transition:background .15s,color .15s; line-height:1;
 }
-.fin-close-btn:hover { background: rgba(255,255,255,0.08); color: #fff; }
+.fin-close-btn:hover { background:rgba(255,255,255,0.08); color:#fff; }
 
-/* Onglets */
-.fin-tabs {
-  display: flex; gap: 0;
-  border-bottom: 1px solid rgba(255,255,255,0.07);
-  margin-bottom: 0;
-}
+/* ── Onglets ── */
+.fin-tabs { display:flex; gap:0; margin:0 -16px; }
 .fin-tab {
-  flex: 1; padding: 8px 4px; font-size: 11px; font-weight: 600;
-  text-align: center; cursor: pointer; border: none; background: none;
-  color: rgba(255,255,255,0.45); border-bottom: 2px solid transparent;
-  transition: color .15s, border-color .15s;
-  text-transform: uppercase; letter-spacing: .4px;
+  flex:1; padding:8px 2px; font-size:9.5px; font-weight:700; text-align:center;
+  cursor:pointer; border:none; background:none; color:rgba(255,255,255,0.35);
+  border-bottom:2px solid transparent; transition:color .15s,border-color .15s;
+  text-transform:uppercase; letter-spacing:.4px;
 }
-.fin-tab:hover  { color: rgba(255,255,255,0.75); }
-.fin-tab.active { color: var(--t-a1); border-bottom-color: var(--t-a1); }
+.fin-tab:hover  { color:rgba(255,255,255,0.65); }
+.fin-tab.active { color:var(--t-a1); border-bottom-color:var(--t-a1); }
 
-/* Corps scrollable */
+/* ── Corps ── */
 .fin-body {
-  flex: 1; overflow-y: auto; padding: 18px;
-  scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.12) transparent;
+  flex:1; overflow-y:auto; padding:15px;
+  scrollbar-width:thin; scrollbar-color:rgba(255,255,255,0.10) transparent;
 }
-.fin-body::-webkit-scrollbar { width: 5px; }
-.fin-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.13); border-radius: 4px; }
+.fin-body::-webkit-scrollbar { width:4px; }
+.fin-body::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.12); border-radius:4px; }
 
-/* ── Onglet Saisie ── */
+/* ── Titres de section ── */
 .fin-section-title {
-  font-size: 11px; font-weight: 700; text-transform: uppercase;
-  letter-spacing: .6px; color: rgba(255,255,255,0.38); margin: 16px 0 8px;
+  font-size:9.5px; font-weight:800; text-transform:uppercase; letter-spacing:.7px;
+  color:rgba(255,255,255,0.28); margin:18px 0 8px;
+  display:flex; align-items:center; gap:8px;
 }
-.fin-section-title:first-child { margin-top: 0; }
+.fin-section-title::after { content:''; flex:1; height:1px; background:rgba(255,255,255,0.05); }
+.fin-section-title:first-child { margin-top:0; }
 
-.fin-type-row {
-  display: flex; gap: 6px; margin-bottom: 14px;
-}
+/* ── Boutons de type ── */
+.fin-type-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; margin-bottom:14px; }
 .fin-type-btn {
-  flex: 1; padding: 8px 6px; border-radius: 9px; border: 1px solid rgba(255,255,255,0.08);
-  background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.55);
-  font-size: 12px; font-weight: 600; cursor: pointer; transition: all .15s;
-  font-family: inherit;
+  padding:10px 4px; border-radius:10px; border:1px solid rgba(255,255,255,0.06);
+  background:rgba(255,255,255,0.03); color:rgba(255,255,255,0.42);
+  font-size:11px; font-weight:700; cursor:pointer; transition:all .16s;
+  font-family:inherit; text-align:center;
 }
-.fin-type-btn.active-income  { background:rgba(16,185,129,0.15); border-color:rgba(16,185,129,0.45); color:#10b981; }
-.fin-type-btn.active-expense { background:rgba(245,87,79,0.13);  border-color:rgba(245,87,79,0.40);  color:#f5574f; }
-.fin-type-btn.active-payment { background:rgba(102,126,234,0.15);border-color:rgba(102,126,234,0.4); color:#667eea; }
+.fin-type-btn:hover { background:rgba(255,255,255,0.07); color:rgba(255,255,255,0.7); }
+.fin-type-btn.active-income  { background:rgba(16,185,129,0.15); border-color:rgba(16,185,129,0.5); color:#10b981; box-shadow:0 0 12px rgba(16,185,129,0.10); }
+.fin-type-btn.active-expense { background:rgba(245,87,79,0.13);  border-color:rgba(245,87,79,0.45);  color:#f5574f; box-shadow:0 0 12px rgba(245,87,79,0.10); }
+.fin-type-btn.active-payment { background:rgba(102,126,234,0.15);border-color:rgba(102,126,234,0.45);color:#667eea; box-shadow:0 0 12px rgba(102,126,234,0.10); }
 
+/* ── Inputs ── */
 .fin-input {
-  width: 100%; background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.09); border-radius: 10px;
-  color: #f0f0f8; padding: 9px 12px; font-size: 13px;
-  font-family: inherit; outline: none; box-sizing: border-box;
-  transition: border-color .15s;
+  width:100%; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.07);
+  border-radius:10px; color:#f0f0f8; padding:9px 12px; font-size:13px;
+  font-family:inherit; outline:none; box-sizing:border-box; transition:border-color .15s,background .15s;
 }
-.fin-input:focus { border-color: var(--t-a1); }
-.fin-input::placeholder { color: rgba(255,255,255,0.25); }
+.fin-input:focus { border-color:var(--t-a1); background:rgba(255,255,255,0.06); }
+.fin-input::placeholder { color:rgba(255,255,255,0.20); }
+.fin-input option { background:#13103d; color:#f0f0f8; }
+select.fin-input {
+  appearance:none; -webkit-appearance:none; cursor:pointer;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='rgba(255,255,255,0.3)' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:right 12px center; padding-right:30px;
+}
 
-.fin-row2 { display: grid; grid-template-columns:1fr 1fr; gap: 8px; margin-bottom: 10px; }
-.fin-mb10 { margin-bottom: 10px; }
-.fin-mb14 { margin-bottom: 14px; }
+.fin-row2 { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px; }
+.fin-mb10 { margin-bottom:10px; }
+.fin-mb14 { margin-bottom:14px; }
 
-.fin-install-row {
-  display: flex; align-items: center; gap: 10px; margin-bottom: 10px;
-}
-.fin-install-preview {
-  background: rgba(102,126,234,0.07); border: 1px solid rgba(102,126,234,0.18);
-  border-radius: 10px; padding: 10px 12px; font-size: 12px;
-  color: rgba(255,255,255,0.6); margin-bottom: 12px; display: none;
-}
-.fin-install-preview.visible { display: block; }
-.fin-install-preview-row {
-  display: flex; justify-content: space-between; padding: 3px 0;
-  border-bottom: 1px solid rgba(255,255,255,0.04);
-}
-.fin-install-preview-row:last-child { border-bottom: none; }
-
+/* ── Bouton principal ── */
 .fin-submit-btn {
-  width: 100%; padding: 11px; border-radius: 11px; border: none;
-  background: var(--t-agrad); color: #fff; font-size: 13px;
-  font-weight: 700; cursor: pointer; font-family: inherit;
-  transition: opacity .15s, transform .1s;
+  width:100%; padding:12px; border-radius:12px; border:none;
+  background:var(--t-agrad); color:#fff; font-size:13px; font-weight:700;
+  cursor:pointer; font-family:inherit; transition:opacity .15s,transform .1s,box-shadow .15s;
+  box-shadow:0 4px 18px rgba(102,126,234,0.25); letter-spacing:.2px;
 }
-.fin-submit-btn:hover { opacity: .88; transform: translateY(-1px); }
+.fin-submit-btn:hover { opacity:.88; transform:translateY(-1px); box-shadow:0 6px 24px rgba(102,126,234,0.35); }
+.fin-submit-btn:active { transform:translateY(0); }
 
-/* ── Onglet Graphiques ── */
-.fin-chart-toolbar {
-  display: flex; gap: 6px; margin-bottom: 14px;
+/* ── Mensualisation preview ── */
+.fin-install-row { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+.fin-install-preview {
+  background:rgba(102,126,234,0.06); border:1px solid rgba(102,126,234,0.15);
+  border-radius:10px; padding:10px 12px; font-size:12px; color:rgba(255,255,255,0.5);
+  margin-bottom:12px; display:none;
 }
-.fin-chart-btn {
-  flex: 1; padding: 7px 4px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.08);
-  background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.5);
-  font-size: 11px; font-weight: 600; cursor: pointer; transition: all .15s;
-  font-family: inherit;
+.fin-install-preview.visible { display:block; }
+.fin-install-preview-row {
+  display:flex; justify-content:space-between; align-items:center; padding:4px 0;
+  border-bottom:1px solid rgba(255,255,255,0.04);
 }
-.fin-chart-btn.active { background: var(--t-asub); color: var(--t-a1); border-color: var(--t-a1); }
+.fin-install-preview-row:last-child { border-bottom:none; }
 
-.fin-period-row {
-  display: flex; gap: 5px; margin-bottom: 14px;
+/* ── Liste transactions ── */
+.fin-search-bar { position:relative; margin-bottom:10px; }
+.fin-search-input {
+  width:100%; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.07);
+  border-radius:10px; color:#f0f0f8; padding:8px 12px 8px 34px; font-size:12px;
+  font-family:inherit; outline:none; box-sizing:border-box; transition:border-color .15s;
 }
-.fin-period-btn {
-  flex: 1; padding: 6px 2px; border-radius: 7px; border: none;
-  background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.45);
-  font-size: 10px; font-weight: 700; cursor: pointer; transition: all .15s;
-  text-transform: uppercase; letter-spacing: .4px; font-family: inherit;
-}
-.fin-period-btn.active { background: rgba(102,126,234,0.18); color: var(--t-a1); }
+.fin-search-input:focus { border-color:var(--t-a1); }
+.fin-search-input::placeholder { color:rgba(255,255,255,0.20); }
+.fin-search-icon { position:absolute; left:11px; top:50%; transform:translateY(-50%); color:rgba(255,255,255,0.28); font-size:13px; pointer-events:none; }
 
-#fin-chart-canvas {
-  width: 100%; border-radius: 12px; display: block;
-  background: rgba(255,255,255,0.025);
+.fin-filter-row { display:flex; gap:5px; margin-bottom:12px; flex-wrap:wrap; }
+.fin-filter-pill {
+  padding:4px 10px; border-radius:20px; border:1px solid rgba(255,255,255,0.07);
+  background:rgba(255,255,255,0.03); color:rgba(255,255,255,0.38); font-size:9.5px;
+  font-weight:700; cursor:pointer; transition:all .14s; font-family:inherit; text-transform:uppercase; letter-spacing:.3px;
 }
+.fin-filter-pill:hover { background:rgba(255,255,255,0.07); color:rgba(255,255,255,0.65); }
+.fin-filter-pill.active-all     { background:rgba(255,255,255,0.09); color:#f0f0f8; border-color:rgba(255,255,255,0.18); }
+.fin-filter-pill.active-income  { background:rgba(16,185,129,0.14); border-color:rgba(16,185,129,0.4); color:#10b981; }
+.fin-filter-pill.active-expense { background:rgba(245,87,79,0.12);  border-color:rgba(245,87,79,0.38);  color:#f5574f; }
+.fin-filter-pill.active-payment { background:rgba(102,126,234,0.14);border-color:rgba(102,126,234,0.38);color:#667eea; }
 
-.fin-chart-legend {
-  display: flex; gap: 14px; justify-content: center;
-  flex-wrap: wrap; margin-top: 10px; font-size: 11px;
-  color: rgba(255,255,255,0.5);
-}
-.fin-legend-dot {
-  width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 5px;
-}
-
-/* ── Onglet Bilan ── */
-.fin-bilan-kpi {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px;
-}
-.fin-kpi-card {
-  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07);
-  border-radius: 12px; padding: 12px 14px;
-}
-.fin-kpi-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: rgba(255,255,255,0.38); margin-bottom: 5px; }
-.fin-kpi-value { font-size: 17px; font-weight: 700; }
-.fin-kpi-sub   { font-size: 10px; color: rgba(255,255,255,0.38); margin-top: 3px; }
-
-.fin-bilan-table {
-  background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.07);
-  border-radius: 12px; overflow: hidden;
-}
-.fin-bilan-row {
-  display: flex; align-items: center; padding: 9px 14px;
-  border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 12px;
-}
-.fin-bilan-row:last-child { border-bottom: none; }
-.fin-bilan-cat { flex: 1; color: rgba(255,255,255,0.65); display: flex; align-items: center; gap: 7px; }
-.fin-bilan-amount { font-weight: 600; }
-
-/* ── Onglet Mensualités ── */
-.fin-inst-card {
-  background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
-  border-radius: 12px; margin-bottom: 10px; overflow: hidden;
-}
-.fin-inst-head {
-  display: flex; align-items: center; padding: 11px 14px;
-  border-bottom: 1px solid rgba(255,255,255,0.05); gap: 10px;
-}
-.fin-inst-label { flex: 1; font-size: 13px; font-weight: 600; color: #f0f0f8; }
-.fin-inst-total { font-size: 12px; color: rgba(255,255,255,0.5); }
-.fin-inst-row {
-  display: flex; align-items: center; padding: 8px 14px;
-  border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 12px;
-}
-.fin-inst-row:last-child { border-bottom: none; }
-.fin-inst-date { flex: 1; color: rgba(255,255,255,0.5); }
-.fin-inst-amt  { font-weight: 600; min-width: 70px; text-align: right; }
-.fin-pay-btn {
-  margin-left: 8px; padding: 3px 9px; border-radius: 6px;
-  border: 1px solid rgba(16,185,129,0.4); background: rgba(16,185,129,0.12);
-  color: #10b981; font-size: 10px; font-weight: 700; cursor: pointer;
-  font-family: inherit; transition: background .12s;
-}
-.fin-pay-btn:hover { background: rgba(16,185,129,0.25); }
-.fin-pay-btn.paid {
-  border-color: rgba(255,255,255,0.1); background: none;
-  color: rgba(255,255,255,0.3); cursor: default;
-}
-
-.fin-rav-banner {
-  background: linear-gradient(135deg,rgba(16,185,129,0.12),rgba(6,182,212,0.08));
-  border: 1px solid rgba(16,185,129,0.22); border-radius: 13px;
-  padding: 14px 16px; margin-bottom: 16px;
-}
-.fin-rav-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: rgba(16,185,129,0.8); margin-bottom: 6px; }
-.fin-rav-value { font-size: 22px; font-weight: 800; color: #10b981; }
-.fin-rav-sub   { font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 4px; }
-
-/* ── Transaction list (Saisie bas) ── */
-.fin-tx-list { margin-top: 18px; }
+.fin-tx-list { }
 .fin-tx-item {
-  display: flex; align-items: center; gap: 10px; padding: 9px 12px;
-  border-radius: 10px; margin-bottom: 5px;
-  background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05);
-  font-size: 12px;
+  display:flex; align-items:center; gap:9px; padding:9px 11px;
+  border-radius:10px; margin-bottom:5px;
+  background:rgba(255,255,255,0.025); border:1px solid rgba(255,255,255,0.05);
+  font-size:12px; transition:background .13s,border-color .13s;
 }
-.fin-tx-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-.fin-tx-label  { flex: 1; color: rgba(255,255,255,0.75); }
-.fin-tx-date   { color: rgba(255,255,255,0.3); font-size: 10px; }
-.fin-tx-amount { font-weight: 700; }
-.fin-tx-del { background:none; border:none; cursor:pointer; color:rgba(255,255,255,0.25); font-size:14px; padding:0 2px; }
-.fin-tx-del:hover { color: #f5574f; }
-
-/* Overlay sombre quand le panneau est ouvert */
-#fin-overlay {
-  display: none; position: fixed; inset: 0;
-  background: rgba(0,0,0,0.35); z-index: 3490;
+.fin-tx-item:hover { background:rgba(255,255,255,0.04); border-color:rgba(255,255,255,0.09); }
+.fin-tx-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+.fin-tx-info { flex:1; min-width:0; }
+.fin-tx-label  { color:rgba(255,255,255,0.80); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.fin-tx-meta   { color:rgba(255,255,255,0.28); font-size:10px; margin-top:2px; }
+.fin-tx-amount { font-weight:700; font-size:12.5px; flex-shrink:0; }
+.fin-tx-actions { display:flex; gap:2px; flex-shrink:0; }
+.fin-tx-btn {
+  background:none; border:none; cursor:pointer; padding:4px 5px; border-radius:6px;
+  font-size:11px; color:rgba(255,255,255,0.22); transition:all .13s;
 }
-#fin-overlay.visible { display: block; }
+.fin-tx-btn:hover { background:rgba(255,255,255,0.08); color:rgba(255,255,255,0.8); }
+.fin-tx-btn.del:hover { background:rgba(245,87,79,0.14); color:#f5574f; }
 
-/* ── Poignée de redimensionnement (bord gauche) ── */
+/* ── Formulaire édition inline ── */
+.fin-edit-card {
+  background:rgba(102,126,234,0.06); border:1px solid rgba(102,126,234,0.22);
+  border-radius:12px; padding:14px; margin-bottom:8px;
+  animation:finEditIn .18s ease;
+}
+@keyframes finEditIn { from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:none} }
+.fin-edit-title { font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.5px; margin-bottom:10px; }
+.fin-edit-actions { display:flex; gap:6px; margin-top:10px; }
+.fin-edit-save {
+  flex:1; padding:9px; border-radius:9px; border:none;
+  background:var(--t-agrad); color:#fff; font-size:12px; font-weight:700; cursor:pointer; font-family:inherit;
+}
+.fin-edit-cancel {
+  padding:9px 14px; border-radius:9px; border:1px solid rgba(255,255,255,0.10);
+  background:rgba(255,255,255,0.04); color:rgba(255,255,255,0.55); font-size:12px;
+  cursor:pointer; font-family:inherit; font-weight:600;
+}
+
+/* ── Graphiques ── */
+.fin-chart-toolbar { display:flex; gap:5px; margin-bottom:12px; }
+.fin-chart-btn {
+  flex:1; padding:8px 3px; border-radius:9px; border:1px solid rgba(255,255,255,0.07);
+  background:rgba(255,255,255,0.03); color:rgba(255,255,255,0.38); font-size:10px;
+  font-weight:700; cursor:pointer; transition:all .15s; font-family:inherit; text-transform:uppercase; letter-spacing:.3px;
+}
+.fin-chart-btn:hover { background:rgba(255,255,255,0.07); }
+.fin-chart-btn.active { background:var(--t-asub); color:var(--t-a1); border-color:var(--t-a1); }
+.fin-period-row { display:flex; gap:4px; margin-bottom:14px; }
+.fin-period-btn {
+  flex:1; padding:6px 3px; border-radius:7px; border:none;
+  background:rgba(255,255,255,0.04); color:rgba(255,255,255,0.35); font-size:10px;
+  font-weight:700; cursor:pointer; transition:all .15s; text-transform:uppercase; letter-spacing:.3px; font-family:inherit;
+}
+.fin-period-btn:hover { background:rgba(255,255,255,0.08); }
+.fin-period-btn.active { background:rgba(102,126,234,0.18); color:var(--t-a1); border:1px solid rgba(102,126,234,0.3); }
+#fin-chart-canvas { width:100%; border-radius:12px; display:block; background:rgba(255,255,255,0.02); }
+.fin-chart-legend { display:flex; gap:14px; justify-content:center; flex-wrap:wrap; margin-top:10px; font-size:10px; color:rgba(255,255,255,0.42); }
+.fin-legend-dot { width:7px; height:7px; border-radius:50%; display:inline-block; margin-right:4px; }
+
+/* ── KPI cards ── */
+.fin-kpi-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:14px; }
+.fin-kpi-card {
+  background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07);
+  border-radius:12px; padding:12px 13px; transition:border-color .15s;
+}
+.fin-kpi-card:hover { border-color:rgba(255,255,255,0.12); }
+.fin-kpi-label { font-size:9px; font-weight:800; text-transform:uppercase; letter-spacing:.6px; color:rgba(255,255,255,0.28); margin-bottom:5px; }
+.fin-kpi-value { font-size:15px; font-weight:800; line-height:1.15; }
+.fin-kpi-sub   { font-size:9px; color:rgba(255,255,255,0.26); margin-top:3px; }
+.fin-kpi-trend {
+  font-size:9px; font-weight:700; display:inline-flex; align-items:center; gap:2px;
+  margin-top:4px; padding:2px 7px; border-radius:20px;
+}
+.fin-kpi-trend.up   { background:rgba(16,185,129,0.12); color:#10b981; }
+.fin-kpi-trend.down { background:rgba(245,87,79,0.12);  color:#f5574f; }
+
+/* ── Sélecteur de période (Bilan) ── */
+.fin-period-selector { display:flex; gap:4px; flex-wrap:wrap; margin-bottom:14px; }
+.fin-period-sel-btn {
+  padding:5px 10px; border-radius:20px; border:1px solid rgba(255,255,255,0.07);
+  background:rgba(255,255,255,0.03); color:rgba(255,255,255,0.36); font-size:10px;
+  font-weight:700; cursor:pointer; transition:all .14s; font-family:inherit;
+}
+.fin-period-sel-btn:hover { background:rgba(255,255,255,0.07); color:rgba(255,255,255,0.65); }
+.fin-period-sel-btn.active { background:var(--t-asub); color:var(--t-a1); border-color:var(--t-a1); }
+
+/* ── Barres de catégories ── */
+.fin-cat-row { margin-bottom:8px; }
+.fin-cat-header { display:flex; justify-content:space-between; margin-bottom:4px; font-size:11px; }
+.fin-cat-name { color:rgba(255,255,255,0.62); }
+.fin-cat-amt  { font-weight:700; }
+.fin-cat-bar-bg { height:4px; background:rgba(255,255,255,0.05); border-radius:4px; overflow:hidden; }
+.fin-cat-bar-fill { height:100%; border-radius:4px; transition:width .5s cubic-bezier(.4,0,.2,1); }
+
+/* ── Mensualités ── */
+.fin-rav-banner {
+  background:linear-gradient(135deg,rgba(16,185,129,0.09),rgba(6,182,212,0.06));
+  border:1px solid rgba(16,185,129,0.17); border-radius:14px; padding:15px 16px; margin-bottom:16px;
+}
+.fin-rav-label { font-size:9.5px; font-weight:800; text-transform:uppercase; letter-spacing:.6px; color:rgba(16,185,129,0.7); margin-bottom:5px; }
+.fin-rav-value { font-size:23px; font-weight:800; }
+.fin-rav-sub   { font-size:10px; color:rgba(255,255,255,0.32); margin-top:4px; }
+.fin-inst-card {
+  background:rgba(255,255,255,0.025); border:1px solid rgba(255,255,255,0.07);
+  border-radius:12px; margin-bottom:10px; overflow:hidden; transition:border-color .15s;
+}
+.fin-inst-card:hover { border-color:rgba(255,255,255,0.12); }
+.fin-inst-head { display:flex; align-items:flex-start; padding:12px 14px; gap:10px; border-bottom:1px solid rgba(255,255,255,0.04); }
+.fin-inst-label { flex:1; font-size:13px; font-weight:700; color:#f0f0f8; }
+.fin-inst-meta  { font-size:10px; color:rgba(255,255,255,0.30); margin-top:3px; }
+.fin-inst-total { font-size:14px; font-weight:800; color:#667eea; flex-shrink:0; }
+.fin-inst-progress { height:3px; background:rgba(255,255,255,0.05); }
+.fin-inst-bar { height:100%; background:linear-gradient(90deg,#10b981,#06b6d4); transition:width .35s; }
+.fin-inst-row { display:flex; align-items:center; padding:8px 14px; border-bottom:1px solid rgba(255,255,255,0.03); font-size:12px; }
+.fin-inst-row:last-child { border-bottom:none; }
+.fin-inst-date { flex:1; color:rgba(255,255,255,0.48); }
+.fin-inst-amt  { font-weight:600; min-width:65px; text-align:right; }
+.fin-pay-btn {
+  margin-left:8px; padding:4px 10px; border-radius:7px;
+  border:1px solid rgba(16,185,129,0.4); background:rgba(16,185,129,0.09);
+  color:#10b981; font-size:10px; font-weight:700; cursor:pointer; font-family:inherit; transition:background .12s;
+}
+.fin-pay-btn:hover { background:rgba(16,185,129,0.20); }
+.fin-pay-btn.paid { border-color:rgba(255,255,255,0.08); background:none; color:rgba(255,255,255,0.25); cursor:default; }
+
+/* ── Onglet Réglages ── */
+.fin-settings-group {
+  background:rgba(255,255,255,0.025); border:1px solid rgba(255,255,255,0.07);
+  border-radius:12px; overflow:hidden; margin-bottom:14px;
+}
+.fin-settings-row {
+  display:flex; align-items:center; padding:10px 13px; gap:11px;
+  border-bottom:1px solid rgba(255,255,255,0.04); font-size:12px;
+}
+.fin-settings-row:last-child { border-bottom:none; }
+.fin-settings-icon { font-size:14px; flex-shrink:0; }
+.fin-settings-label { flex:1; color:rgba(255,255,255,0.68); }
+.fin-settings-label small { display:block; color:rgba(255,255,255,0.28); font-size:9.5px; margin-top:1px; }
+.fin-settings-control { flex-shrink:0; }
+.fin-settings-select {
+  background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.10);
+  border-radius:8px; color:#f0f0f8; padding:4px 8px; font-size:11px; font-family:inherit; outline:none; cursor:pointer;
+}
+.fin-settings-select option { background:#13103d; }
+.fin-settings-input-sm {
+  width:75px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.10);
+  border-radius:8px; color:#f0f0f8; padding:4px 8px; font-size:11px; font-family:inherit;
+  outline:none; text-align:right;
+}
+.fin-settings-input-sm:focus { border-color:var(--t-a1); }
+.fin-export-btn {
+  width:100%; padding:10px; border-radius:10px; border:1px solid rgba(102,126,234,0.3);
+  background:rgba(102,126,234,0.07); color:#667eea; font-size:12px; font-weight:700;
+  cursor:pointer; font-family:inherit; transition:background .13s; margin-bottom:8px;
+}
+.fin-export-btn:hover { background:rgba(102,126,234,0.14); }
+.fin-danger-btn {
+  width:100%; padding:10px; border-radius:10px; border:1px solid rgba(245,87,79,0.28);
+  background:rgba(245,87,79,0.06); color:#f5574f; font-size:12px; font-weight:700;
+  cursor:pointer; font-family:inherit; transition:background .13s;
+}
+.fin-danger-btn:hover { background:rgba(245,87,79,0.13); }
+
+/* ── Overlay ── */
+#fin-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.35); z-index:3490; backdrop-filter:blur(2px); }
+#fin-overlay.visible { display:block; }
+
+/* ── Poignée de redimensionnement ── */
 #fin-resize-handle {
-  position: absolute;
-  left: 0; top: 0; bottom: 0;
-  width: 7px;
-  cursor: ew-resize;
-  z-index: 10;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background .18s;
+  position:absolute; left:0; top:0; bottom:0; width:7px; cursor:ew-resize; z-index:10;
+  display:flex; align-items:center; justify-content:center; transition:background .18s;
 }
-#fin-resize-handle:hover,
-#fin-resize-handle.dragging {
-  background: rgba(102,126,234,0.18);
-}
-/* Trait vertical central */
-#fin-resize-handle::after {
-  content: '';
-  width: 2px; height: 48px;
-  border-radius: 2px;
-  background: rgba(102,126,234,0.55);
-  opacity: 0;
-  transition: opacity .18s, height .18s;
-}
-#fin-resize-handle:hover::after,
-#fin-resize-handle.dragging::after {
-  opacity: 1;
-  height: 64px;
-}
+#fin-resize-handle:hover, #fin-resize-handle.dragging { background:rgba(102,126,234,0.14); }
+#fin-resize-handle::after { content:''; width:2px; height:48px; border-radius:2px; background:rgba(102,126,234,0.55); opacity:0; transition:opacity .18s,height .18s; }
+#fin-resize-handle:hover::after, #fin-resize-handle.dragging::after { opacity:1; height:64px; }
 
 /* ── Fix select dropdown natif ── */
 .fin-input option {
@@ -10444,236 +10642,333 @@ function ctExportCsv() {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   MODULE FINANCIER — Panneau latéral droit
-   Données : localStorage  fin_tx  (transactions)
-                           fin_inst (mensualités)
+   MODULE FINANCIER v2 — Panneau latéral droit professionnel
+   Données : fin_tx (transactions), fin_inst (mensualités), fin_cfg (réglages)
 ══════════════════════════════════════════════════════════════ */
 (function() {
 
   /* ── Constantes & état ── */
   const FIN_TX   = 'fin_tx';
   const FIN_INST = 'fin_inst';
+  const FIN_CFG  = 'fin_cfg';
 
-  const CAT_INCOME  = ['Salaire','Freelance','Vente','Investissement','Prime','Autre'];
-  const CAT_EXPENSE = ['Logement','Alimentation','Transport','Loisirs','Santé','Abonnement','Autre'];
-  const CAT_PAYMENT = ['Facture client','Crédit','Mensualité','Abonnement','Autre'];
+  const CAT_INCOME  = ['Salaire','Freelance','Vente','Investissement','Prime','Bonus','Remboursement','Autre'];
+  const CAT_EXPENSE = ['Logement','Alimentation','Transport','Loisirs','Santé','Abonnement','Vêtements','Éducation','Impôts','Autre'];
+  const CAT_PAYMENT = ['Facture client','Crédit','Mensualité','Loyer','Abonnement','Contrat','Autre'];
 
   const COL_INCOME  = '#10b981';
   const COL_EXPENSE = '#f5574f';
   const COL_PAYMENT = '#667eea';
 
-  let finTx     = [];  // { id, type, label, category, amount, date }
-  let finInst   = [];  // { id, parentTx, label, amount, dueDate, paid, paidDate }
-  let finActiveTab   = 'saisie';
-  let finChartType   = 'bar';
-  let finChartPeriod = 'month';
-  let finTxType      = 'income';
-  let finNbMonths    = 1;
+  const CURRENCIES = {
+    EUR:{ symbol:'€',  locale:'fr-FR', code:'EUR' },
+    USD:{ symbol:'$',  locale:'en-US', code:'USD' },
+    GBP:{ symbol:'£',  locale:'en-GB', code:'GBP' },
+    CHF:{ symbol:'CHF',locale:'fr-CH', code:'CHF' },
+    MAD:{ symbol:'MAD',locale:'fr-MA', code:'MAD' },
+  };
+
+  let finTx         = [];
+  let finInst       = [];
+  let finCfg        = { currency:'EUR', budgets:{} };
+  let finActiveTab  = 'saisie';
+  let finChartType  = 'bar';
+  let finChartPeriod= 'month';
+  let finTxType     = 'income';
+  let finNbMonths   = 1;
+  let finTxFilter   = 'all';
+  let finTxSearch   = '';
+  let finBilanPeriod= 'month';
+  let finEditId     = null;
 
   /* ── Persistence ── */
   function finLoadData() {
-    try { finTx   = JSON.parse(localStorage.getItem(FIN_TX)   || '[]'); } catch { finTx   = []; }
-    try { finInst = JSON.parse(localStorage.getItem(FIN_INST) || '[]'); } catch { finInst = []; }
+    try { finTx   = JSON.parse(localStorage.getItem(FIN_TX)   || '[]'); } catch { finTx=[]; }
+    try { finInst = JSON.parse(localStorage.getItem(FIN_INST) || '[]'); } catch { finInst=[]; }
+    try { finCfg  = { currency:'EUR', budgets:{}, ...JSON.parse(localStorage.getItem(FIN_CFG)||'{}') }; } catch { finCfg={currency:'EUR',budgets:{}}; }
   }
   function finSaveTx()   { localStorage.setItem(FIN_TX,   JSON.stringify(finTx));   }
   function finSaveInst() { localStorage.setItem(FIN_INST, JSON.stringify(finInst)); }
+  function finSaveCfg()  { localStorage.setItem(FIN_CFG,  JSON.stringify(finCfg));  }
 
   /* ── Helpers ── */
-  const finId    = ()  => Math.random().toString(36).slice(2,9);
-  const finEur   = n   => new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR'}).format(n||0);
-  const finToday = ()  => new Date().toISOString().split('T')[0];
+  const finId      = () => Math.random().toString(36).slice(2,9);
+  const finToday   = () => new Date().toISOString().split('T')[0];
   const finAddDays = (d,n) => { const x=new Date(d); x.setDate(x.getDate()+n); return x.toISOString().split('T')[0]; };
-  const finFmtDate = d => d ? new Date(d).toLocaleDateString('fr-FR') : '—';
-  const finEsc     = s => (s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  const finFmtDate = d => d ? new Date(d+'T00:00').toLocaleDateString('fr-FR') : '—';
+  const finEsc     = s => (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  function finEur(n) {
+    const cur = CURRENCIES[finCfg?.currency] || CURRENCIES.EUR;
+    try { return new Intl.NumberFormat(cur.locale,{style:'currency',currency:cur.code}).format(n||0); }
+    catch { return `${n||0} ${cur.symbol}`; }
+  }
 
-  /* ═══════════════════════════════════════
+  /* ── Balance pill ── */
+  function finUpdateBalance() {
+    const pill = document.getElementById('fin-balance-pill');
+    if (!pill) return;
+    const inc = finTx.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+    const out = finTx.filter(t=>t.type!=='income').reduce((s,t)=>s+t.amount,0);
+    const net = inc - out;
+    pill.textContent = finEur(net);
+    pill.className = 'fin-balance-pill ' + (net>=0?'fin-balance-pos':'fin-balance-neg');
+  }
+
+  /* ═══════════════════════════════════════════════
      TOGGLE & NAVIGATION
-  ═══════════════════════════════════════ */
+  ═══════════════════════════════════════════════ */
   window.finToggle = function() {
     const panel = document.getElementById('fin-panel');
-    if (panel.classList.contains('open')) { finClose(); }
-    else { finOpen(); }
+    if (panel.classList.contains('open')) finClose(); else finOpen();
   };
 
   window.finOpen = function() {
     finLoadData();
-    const panel = document.getElementById('fin-panel');
-    const overlay = document.getElementById('fin-overlay');
-    const btn = document.getElementById('tb-fin-btn');
-    panel.classList.add('open');
-    overlay.classList.add('visible');
+    const panel=document.getElementById('fin-panel'), overlay=document.getElementById('fin-overlay'), btn=document.getElementById('tb-fin-btn');
+    panel.classList.add('open'); overlay.classList.add('visible');
     if (btn) btn.classList.add('active');
-    finRender();
+    finUpdateBalance(); finRender();
   };
 
   window.finClose = function() {
     document.getElementById('fin-panel').classList.remove('open');
     document.getElementById('fin-overlay').classList.remove('visible');
-    const btn = document.getElementById('tb-fin-btn');
-    if (btn) btn.classList.remove('active');
+    const btn=document.getElementById('tb-fin-btn'); if (btn) btn.classList.remove('active');
+    finEditId=null;
   };
 
   window.finTab = function(tab) {
-    finActiveTab = tab;
-    document.querySelectorAll('.fin-tab').forEach(b => b.classList.remove('active'));
-    const bt = document.getElementById('ftab-' + tab);
-    if (bt) bt.classList.add('active');
+    finActiveTab=tab; finEditId=null;
+    document.querySelectorAll('.fin-tab').forEach(b=>b.classList.remove('active'));
+    const bt=document.getElementById('ftab-'+tab); if (bt) bt.classList.add('active');
     finRender();
   };
 
   function finRender() {
-    const body = document.getElementById('fin-body');
-    if (!body) return;
+    const body=document.getElementById('fin-body'); if (!body) return;
     switch (finActiveTab) {
-      case 'saisie':  body.innerHTML = finHtmlSaisie();  finBindSaisie();  break;
-      case 'graphes': body.innerHTML = finHtmlGraphes(); finBindGraphes(); break;
-      case 'bilan':   body.innerHTML = finHtmlBilan();   break;
-      case 'mensuel': body.innerHTML = finHtmlMensuel(); finBindMensuel(); break;
+      case 'saisie':       body.innerHTML=finHtmlSaisie();        finBindSaisie();       break;
+      case 'transactions': body.innerHTML=finHtmlTransactions();   finBindTransactions(); break;
+      case 'graphes':      body.innerHTML=finHtmlGraphes();        finBindGraphes();      break;
+      case 'bilan':        body.innerHTML=finHtmlBilan();                                 break;
+      case 'mensuel':      body.innerHTML=finHtmlMensuel();                               break;
+      case 'reglages':     body.innerHTML=finHtmlReglages();       finBindReglages();     break;
     }
+    finUpdateBalance();
   }
 
-  /* ═══════════════════════════════════════
+  /* ═══════════════════════════════════════════════
      ONGLET SAISIE
-  ═══════════════════════════════════════ */
+  ═══════════════════════════════════════════════ */
   function finHtmlSaisie() {
-    const cats = finTxType === 'income' ? CAT_INCOME : finTxType === 'expense' ? CAT_EXPENSE : CAT_PAYMENT;
-    const showInstall = finTxType === 'payment';
-    const recent = [...finTx].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,8);
-
+    const cats = finTxType==='income' ? CAT_INCOME : finTxType==='expense' ? CAT_EXPENSE : CAT_PAYMENT;
+    const showInstall = finTxType==='payment';
+    const recent = [...finTx].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,6);
     return `
-      <div class="fin-section-title">Type de transaction</div>
+      <div class="fin-section-title">Type</div>
       <div class="fin-type-row">
-        <button class="fin-type-btn ${finTxType==='income'?'active-income':''}" onclick="finSetType('income')">↑ Revenu</button>
+        <button class="fin-type-btn ${finTxType==='income'?'active-income':''}"  onclick="finSetType('income')">↑ Revenu</button>
         <button class="fin-type-btn ${finTxType==='expense'?'active-expense':''}" onclick="finSetType('expense')">↓ Dépense</button>
         <button class="fin-type-btn ${finTxType==='payment'?'active-payment':''}" onclick="finSetType('payment')">↔ Paiement</button>
       </div>
-
       <div class="fin-section-title">Détails</div>
-      <input class="fin-input fin-mb10" id="fin-f-label" type="text" placeholder="Intitulé" autocapitalize="none" autocorrect="off">
+      <input class="fin-input fin-mb10" id="fin-f-label" type="text" placeholder="Intitulé (optionnel)" autocomplete="off">
       <div class="fin-row2">
-        <input class="fin-input" id="fin-f-amount" type="number" step="0.01" min="0.01" placeholder="Montant (€)">
+        <input class="fin-input" id="fin-f-amount" type="number" step="0.01" min="0.01" placeholder="Montant">
         <input class="fin-input" id="fin-f-date" type="date" value="${finToday()}">
       </div>
-      <select class="fin-input fin-mb14" id="fin-f-cat">
-        ${cats.map(c=>`<option value="${finEsc(c)}">${finEsc(c)}</option>`).join('')}
-      </select>
-
+      <div class="fin-row2 fin-mb14">
+        <select class="fin-input" id="fin-f-cat">${cats.map(c=>`<option value="${finEsc(c)}">${finEsc(c)}</option>`).join('')}</select>
+        <input class="fin-input" id="fin-f-note" type="text" placeholder="Note (opt.)">
+      </div>
       ${showInstall ? `
         <div class="fin-section-title">Mensualisation</div>
         <div class="fin-install-row">
-          <input class="fin-input" id="fin-f-months" type="number" min="1" max="60" value="${finNbMonths}"
-            style="width:80px;" oninput="finUpdateInstallPreview()">
-          <span style="color:rgba(255,255,255,0.45);font-size:12px;">mensualité(s) · ~30 j d'intervalle</span>
+          <input class="fin-input" id="fin-f-months" type="number" min="1" max="60" value="${finNbMonths}" style="width:80px;" oninput="finUpdateInstallPreview()">
+          <span style="color:rgba(255,255,255,0.4);font-size:12px;">mensualités (~30 j chacune)</span>
         </div>
         <div class="fin-install-preview ${finNbMonths>1?'visible':''}" id="fin-inst-preview"></div>
       ` : ''}
-
       <button class="fin-submit-btn" id="fin-submit">
-        ${finTxType==='income'?'+ Enregistrer le revenu':finTxType==='expense'?'+ Enregistrer la dépense':'+ Enregistrer le paiement'}
+        ${finTxType==='income'?'+ Ajouter le revenu':finTxType==='expense'?'+ Ajouter la dépense':'+ Ajouter le paiement'}
       </button>
-
-      <div class="fin-section-title" style="margin-top:20px;">Transactions récentes</div>
-      <div class="fin-tx-list">
-        ${recent.length === 0 ? '<div style="color:rgba(255,255,255,0.3);font-size:12px;text-align:center;padding:20px 0;">Aucune transaction</div>' :
-          recent.map(tx => {
-            const col = tx.type==='income' ? COL_INCOME : tx.type==='expense' ? COL_EXPENSE : COL_PAYMENT;
-            const sign = tx.type==='income' ? '+' : '−';
-            return `<div class="fin-tx-item">
-              <div class="fin-tx-dot" style="background:${col}"></div>
-              <div class="fin-tx-label">${finEsc(tx.label||tx.category)}</div>
-              <div class="fin-tx-date">${finFmtDate(tx.date)}</div>
-              <div class="fin-tx-amount" style="color:${col}">${sign}${finEur(tx.amount)}</div>
-              <button class="fin-tx-del" onclick="finDelTx('${tx.id}')" title="Supprimer">🗑</button>
-            </div>`;
-          }).join('')
-        }
+      <div class="fin-section-title" style="margin-top:22px;">
+        Dernières saisies
+        <span style="font-size:9px;font-weight:400;text-transform:none;letter-spacing:0;color:rgba(255,255,255,0.28);">${finTx.length} au total</span>
       </div>
+      <div class="fin-tx-list">
+        ${recent.length===0 ? '<div style="color:rgba(255,255,255,0.28);font-size:12px;text-align:center;padding:24px 0;">Aucune transaction</div>'
+          : recent.map(tx=>finTxHtml(tx)).join('')}
+      </div>
+      ${finTx.length>6?`<button class="fin-export-btn" style="margin-top:6px;" onclick="finTab('transactions')">Voir toutes les opérations →</button>`:''}
     `;
   }
 
+  function finTxHtml(tx, withEdit=true) {
+    const col=tx.type==='income'?COL_INCOME:tx.type==='expense'?COL_EXPENSE:COL_PAYMENT;
+    const sign=tx.type==='income'?'+':'−';
+    return `<div class="fin-tx-item">
+      <div class="fin-tx-dot" style="background:${col}"></div>
+      <div class="fin-tx-info">
+        <div class="fin-tx-label">${finEsc(tx.label||tx.category)}</div>
+        <div class="fin-tx-meta">${finEsc(tx.category)} · ${finFmtDate(tx.date)}${tx.note?` · ${finEsc(tx.note)}`:''}</div>
+      </div>
+      <div class="fin-tx-amount" style="color:${col}">${sign}${finEur(tx.amount)}</div>
+      <div class="fin-tx-actions">
+        ${withEdit?`<button class="fin-tx-btn" onclick="finEditTx('${tx.id}')" title="Modifier">✏️</button>`:''}
+        <button class="fin-tx-btn del" onclick="finDelTx('${tx.id}')" title="Supprimer">🗑</button>
+      </div>
+    </div>`;
+  }
+
   function finBindSaisie() {
-    const btn = document.getElementById('fin-submit');
-    if (btn) btn.addEventListener('click', finSubmitTx);
+    const btn=document.getElementById('fin-submit'); if(btn) btn.addEventListener('click',finSubmitTx);
     finUpdateInstallPreview();
   }
 
-  window.finSetType = function(type) {
-    finTxType = type;
-    finRender();
-  };
+  window.finSetType = function(type) { finTxType=type; finRender(); };
 
   window.finUpdateInstallPreview = function() {
-    const inp = document.getElementById('fin-f-months');
-    if (!inp) return;
-    finNbMonths = Math.max(1, Math.min(60, parseInt(inp.value) || 1));
-    const prev = document.getElementById('fin-inst-preview');
-    if (!prev) return;
-    const amtInp = document.getElementById('fin-f-amount');
-    const dateInp = document.getElementById('fin-f-date');
-    const amount = parseFloat(amtInp?.value) || 0;
-    const date   = dateInp?.value || finToday();
-    const unit   = amount / finNbMonths;
-
-    if (finNbMonths <= 1) { prev.classList.remove('visible'); return; }
+    const inp=document.getElementById('fin-f-months'); if(!inp) return;
+    finNbMonths=Math.max(1,Math.min(60,parseInt(inp.value)||1));
+    const prev=document.getElementById('fin-inst-preview'); if(!prev) return;
+    const amount=parseFloat(document.getElementById('fin-f-amount')?.value)||0;
+    const date=document.getElementById('fin-f-date')?.value||finToday();
+    if (finNbMonths<=1) { prev.classList.remove('visible'); return; }
     prev.classList.add('visible');
-    const rows = Array.from({length: Math.min(finNbMonths, 5)}, (_,i) => {
-      const isLast = i === finNbMonths - 1;
-      const amt = isLast ? amount - Math.round(unit*100)/100*(finNbMonths-1) : Math.round(unit*100)/100;
-      return `<div class="fin-install-preview-row">
-        <span>Éch. ${i+1} · ${finFmtDate(finAddDays(date, i*30))}</span>
-        <span style="color:#f0f0f8;font-weight:600;">${finEur(amt)}</span>
-      </div>`;
+    const unit=Math.round((amount/finNbMonths)*100)/100;
+    const rows=Array.from({length:Math.min(finNbMonths,5)},(_,i)=>{
+      const isLast=i===finNbMonths-1;
+      const amt=isLast?Math.round((amount-unit*(finNbMonths-1))*100)/100:unit;
+      return `<div class="fin-install-preview-row"><span>Éch.${i+1} — ${finFmtDate(finAddDays(date,i*30))}</span><span style="color:#f0f0f8;font-weight:600;">${finEur(amt)}</span></div>`;
     }).join('');
-    prev.innerHTML = rows + (finNbMonths>5 ? `<div style="color:rgba(255,255,255,0.35);font-size:11px;padding-top:4px;">+ ${finNbMonths-5} autres…</div>`:'');
+    prev.innerHTML=rows+(finNbMonths>5?`<div style="color:rgba(255,255,255,0.3);font-size:10px;padding-top:5px;">+ ${finNbMonths-5} autres…</div>`:'');
   };
 
   function finSubmitTx() {
-    const label  = document.getElementById('fin-f-label')?.value.trim();
-    const amount = parseFloat(document.getElementById('fin-f-amount')?.value);
-    const date   = document.getElementById('fin-f-date')?.value || finToday();
-    const cat    = document.getElementById('fin-f-cat')?.value;
-    if (!amount || amount <= 0) { notify('Veuillez saisir un montant valide.'); return; }
-
-    const tx = { id: finId(), type: finTxType, label: label || cat, category: cat, amount, date };
-    finTx.push(tx);
-    finSaveTx();
-
-    // Générer les mensualités si paiement en plusieurs fois
-    if (finTxType === 'payment' && finNbMonths > 1) {
-      const unit = Math.round((amount / finNbMonths) * 100) / 100;
-      for (let i = 0; i < finNbMonths; i++) {
-        const isLast = i === finNbMonths - 1;
-        const instAmt = isLast ? Math.round((amount - unit*(finNbMonths-1))*100)/100 : unit;
-        finInst.push({
-          id: finId(), parentTx: tx.id, label: tx.label||cat,
-          amount: instAmt, dueDate: finAddDays(date, i*30),
-          paid: false, paidDate: null,
-        });
+    const label=document.getElementById('fin-f-label')?.value.trim();
+    const amount=parseFloat(document.getElementById('fin-f-amount')?.value);
+    const date=document.getElementById('fin-f-date')?.value||finToday();
+    const cat=document.getElementById('fin-f-cat')?.value;
+    const note=document.getElementById('fin-f-note')?.value.trim();
+    if (!amount||amount<=0) { notify('⚠️ Montant invalide'); return; }
+    const tx={id:finId(),type:finTxType,label:label||cat,category:cat,amount,date,note:note||''};
+    finTx.push(tx); finSaveTx();
+    if (finTxType==='payment'&&finNbMonths>1) {
+      const unit=Math.round((amount/finNbMonths)*100)/100;
+      for (let i=0;i<finNbMonths;i++) {
+        const isLast=i===finNbMonths-1;
+        finInst.push({id:finId(),parentTx:tx.id,label:tx.label||cat,
+          amount:isLast?Math.round((amount-unit*(finNbMonths-1))*100)/100:unit,
+          dueDate:finAddDays(date,i*30),paid:false,paidDate:null});
       }
-      finSaveInst();
-      notify(`💳 ${finNbMonths} mensualités générées (${finEur(amount)})`);
-    } else {
-      notify(`✅ ${tx.type==='income'?'Revenu':tx.type==='expense'?'Dépense':'Paiement'} enregistré — ${finEur(amount)}`);
-    }
+      finSaveInst(); notify(`💳 ${finNbMonths} mensualités générées`);
+    } else { notify(`✅ ${finEur(amount)} enregistré`); }
     finRender();
   }
 
-  window.finDelTx = function(id) {
-    finTx   = finTx.filter(t => t.id !== id);
-    finInst = finInst.filter(i => i.parentTx !== id);
-    finSaveTx(); finSaveInst();
-    finRender();
+  /* ═══════════════════════════════════════════════
+     ÉDITION DE TRANSACTION
+  ═══════════════════════════════════════════════ */
+  window.finEditTx = function(id) { finEditId=id; finActiveTab='transactions'; finRender(); };
+
+  function finHtmlEditForm(tx) {
+    const cats=tx.type==='income'?CAT_INCOME:tx.type==='expense'?CAT_EXPENSE:CAT_PAYMENT;
+    const typeLabel=tx.type==='income'?'Revenu':tx.type==='expense'?'Dépense':'Paiement';
+    const col=tx.type==='income'?COL_INCOME:tx.type==='expense'?COL_EXPENSE:COL_PAYMENT;
+    return `<div class="fin-edit-card">
+      <div class="fin-edit-title" style="color:${col}">✏️ Modifier — ${typeLabel}</div>
+      <input class="fin-input fin-mb10" id="fin-e-label" type="text" value="${finEsc(tx.label||'')}" placeholder="Intitulé">
+      <div class="fin-row2">
+        <input class="fin-input" id="fin-e-amount" type="number" step="0.01" value="${tx.amount}">
+        <input class="fin-input" id="fin-e-date" type="date" value="${tx.date}">
+      </div>
+      <div class="fin-row2 fin-mb10">
+        <select class="fin-input" id="fin-e-cat">
+          ${cats.map(c=>`<option value="${finEsc(c)}" ${c===tx.category?'selected':''}>${finEsc(c)}</option>`).join('')}
+        </select>
+        <input class="fin-input" id="fin-e-note" type="text" value="${finEsc(tx.note||'')}" placeholder="Note">
+      </div>
+      <div class="fin-edit-actions">
+        <button class="fin-edit-save"   onclick="finSaveEdit('${tx.id}')">✓ Enregistrer</button>
+        <button class="fin-edit-cancel" onclick="finCancelEdit()">Annuler</button>
+      </div>
+    </div>`;
+  }
+
+  window.finSaveEdit = function(id) {
+    const tx=finTx.find(t=>t.id===id); if(!tx) return;
+    const amount=parseFloat(document.getElementById('fin-e-amount')?.value);
+    if (!amount||amount<=0) { notify('⚠️ Montant invalide'); return; }
+    tx.label=document.getElementById('fin-e-label')?.value.trim()||tx.category;
+    tx.amount=amount;
+    tx.date=document.getElementById('fin-e-date')?.value||finToday();
+    tx.category=document.getElementById('fin-e-cat')?.value;
+    tx.note=document.getElementById('fin-e-note')?.value.trim()||'';
+    finSaveTx(); finEditId=null; notify('✅ Transaction modifiée'); finRender();
   };
 
-  /* ═══════════════════════════════════════
-     ONGLET GRAPHIQUES (Canvas natif)
-  ═══════════════════════════════════════ */
+  window.finCancelEdit = function() { finEditId=null; finRender(); };
+
+  window.finDelTx = function(id) {
+    finTx=finTx.filter(t=>t.id!==id); finInst=finInst.filter(i=>i.parentTx!==id);
+    finSaveTx(); finSaveInst(); if(finEditId===id) finEditId=null;
+    notify('🗑 Supprimé'); finRender();
+  };
+
+  /* ═══════════════════════════════════════════════
+     ONGLET OPÉRATIONS (liste complète + filtre)
+  ═══════════════════════════════════════════════ */
+  function finHtmlTransactions() {
+    let txs=[...finTx].sort((a,b)=>b.date.localeCompare(a.date));
+    if (finTxFilter!=='all') txs=txs.filter(t=>t.type===finTxFilter);
+    if (finTxSearch) { const q=finTxSearch.toLowerCase(); txs=txs.filter(t=>(t.label||'').toLowerCase().includes(q)||(t.category||'').toLowerCase().includes(q)||(t.note||'').toLowerCase().includes(q)); }
+    const editingTx=finEditId?finTx.find(t=>t.id===finEditId):null;
+    return `
+      <div class="fin-search-bar">
+        <span class="fin-search-icon">🔍</span>
+        <input class="fin-search-input" id="fin-tx-search" type="text" placeholder="Rechercher…" value="${finEsc(finTxSearch)}" oninput="finTxSearchChange(this.value)" autocomplete="off">
+      </div>
+      <div class="fin-filter-row">
+        <button class="fin-filter-pill ${finTxFilter==='all'?'active-all':''}"     onclick="finSetFilter('all')">Tout</button>
+        <button class="fin-filter-pill ${finTxFilter==='income'?'active-income':''}"  onclick="finSetFilter('income')">↑ Revenus</button>
+        <button class="fin-filter-pill ${finTxFilter==='expense'?'active-expense':''}" onclick="finSetFilter('expense')">↓ Dépenses</button>
+        <button class="fin-filter-pill ${finTxFilter==='payment'?'active-payment':''}" onclick="finSetFilter('payment')">↔ Paiements</button>
+      </div>
+      ${editingTx?finHtmlEditForm(editingTx):''}
+      <div class="fin-tx-list">
+        ${txs.length===0
+          ?`<div style="color:rgba(255,255,255,0.28);font-size:12px;text-align:center;padding:30px 0;">${finTxSearch?'Aucun résultat':'Aucune transaction'}</div>`
+          :txs.map(tx=>finEditId===tx.id?'':finTxHtml(tx)).join('')}
+      </div>
+      <div style="color:rgba(255,255,255,0.22);font-size:10px;text-align:center;margin-top:8px;">${txs.length} opération(s)</div>
+    `;
+  }
+
+  function finBindTransactions() {
+    if (finEditId) { const el=document.querySelector('.fin-edit-card'); if(el) setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'nearest'}),50); }
+  }
+
+  window.finSetFilter       = function(f) { finTxFilter=f; finRender(); };
+  window.finTxSearchChange  = function(v) { finTxSearch=v; finRender(); };
+
+  /* ═══════════════════════════════════════════════
+     ONGLET GRAPHIQUES
+  ═══════════════════════════════════════════════ */
   function finHtmlGraphes() {
+    const now=new Date();
+    const monthInc  = finTx.filter(t=>{const d=new Date(t.date);return t.type==='income'&&d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();}).reduce((s,t)=>s+t.amount,0);
+    const monthExp  = finTx.filter(t=>{const d=new Date(t.date);return t.type!=='income'&&d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();}).reduce((s,t)=>s+t.amount,0);
+    const pm=new Date(now); pm.setMonth(pm.getMonth()-1);
+    const prevInc   = finTx.filter(t=>{const d=new Date(t.date);return t.type==='income'&&d.getMonth()===pm.getMonth()&&d.getFullYear()===pm.getFullYear();}).reduce((s,t)=>s+t.amount,0);
+    const prevExp   = finTx.filter(t=>{const d=new Date(t.date);return t.type!=='income'&&d.getMonth()===pm.getMonth()&&d.getFullYear()===pm.getFullYear();}).reduce((s,t)=>s+t.amount,0);
+    const net=monthInc-monthExp;
+    const trend=(cur,prev,inv=false)=>{ if(!prev) return ''; const pct=Math.round((cur-prev)/prev*100); const up=inv?(pct<=0):(pct>=0); return `<span class="fin-kpi-trend ${up?'up':'down'}">${pct>=0?'▲':'▼'} ${Math.abs(pct)}%</span>`; };
     return `
       <div class="fin-chart-toolbar">
-        <button class="fin-chart-btn ${finChartType==='bar'?'active':''}"   onclick="finSetChart('bar')">▐▌ Barres</button>
-        <button class="fin-chart-btn ${finChartType==='line'?'active':''}"  onclick="finSetChart('line')">╱ Courbe</button>
-        <button class="fin-chart-btn ${finChartType==='pie'?'active':''}"   onclick="finSetChart('pie')">◕ Camem.</button>
+        <button class="fin-chart-btn ${finChartType==='bar'?'active':''}"  onclick="finSetChart('bar')">▌▐ Barres</button>
+        <button class="fin-chart-btn ${finChartType==='line'?'active':''}" onclick="finSetChart('line')">╱ Courbe</button>
+        <button class="fin-chart-btn ${finChartType==='pie'?'active':''}"  onclick="finSetChart('pie')">◕ Camembert</button>
       </div>
       <div class="fin-period-row">
         <button class="fin-period-btn ${finChartPeriod==='week'?'active':''}"  onclick="finSetPeriod('week')">7 jours</button>
@@ -10682,431 +10977,360 @@ function ctExportCsv() {
       </div>
       <canvas id="fin-chart-canvas" height="220"></canvas>
       <div class="fin-chart-legend" id="fin-chart-legend"></div>
+      <div class="fin-section-title" style="margin-top:20px;">Ce mois</div>
+      <div class="fin-kpi-grid">
+        <div class="fin-kpi-card">
+          <div class="fin-kpi-label">Revenus</div>
+          <div class="fin-kpi-value" style="color:${COL_INCOME}">${finEur(monthInc)}</div>
+          ${trend(monthInc,prevInc)}
+        </div>
+        <div class="fin-kpi-card">
+          <div class="fin-kpi-label">Dépenses</div>
+          <div class="fin-kpi-value" style="color:${COL_EXPENSE}">${finEur(monthExp)}</div>
+          ${trend(monthExp,prevExp,true)}
+        </div>
+        <div class="fin-kpi-card" style="grid-column:1/-1;">
+          <div class="fin-kpi-label">Solde net</div>
+          <div class="fin-kpi-value" style="color:${net>=0?COL_INCOME:COL_EXPENSE};font-size:19px;">${finEur(net)}</div>
+          <div class="fin-kpi-sub">${now.toLocaleDateString('fr-FR',{month:'long',year:'numeric'})}</div>
+        </div>
+      </div>
     `;
   }
 
-  function finBindGraphes() {
-    setTimeout(() => finDrawChart(), 30);
-  }
-
-  window.finSetChart  = function(t) { finChartType   = t; finRender(); };
-  window.finSetPeriod = function(p) { finChartPeriod = p; finRender(); };
+  function finBindGraphes() { setTimeout(finDrawChart,30); }
+  window.finSetChart  = t => { finChartType=t;   finRender(); };
+  window.finSetPeriod = p => { finChartPeriod=p; finRender(); };
 
   function finGetChartData() {
-    const now = new Date();
-    let labels = [], incomes = [], expenses = [], balances = [];
-
-    if (finChartPeriod === 'week') {
-      labels   = Array.from({length:7},(_,i)=>{ const d=new Date(now); d.setDate(d.getDate()-6+i); return d.toLocaleDateString('fr-FR',{weekday:'short'}); });
-      const dates = Array.from({length:7},(_,i)=>{ const d=new Date(now); d.setDate(d.getDate()-6+i); return d.toISOString().split('T')[0]; });
-      incomes  = dates.map(d => finTx.filter(t=>t.type==='income'  && t.date===d).reduce((s,t)=>s+t.amount,0));
-      expenses = dates.map(d => finTx.filter(t=>t.type!=='income'  && t.date===d).reduce((s,t)=>s+t.amount,0));
-    } else if (finChartPeriod === 'month') {
-      const MONTHS = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
-      labels   = Array.from({length:12},(_,i)=>MONTHS[i]);
-      incomes  = Array.from({length:12},(_,i)=>finTx.filter(t=>{ const d=new Date(t.date); return d.getFullYear()===now.getFullYear()&&d.getMonth()===i&&t.type==='income'; }).reduce((s,t)=>s+t.amount,0));
-      expenses = Array.from({length:12},(_,i)=>finTx.filter(t=>{ const d=new Date(t.date); return d.getFullYear()===now.getFullYear()&&d.getMonth()===i&&t.type!=='income'; }).reduce((s,t)=>s+t.amount,0));
+    const now=new Date();
+    let labels=[], incomes=[], expenses=[];
+    if (finChartPeriod==='week') {
+      labels=Array.from({length:7},(_,i)=>{const d=new Date(now);d.setDate(d.getDate()-6+i);return d.toLocaleDateString('fr-FR',{weekday:'short'});});
+      const dates=Array.from({length:7},(_,i)=>{const d=new Date(now);d.setDate(d.getDate()-6+i);return d.toISOString().split('T')[0];});
+      incomes=dates.map(d=>finTx.filter(t=>t.type==='income'&&t.date===d).reduce((s,t)=>s+t.amount,0));
+      expenses=dates.map(d=>finTx.filter(t=>t.type!=='income'&&t.date===d).reduce((s,t)=>s+t.amount,0));
+    } else if (finChartPeriod==='month') {
+      const M=['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
+      labels=M;
+      incomes=Array.from({length:12},(_,i)=>finTx.filter(t=>{const d=new Date(t.date);return d.getFullYear()===now.getFullYear()&&d.getMonth()===i&&t.type==='income';}).reduce((s,t)=>s+t.amount,0));
+      expenses=Array.from({length:12},(_,i)=>finTx.filter(t=>{const d=new Date(t.date);return d.getFullYear()===now.getFullYear()&&d.getMonth()===i&&t.type!=='income';}).reduce((s,t)=>s+t.amount,0));
     } else {
-      const yr = now.getFullYear();
-      labels   = Array.from({length:5},(_,i)=>String(yr-4+i));
-      incomes  = Array.from({length:5},(_,i)=>finTx.filter(t=>{ const d=new Date(t.date); return d.getFullYear()===(yr-4+i)&&t.type==='income'; }).reduce((s,t)=>s+t.amount,0));
-      expenses = Array.from({length:5},(_,i)=>finTx.filter(t=>{ const d=new Date(t.date); return d.getFullYear()===(yr-4+i)&&t.type!=='income'; }).reduce((s,t)=>s+t.amount,0));
+      const yr=now.getFullYear();
+      labels=Array.from({length:5},(_,i)=>String(yr-4+i));
+      incomes=Array.from({length:5},(_,i)=>finTx.filter(t=>{const d=new Date(t.date);return d.getFullYear()===(yr-4+i)&&t.type==='income';}).reduce((s,t)=>s+t.amount,0));
+      expenses=Array.from({length:5},(_,i)=>finTx.filter(t=>{const d=new Date(t.date);return d.getFullYear()===(yr-4+i)&&t.type!=='income';}).reduce((s,t)=>s+t.amount,0));
     }
-
-    balances = incomes.map((v,i) => v - expenses[i]);
-    return { labels, incomes, expenses, balances };
+    return {labels,incomes,expenses,balances:incomes.map((v,i)=>v-expenses[i])};
   }
 
   function finDrawChart() {
-    const canvas = document.getElementById('fin-chart-canvas');
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    const W = canvas.offsetWidth || 350;
-    canvas.width  = W * 2; canvas.height = 440;
-    canvas.style.height = '220px';
-    ctx.scale(2, 2);
-    const w = W, h = 220;
-    ctx.clearRect(0, 0, w, h);
-
-    const { labels, incomes, expenses, balances } = finGetChartData();
-    const n = labels.length;
-    const legend = document.getElementById('fin-chart-legend');
-
-    if (finChartType === 'pie') {
-      finDrawPie(ctx, w, h, incomes, expenses);
-      if (legend) legend.innerHTML = `
-        <span><span class="fin-legend-dot" style="background:${COL_INCOME}"></span>Revenus</span>
-        <span><span class="fin-legend-dot" style="background:${COL_EXPENSE}"></span>Dépenses</span>`;
+    const canvas=document.getElementById('fin-chart-canvas'); if(!canvas) return;
+    const ctx=canvas.getContext('2d');
+    const W=canvas.offsetWidth||360; canvas.width=W*2; canvas.height=440; canvas.style.height='220px';
+    ctx.scale(2,2);
+    const w=W,h=220; ctx.clearRect(0,0,w,h);
+    const {labels,incomes,expenses,balances}=finGetChartData();
+    const n=labels.length;
+    const legend=document.getElementById('fin-chart-legend');
+    if (finChartType==='pie') {
+      finDrawPie(ctx,w,h,incomes,expenses);
+      if(legend) legend.innerHTML=`<span><span class="fin-legend-dot" style="background:${COL_INCOME}"></span>Revenus</span><span><span class="fin-legend-dot" style="background:${COL_EXPENSE}"></span>Dépenses</span>`;
       return;
     }
-
-    // Axes & grid
-    const padL=38, padR=10, padT=14, padB=32;
-    const chartW = w - padL - padR;
-    const chartH = h - padT - padB;
-
-    const allVals = finChartType === 'line' ? balances : [...incomes, ...expenses];
-    const maxVal  = Math.max(...allVals, 1);
-    const minVal  = finChartType === 'line' ? Math.min(...balances, 0) : 0;
-    const range   = maxVal - minVal || 1;
-
-    const toY = v => padT + chartH - ((v - minVal) / range) * chartH;
-    const toX = i => padL + (i / (n-1 || 1)) * chartW;
-
-    // Grid lines (5)
-    ctx.strokeStyle = 'rgba(255,255,255,0.06)';
-    ctx.lineWidth = 1;
-    for (let g = 0; g <= 4; g++) {
-      const y = padT + (g / 4) * chartH;
-      ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(w - padR, y); ctx.stroke();
-      const val = maxVal - (g / 4) * range;
-      ctx.fillStyle = 'rgba(255,255,255,0.3)';
-      ctx.font = '9px system-ui';
-      ctx.textAlign = 'right';
-      ctx.fillText(val>=1000?`${(val/1000).toFixed(1)}k`:`${Math.round(val)}`, padL-4, y+3);
+    const padL=40,padR=12,padT=16,padB=34,chartW=w-padL-padR,chartH=h-padT-padB;
+    const allVals=finChartType==='line'?balances:[...incomes,...expenses];
+    const maxVal=Math.max(...allVals,1),minVal=finChartType==='line'?Math.min(...balances,0):0,range=maxVal-minVal||1;
+    const toY=v=>padT+chartH-((v-minVal)/range)*chartH;
+    const toX=i=>padL+(i/(n-1||1))*chartW;
+    ctx.strokeStyle='rgba(255,255,255,0.05)'; ctx.lineWidth=1;
+    for(let g=0;g<=4;g++) {
+      const y=padT+(g/4)*chartH; ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(w-padR,y); ctx.stroke();
+      const val=maxVal-(g/4)*range; ctx.fillStyle='rgba(255,255,255,0.28)'; ctx.font='9px system-ui'; ctx.textAlign='right';
+      ctx.fillText(val>=1000?`${(val/1000).toFixed(1)}k`:`${Math.round(val)}`,padL-5,y+3);
     }
-
-    // X labels
-    ctx.fillStyle = 'rgba(255,255,255,0.35)';
-    ctx.font = '9px system-ui';
-    ctx.textAlign = 'center';
-
-    if (finChartType === 'bar') {
-      // Bar chart — grouped bars (income vs expense)
-      const barW = (chartW / n) * 0.35;
-      const gap  = 2;
-      const zeroY = toY(0);
-      labels.forEach((lbl, i) => {
-        const x = padL + (i + 0.5) / n * chartW;
-        // Income bar
-        const ih = Math.max(1, ((incomes[i] - minVal) / range) * chartH);
-        const iy = toY(incomes[i]);
-        ctx.fillStyle = COL_INCOME;
-        finRoundRect(ctx, x - barW - gap/2, iy, barW, ih, 3);
-        ctx.fill();
-        // Expense bar
-        const eh = Math.max(1, ((expenses[i] - minVal) / range) * chartH);
-        const ey = toY(expenses[i]);
-        ctx.fillStyle = COL_EXPENSE;
-        finRoundRect(ctx, x + gap/2, ey, barW, eh, 3);
-        ctx.fill();
-        ctx.fillStyle = 'rgba(255,255,255,0.35)';
-        ctx.fillText(lbl, x, h - padB + 12);
+    ctx.fillStyle='rgba(255,255,255,0.3)'; ctx.font='9px system-ui'; ctx.textAlign='center';
+    if (finChartType==='bar') {
+      const barW=(chartW/n)*0.34,gap=2;
+      labels.forEach((lbl,i)=>{
+        const x=padL+(i+0.5)/n*chartW;
+        const ih=Math.max(1,((incomes[i]-minVal)/range)*chartH);
+        ctx.fillStyle=COL_INCOME; finRoundRect(ctx,x-barW-gap/2,toY(incomes[i]),barW,ih,3); ctx.fill();
+        const eh=Math.max(1,((expenses[i]-minVal)/range)*chartH);
+        ctx.fillStyle=COL_EXPENSE; finRoundRect(ctx,x+gap/2,toY(expenses[i]),barW,eh,3); ctx.fill();
+        ctx.fillStyle='rgba(255,255,255,0.3)'; ctx.fillText(lbl,x,h-padB+13);
       });
-      if (legend) legend.innerHTML = `
-        <span><span class="fin-legend-dot" style="background:${COL_INCOME}"></span>Revenus</span>
-        <span><span class="fin-legend-dot" style="background:${COL_EXPENSE}"></span>Dépenses</span>`;
-
+      if(legend) legend.innerHTML=`<span><span class="fin-legend-dot" style="background:${COL_INCOME}"></span>Revenus</span><span><span class="fin-legend-dot" style="background:${COL_EXPENSE}"></span>Dépenses</span>`;
     } else {
-      // Line chart — balance
-      const pts = balances.map((v,i) => ({ x: toX(i), y: toY(v) }));
-      // Gradient fill
-      const grad = ctx.createLinearGradient(0, padT, 0, padT + chartH);
-      grad.addColorStop(0,   'rgba(102,126,234,0.35)');
-      grad.addColorStop(1,   'rgba(102,126,234,0.00)');
-      ctx.beginPath();
-      ctx.moveTo(pts[0].x, toY(0));
-      pts.forEach(p => ctx.lineTo(p.x, p.y));
-      ctx.lineTo(pts[pts.length-1].x, toY(0));
-      ctx.closePath();
-      ctx.fillStyle = grad;
-      ctx.fill();
-      // Line
-      ctx.beginPath();
-      pts.forEach((p,i) => i===0 ? ctx.moveTo(p.x,p.y) : ctx.lineTo(p.x,p.y));
-      ctx.strokeStyle = COL_PAYMENT;
-      ctx.lineWidth = 2.5;
-      ctx.lineJoin = 'round';
-      ctx.stroke();
-      // Dots
-      pts.forEach(p => {
-        ctx.beginPath(); ctx.arc(p.x, p.y, 3.5, 0, Math.PI*2);
-        ctx.fillStyle = COL_PAYMENT; ctx.fill();
-        ctx.strokeStyle = '#0d0b26'; ctx.lineWidth=1.5; ctx.stroke();
-      });
-      // Zero line
-      if (minVal < 0) {
-        ctx.strokeStyle = 'rgba(255,255,255,0.18)'; ctx.lineWidth = 1;
-        ctx.setLineDash([4,4]);
-        ctx.beginPath(); ctx.moveTo(padL, toY(0)); ctx.lineTo(w-padR, toY(0)); ctx.stroke();
-        ctx.setLineDash([]);
-      }
-      labels.forEach((lbl,i) => ctx.fillText(lbl, toX(i), h - padB + 12));
-      if (legend) legend.innerHTML = `<span><span class="fin-legend-dot" style="background:${COL_PAYMENT}"></span>Solde (Revenus − Dépenses)</span>`;
+      const pts=balances.map((v,i)=>({x:toX(i),y:toY(v)}));
+      const grad=ctx.createLinearGradient(0,padT,0,padT+chartH);
+      grad.addColorStop(0,'rgba(102,126,234,0.30)'); grad.addColorStop(1,'rgba(102,126,234,0)');
+      ctx.beginPath(); ctx.moveTo(pts[0].x,toY(0)); pts.forEach(p=>ctx.lineTo(p.x,p.y));
+      ctx.lineTo(pts[pts.length-1].x,toY(0)); ctx.closePath(); ctx.fillStyle=grad; ctx.fill();
+      ctx.beginPath(); pts.forEach((p,i)=>i===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y));
+      ctx.strokeStyle=COL_PAYMENT; ctx.lineWidth=2.5; ctx.lineJoin='round'; ctx.stroke();
+      pts.forEach(p=>{ctx.beginPath();ctx.arc(p.x,p.y,3.5,0,Math.PI*2);ctx.fillStyle=COL_PAYMENT;ctx.fill();ctx.strokeStyle='#0d0b26';ctx.lineWidth=1.5;ctx.stroke();});
+      if(minVal<0){ctx.strokeStyle='rgba(255,255,255,0.15)';ctx.lineWidth=1;ctx.setLineDash([4,4]);ctx.beginPath();ctx.moveTo(padL,toY(0));ctx.lineTo(w-padR,toY(0));ctx.stroke();ctx.setLineDash([]);}
+      labels.forEach((lbl,i)=>ctx.fillText(lbl,toX(i),h-padB+13));
+      if(legend) legend.innerHTML=`<span><span class="fin-legend-dot" style="background:${COL_PAYMENT}"></span>Solde net (Revenus − Dépenses)</span>`;
     }
   }
 
-  function finDrawPie(ctx, w, h, incomes, expenses) {
-    const totalInc = incomes.reduce((s,v)=>s+v,0);
-    const totalExp = expenses.reduce((s,v)=>s+v,0);
-    const total    = totalInc + totalExp || 1;
-    const cx = w/2, cy = h/2 - 10, r = Math.min(w,h)/2 - 24;
-    const slices = [
-      { label: 'Revenus',  value: totalInc, color: COL_INCOME  },
-      { label: 'Dépenses', value: totalExp, color: COL_EXPENSE },
-    ];
-    let angle = -Math.PI / 2;
-    slices.forEach(s => {
-      const sweep = (s.value / total) * Math.PI * 2;
-      ctx.beginPath();
-      ctx.moveTo(cx, cy);
-      ctx.arc(cx, cy, r, angle, angle + sweep);
-      ctx.closePath();
-      ctx.fillStyle = s.color;
-      ctx.fill();
-      ctx.strokeStyle = '#0d0b26';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-      angle += sweep;
+  function finDrawPie(ctx,w,h,incomes,expenses) {
+    const totalInc=incomes.reduce((s,v)=>s+v,0),totalExp=expenses.reduce((s,v)=>s+v,0),total=totalInc+totalExp||1;
+    const cx=w/2,cy=h/2-8,r=Math.min(w,h)/2-26;
+    let angle=-Math.PI/2;
+    [{value:totalInc,color:COL_INCOME},{value:totalExp,color:COL_EXPENSE}].forEach(s=>{
+      const sweep=(s.value/total)*Math.PI*2;
+      ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,angle,angle+sweep);ctx.closePath();
+      ctx.fillStyle=s.color;ctx.fill();ctx.strokeStyle='rgba(10,8,32,0.9)';ctx.lineWidth=2;ctx.stroke();
+      angle+=sweep;
     });
-    // Centre (donut)
-    ctx.beginPath(); ctx.arc(cx, cy, r*0.52, 0, Math.PI*2);
-    ctx.fillStyle = 'rgba(13,11,38,0.97)'; ctx.fill();
-    // Solde au centre
-    const solde = totalInc - totalExp;
-    ctx.fillStyle = solde >= 0 ? COL_INCOME : COL_EXPENSE;
-    ctx.font = `bold 15px system-ui`;
-    ctx.textAlign = 'center';
-    ctx.fillText(finEur(solde), cx, cy + 2);
-    ctx.fillStyle = 'rgba(255,255,255,0.35)'; ctx.font = '10px system-ui';
-    ctx.fillText('Solde net', cx, cy + 15);
+    ctx.beginPath();ctx.arc(cx,cy,r*0.52,0,Math.PI*2);ctx.fillStyle='rgba(10,8,32,0.97)';ctx.fill();
+    const solde=totalInc-totalExp;
+    ctx.fillStyle=solde>=0?COL_INCOME:COL_EXPENSE;ctx.font='bold 15px system-ui';ctx.textAlign='center';
+    ctx.fillText(finEur(solde),cx,cy+2);
+    ctx.fillStyle='rgba(255,255,255,0.32)';ctx.font='10px system-ui';ctx.fillText('Solde net',cx,cy+16);
   }
 
-  function finRoundRect(ctx, x, y, w, h, r) {
-    ctx.beginPath();
-    ctx.moveTo(x+r, y); ctx.lineTo(x+w-r, y);
-    ctx.quadraticCurveTo(x+w, y, x+w, y+r);
-    ctx.lineTo(x+w, y+h); ctx.lineTo(x, y+h); ctx.lineTo(x, y+r);
-    ctx.quadraticCurveTo(x, y, x+r, y);
-    ctx.closePath();
+  function finRoundRect(ctx,x,y,w,h,r) {
+    ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+    ctx.lineTo(x+w,y+h);ctx.lineTo(x,y+h);ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();
   }
 
-  /* ═══════════════════════════════════════
+  /* ═══════════════════════════════════════════════
      ONGLET BILAN
-  ═══════════════════════════════════════ */
+  ═══════════════════════════════════════════════ */
+  const BILAN_PERIODS = [
+    { id:'day',   label:"Auj.",         filter:t=>t.date===finToday() },
+    { id:'week',  label:'7 jours',      filter:t=>{const d=new Date(t.date),w=new Date();w.setDate(w.getDate()-7);return d>=w;} },
+    { id:'month', label:'Ce mois',      filter:t=>{const d=new Date(t.date),n=new Date();return d.getMonth()===n.getMonth()&&d.getFullYear()===n.getFullYear();} },
+    { id:'year',  label:'Cette année',  filter:t=>new Date(t.date).getFullYear()===new Date().getFullYear() },
+    { id:'all',   label:'Tout',         filter:_=>true },
+  ];
+
   function finHtmlBilan() {
-    const PERIODS = [
-      { id:'day',   label:'Aujourd\'hui',  filter: t => t.date === finToday() },
-      { id:'week',  label:'7 derniers jours', filter: t => { const d=new Date(t.date); const w=new Date(); w.setDate(w.getDate()-7); return d>=w; } },
-      { id:'month', label:'Ce mois',       filter: t => { const d=new Date(t.date),n=new Date(); return d.getMonth()===n.getMonth()&&d.getFullYear()===n.getFullYear(); } },
-      { id:'year',  label:'Cette année',   filter: t => new Date(t.date).getFullYear()===new Date().getFullYear() },
-      { id:'all',   label:'Tout',          filter: _ => true },
-    ];
-
-    const html = PERIODS.map(p => {
-      const txs     = finTx.filter(p.filter);
-      const income  = txs.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
-      const expense = txs.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
-      const payment = txs.filter(t=>t.type==='payment').reduce((s,t)=>s+t.amount,0);
-      const solde   = income - expense - payment;
-      const kpiCol  = solde >= 0 ? '#10b981' : '#f5574f';
-
-      // Répartition dépenses par catégorie
-      const catBreakdown = {};
-      txs.filter(t=>t.type!=='income').forEach(t => { catBreakdown[t.category]=(catBreakdown[t.category]||0)+t.amount; });
-      const topCats = Object.entries(catBreakdown).sort((a,b)=>b[1]-a[1]).slice(0,5);
-
-      return `
-        <div style="margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid rgba(255,255,255,0.06);">
-          <div class="fin-section-title">${p.label}</div>
-          <div class="fin-bilan-kpi">
-            <div class="fin-kpi-card">
-              <div class="fin-kpi-label">Revenus</div>
-              <div class="fin-kpi-value" style="color:#10b981">${finEur(income)}</div>
-            </div>
-            <div class="fin-kpi-card">
-              <div class="fin-kpi-label">Sorties</div>
-              <div class="fin-kpi-value" style="color:#f5574f">${finEur(expense+payment)}</div>
-            </div>
-            <div class="fin-kpi-card" style="grid-column:1/-1;">
-              <div class="fin-kpi-label">Solde net</div>
-              <div class="fin-kpi-value" style="color:${kpiCol}">${finEur(solde)}</div>
-              <div class="fin-kpi-sub">${txs.length} transaction(s)</div>
-            </div>
-          </div>
-          ${topCats.length ? `
-            <div class="fin-bilan-table">
-              ${topCats.map(([cat,amt])=>`
-                <div class="fin-bilan-row">
-                  <div class="fin-bilan-cat">
-                    <div style="width:6px;height:6px;border-radius:50%;background:${COL_EXPENSE};flex-shrink:0;"></div>
-                    ${finEsc(cat)}
-                  </div>
-                  <div class="fin-bilan-amount" style="color:#f5574f">${finEur(amt)}</div>
-                </div>`).join('')}
-            </div>` : '<div style="color:rgba(255,255,255,0.25);font-size:12px;padding:8px 0;">Aucune donnée</div>'}
-        </div>`;
-    }).join('');
-
-    return html;
+    const p=BILAN_PERIODS.find(x=>x.id===finBilanPeriod)||BILAN_PERIODS[2];
+    const txs=finTx.filter(p.filter);
+    const income=txs.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+    const expense=txs.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+    const payment=txs.filter(t=>t.type==='payment').reduce((s,t)=>s+t.amount,0);
+    const solde=income-expense-payment;
+    const catMap={};
+    txs.filter(t=>t.type!=='income').forEach(t=>{catMap[t.category]=(catMap[t.category]||0)+t.amount;});
+    const topCats=Object.entries(catMap).sort((a,b)=>b[1]-a[1]);
+    const maxCat=topCats[0]?.[1]||1;
+    const incMap={};
+    txs.filter(t=>t.type==='income').forEach(t=>{incMap[t.category]=(incMap[t.category]||0)+t.amount;});
+    const topInc=Object.entries(incMap).sort((a,b)=>b[1]-a[1]);
+    const maxInc=topInc[0]?.[1]||1;
+    const today=finToday();
+    const overdueInst=finInst.filter(i=>!i.paid&&i.dueDate<today).length;
+    const pendingInst=finInst.filter(i=>!i.paid&&i.dueDate>=today).sort((a,b)=>a.dueDate.localeCompare(b.dueDate)).slice(0,3);
+    return `
+      <div class="fin-period-selector">
+        ${BILAN_PERIODS.map(pp=>`<button class="fin-period-sel-btn ${pp.id===finBilanPeriod?'active':''}" onclick="finSetBilanPeriod('${pp.id}')">${pp.label}</button>`).join('')}
+      </div>
+      <div class="fin-kpi-grid">
+        <div class="fin-kpi-card">
+          <div class="fin-kpi-label">Revenus</div>
+          <div class="fin-kpi-value" style="color:${COL_INCOME}">${finEur(income)}</div>
+          <div class="fin-kpi-sub">${txs.filter(t=>t.type==='income').length} entrée(s)</div>
+        </div>
+        <div class="fin-kpi-card">
+          <div class="fin-kpi-label">Sorties</div>
+          <div class="fin-kpi-value" style="color:${COL_EXPENSE}">${finEur(expense+payment)}</div>
+          <div class="fin-kpi-sub">${txs.filter(t=>t.type!=='income').length} sortie(s)</div>
+        </div>
+        <div class="fin-kpi-card" style="grid-column:1/-1;">
+          <div class="fin-kpi-label">Solde net</div>
+          <div class="fin-kpi-value" style="color:${solde>=0?COL_INCOME:COL_EXPENSE};font-size:20px;">${finEur(solde)}</div>
+          <div class="fin-kpi-sub">${txs.length} transaction(s) · ${p.label}</div>
+        </div>
+      </div>
+      ${topCats.length?`
+        <div class="fin-section-title">Répartition dépenses</div>
+        ${topCats.map(([cat,amt])=>`<div class="fin-cat-row">
+          <div class="fin-cat-header"><span class="fin-cat-name">${finEsc(cat)}</span><span class="fin-cat-amt" style="color:${COL_EXPENSE}">${finEur(amt)}</span></div>
+          <div class="fin-cat-bar-bg"><div class="fin-cat-bar-fill" style="width:${Math.round(amt/maxCat*100)}%;background:${COL_EXPENSE};opacity:.65;"></div></div>
+        </div>`).join('')}`:''}
+      ${topInc.length>1?`
+        <div class="fin-section-title">Sources de revenus</div>
+        ${topInc.map(([cat,amt])=>`<div class="fin-cat-row">
+          <div class="fin-cat-header"><span class="fin-cat-name">${finEsc(cat)}</span><span class="fin-cat-amt" style="color:${COL_INCOME}">${finEur(amt)}</span></div>
+          <div class="fin-cat-bar-bg"><div class="fin-cat-bar-fill" style="width:${Math.round(amt/maxInc*100)}%;background:${COL_INCOME};opacity:.65;"></div></div>
+        </div>`).join('')}`:''}
+      ${pendingInst.length||overdueInst?`
+        <div class="fin-section-title">Prochaines échéances</div>
+        ${overdueInst?`<div style="background:rgba(245,87,79,0.09);border:1px solid rgba(245,87,79,0.22);border-radius:9px;padding:8px 12px;font-size:12px;color:#f5574f;margin-bottom:8px;">⚠️ ${overdueInst} échéance(s) en retard</div>`:''}
+        ${pendingInst.map(i=>`<div class="fin-tx-item">
+          <div class="fin-tx-dot" style="background:${COL_PAYMENT}"></div>
+          <div class="fin-tx-info"><div class="fin-tx-label">${finEsc(i.label)}</div><div class="fin-tx-meta">Due le ${finFmtDate(i.dueDate)}</div></div>
+          <div class="fin-tx-amount" style="color:${COL_PAYMENT}">${finEur(i.amount)}</div>
+          <button class="fin-pay-btn" onclick="finPayInst('${i.id}')">Payer</button>
+        </div>`).join('')}
+        <button class="fin-export-btn" style="margin-top:4px;" onclick="finTab('mensuel')">Voir toutes les échéances →</button>
+      `:''}
+    `;
   }
+  window.finSetBilanPeriod = p => { finBilanPeriod=p; finRender(); };
 
-  /* ═══════════════════════════════════════
+  /* ═══════════════════════════════════════════════
      ONGLET MENSUALITÉS
-  ═══════════════════════════════════════ */
+  ═══════════════════════════════════════════════ */
   function finHtmlMensuel() {
-    const today   = finToday();
-    const thisMonth = today.slice(0,7);
-
-    // Reste à vivre ce mois
-    const monthIncome  = finTx.filter(t=>{ const d=new Date(t.date),n=new Date(); return t.type==='income'&&d.getMonth()===n.getMonth()&&d.getFullYear()===n.getFullYear(); }).reduce((s,t)=>s+t.amount,0);
-    const monthInstDue = finInst.filter(i=>i.dueDate.startsWith(thisMonth)).reduce((s,i)=>s+i.amount,0);
-    const rav          = monthIncome - monthInstDue;
-
-    // Grouper les mensualités par facture source
-    const byParent = {};
-    finInst.forEach(i => {
-      if (!byParent[i.parentTx]) byParent[i.parentTx] = [];
-      byParent[i.parentTx].push(i);
-    });
-
-    const cards = Object.entries(byParent).map(([parentId, items]) => {
-      const tx      = finTx.find(t=>t.id===parentId);
-      const total   = items.reduce((s,i)=>s+i.amount,0);
-      const paid    = items.filter(i=>i.paid).length;
-      const pctDone = Math.round((paid/items.length)*100);
-      const sortedItems = [...items].sort((a,b)=>a.dueDate.localeCompare(b.dueDate));
-
-      return `
-        <div class="fin-inst-card">
-          <div class="fin-inst-head">
-            <div>
-              <div class="fin-inst-label">${finEsc(tx?.label||tx?.category||'Paiement')}</div>
-              <div style="font-size:10px;color:rgba(255,255,255,0.35);margin-top:2px;">${paid}/${items.length} payée(s) · ${pctDone}%</div>
-            </div>
-            <div class="fin-inst-total">${finEur(total)}</div>
+    const today=finToday(), thisMonth=today.slice(0,7);
+    const monthIncome=finTx.filter(t=>{const d=new Date(t.date),n=new Date();return t.type==='income'&&d.getMonth()===n.getMonth()&&d.getFullYear()===n.getFullYear();}).reduce((s,t)=>s+t.amount,0);
+    const monthInstDue=finInst.filter(i=>i.dueDate.startsWith(thisMonth)).reduce((s,i)=>s+i.amount,0);
+    const rav=monthIncome-monthInstDue;
+    const byParent={};
+    finInst.forEach(i=>{if(!byParent[i.parentTx])byParent[i.parentTx]=[];byParent[i.parentTx].push(i);});
+    const cards=Object.entries(byParent).map(([parentId,items])=>{
+      const tx=finTx.find(t=>t.id===parentId);
+      const total=items.reduce((s,i)=>s+i.amount,0);
+      const paid=items.filter(i=>i.paid).length;
+      const pct=Math.round((paid/items.length)*100);
+      const sorted=[...items].sort((a,b)=>a.dueDate.localeCompare(b.dueDate));
+      return `<div class="fin-inst-card">
+        <div class="fin-inst-head">
+          <div>
+            <div class="fin-inst-label">${finEsc(tx?.label||tx?.category||'Paiement')}</div>
+            <div class="fin-inst-meta">${paid}/${items.length} payée(s) · ${pct}%</div>
           </div>
-          <div style="height:3px;background:rgba(255,255,255,0.06);">
-            <div style="height:100%;width:${pctDone}%;background:linear-gradient(90deg,#10b981,#06b6d4);border-radius:3px;transition:width .3s;"></div>
-          </div>
-          ${sortedItems.slice(0,5).map(i=>{
-            const overdue = !i.paid && i.dueDate < today;
-            const col = i.paid ? '#10b981' : overdue ? '#f5574f' : '#f5c542';
-            return `<div class="fin-inst-row">
-              <div class="fin-inst-date" style="color:${col}">
-                ${overdue?'⚠️ ':i.paid?'✅ ':''} ${finFmtDate(i.dueDate)}
-              </div>
-              <div class="fin-inst-amt" style="color:${col}">${finEur(i.amount)}</div>
-              ${i.paid
-                ? `<button class="fin-pay-btn paid" disabled>Payé</button>`
-                : `<button class="fin-pay-btn" onclick="finPayInst('${i.id}')">Payer</button>`
-              }
-            </div>`;
-          }).join('')}
-          ${sortedItems.length > 5 ? `<div style="font-size:11px;color:rgba(255,255,255,0.3);padding:6px 14px;">+ ${sortedItems.length-5} autres</div>`:''}
-        </div>`;
+          <div class="fin-inst-total">${finEur(total)}</div>
+        </div>
+        <div class="fin-inst-progress"><div class="fin-inst-bar" style="width:${pct}%"></div></div>
+        ${sorted.slice(0,5).map(i=>{
+          const overdue=!i.paid&&i.dueDate<today;
+          const col=i.paid?'#10b981':overdue?'#f5574f':'#f5c542';
+          return `<div class="fin-inst-row">
+            <div class="fin-inst-date" style="color:${col}">${overdue?'⚠️ ':i.paid?'✅ ':''} ${finFmtDate(i.dueDate)}</div>
+            <div class="fin-inst-amt" style="color:${col}">${finEur(i.amount)}</div>
+            ${i.paid?`<button class="fin-pay-btn paid" disabled>Payé</button>`:`<button class="fin-pay-btn" onclick="finPayInst('${i.id}')">Payer</button>`}
+          </div>`;
+        }).join('')}
+        ${sorted.length>5?`<div style="font-size:10px;color:rgba(255,255,255,0.28);padding:6px 14px;">+ ${sorted.length-5} autres</div>`:''}
+      </div>`;
     }).join('');
-
     return `
       <div class="fin-rav-banner">
-        <div class="fin-rav-label">💶 Reste à vivre ce mois</div>
-        <div class="fin-rav-value" style="color:${rav>=0?'#10b981':'#f5574f'}">${finEur(rav)}</div>
-        <div class="fin-rav-sub">Revenus (${finEur(monthIncome)}) − mensualités dues (${finEur(monthInstDue)})</div>
+        <div class="fin-rav-label">💶 Reste à vivre — ce mois</div>
+        <div class="fin-rav-value" style="color:${rav>=0?COL_INCOME:COL_EXPENSE}">${finEur(rav)}</div>
+        <div class="fin-rav-sub">Revenus ${finEur(monthIncome)} − échéances ${finEur(monthInstDue)}</div>
       </div>
-      ${Object.keys(byParent).length === 0
-        ? `<div style="text-align:center;color:rgba(255,255,255,0.3);font-size:13px;padding:40px 0;">
-            Aucune mensualisation en cours.<br>
-            <span style="font-size:11px;">Créez un paiement échelonné depuis l'onglet Saisie.</span>
-          </div>`
-        : cards
-      }`;
-  }
-
-  function finBindMensuel() {
-    // binding dynamique via onclick inline
+      ${Object.keys(byParent).length===0
+        ?`<div style="text-align:center;color:rgba(255,255,255,0.28);font-size:12px;padding:36px 0;">Aucune mensualisation active.<br><span style="font-size:10px;">Créez un paiement échelonné via l'onglet Saisie.</span></div>`
+        :cards}
+    `;
   }
 
   window.finPayInst = function(id) {
-    const inst = finInst.find(i=>i.id===id);
-    if (!inst || inst.paid) return;
-    inst.paid = true;
-    inst.paidDate = finToday();
-    finSaveInst();
-    finRender();
-    notify(`✅ Mensualité de ${finEur(inst.amount)} marquée comme payée`);
+    const inst=finInst.find(i=>i.id===id); if(!inst||inst.paid) return;
+    inst.paid=true; inst.paidDate=finToday();
+    finSaveInst(); finRender(); notify(`✅ Mensualité de ${finEur(inst.amount)} payée`);
   };
 
-  /* ═══════════════════════════════════════
+  /* ═══════════════════════════════════════════════
+     ONGLET RÉGLAGES
+  ═══════════════════════════════════════════════ */
+  function finHtmlReglages() {
+    return `
+      <div class="fin-section-title">Devise</div>
+      <div class="fin-settings-group">
+        <div class="fin-settings-row">
+          <span class="fin-settings-icon">💱</span>
+          <div class="fin-settings-label">Devise d'affichage<small>Affecte tous les montants</small></div>
+          <div class="fin-settings-control">
+            <select class="fin-settings-select" onchange="finSaveSetting('currency',this.value)">
+              ${Object.keys(CURRENCIES).map(k=>`<option value="${k}" ${finCfg.currency===k?'selected':''}>${k} ${CURRENCIES[k].symbol}</option>`).join('')}
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="fin-section-title">Budget mensuel</div>
+      <div class="fin-settings-group">
+        ${CAT_EXPENSE.slice(0,6).map(cat=>`
+          <div class="fin-settings-row">
+            <span class="fin-settings-icon">🎯</span>
+            <div class="fin-settings-label">${finEsc(cat)}</div>
+            <div class="fin-settings-control">
+              <input class="fin-settings-input-sm" type="number" min="0" step="10"
+                value="${finCfg.budgets[cat]||''}" placeholder="—"
+                onchange="finSaveBudget('${finEsc(cat)}',this.value)">
+            </div>
+          </div>`).join('')}
+      </div>
+      <div class="fin-section-title">Statistiques</div>
+      <div class="fin-settings-group">
+        <div class="fin-settings-row">
+          <span class="fin-settings-icon">📊</span>
+          <div class="fin-settings-label">Transactions<small>${finTx.length} enregistrées</small></div>
+          <div class="fin-settings-control" style="color:rgba(255,255,255,0.35);font-size:11px;">${finEur(finTx.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0))} total</div>
+        </div>
+        <div class="fin-settings-row">
+          <span class="fin-settings-icon">🔄</span>
+          <div class="fin-settings-label">Mensualités<small>${finInst.filter(i=>!i.paid).length} en attente</small></div>
+          <div class="fin-settings-control" style="color:rgba(255,255,255,0.35);font-size:11px;">${finInst.length} au total</div>
+        </div>
+      </div>
+      <div class="fin-section-title">Actions</div>
+      <button class="fin-export-btn" onclick="finExportCSV()">📤 Exporter en CSV</button>
+      <button class="fin-danger-btn" onclick="finClearData()">🗑 Supprimer toutes les données</button>
+    `;
+  }
+  function finBindReglages() {}
+
+  window.finSaveSetting = function(key,val) {
+    finCfg[key]=val; finSaveCfg(); finUpdateBalance();
+    const body=document.getElementById('fin-body'); if(body) { body.innerHTML=finHtmlReglages(); finBindReglages(); }
+  };
+  window.finSaveBudget = function(cat,val) {
+    const v=parseFloat(val); if(v>0) finCfg.budgets[cat]=v; else delete finCfg.budgets[cat]; finSaveCfg();
+  };
+  window.finExportCSV = function() {
+    if(!finTx.length) { notify('Aucune donnée à exporter'); return; }
+    const rows=['Type,Intitulé,Catégorie,Montant,Date,Note',
+      ...finTx.map(t=>`${t.type},"${(t.label||'').replace(/"/g,'""')}","${(t.category||'').replace(/"/g,'""')}",${t.amount},${t.date},"${(t.note||'').replace(/"/g,'""')}"`)]
+    .join('\n');
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(new Blob(['﻿'+rows],{type:'text/csv;charset=utf-8;'}));
+    a.download=`finances_${finToday()}.csv`; a.click();
+    notify('📤 Export CSV téléchargé');
+  };
+  window.finClearData = function() {
+    if(!confirm('Supprimer toutes les transactions et mensualités ? Cette action est irréversible.')) return;
+    finTx=[]; finInst=[]; finSaveTx(); finSaveInst();
+    notify('🗑 Données supprimées'); finRender();
+  };
+
+  /* ═══════════════════════════════════════════════
      REDIMENSIONNEMENT PAR LE BORD GAUCHE
-  ═══════════════════════════════════════ */
-  const FIN_WIDTH_KEY = 'fin_panel_width';
-  const FIN_MIN_W = 310;
-  const FIN_MAX_W = Math.round(window.innerWidth * 0.72);
+  ═══════════════════════════════════════════════ */
+  const FIN_WIDTH_KEY='fin_panel_width';
+  const FIN_MIN_W=320;
+  const FIN_MAX_W=()=>Math.round(window.innerWidth*0.80);
 
   function finApplyWidth(w) {
-    const panel = document.getElementById('fin-panel');
-    if (panel) panel.style.width = Math.min(FIN_MAX_W, Math.max(FIN_MIN_W, w)) + 'px';
+    const panel=document.getElementById('fin-panel');
+    if(panel) panel.style.width=Math.min(FIN_MAX_W(),Math.max(FIN_MIN_W,w))+'px';
   }
 
   function finInitResize() {
-    const handle = document.getElementById('fin-resize-handle');
-    const panel  = document.getElementById('fin-panel');
-    if (!handle || !panel) return;
-
-    // Restaurer la largeur sauvegardée
-    const saved = parseInt(localStorage.getItem(FIN_WIDTH_KEY));
-    if (saved && saved >= FIN_MIN_W) finApplyWidth(saved);
-
-    let dragging = false, startX = 0, startW = 0;
-
-    handle.addEventListener('mousedown', e => {
-      dragging = true;
-      startX   = e.clientX;
-      startW   = panel.offsetWidth;
-      handle.classList.add('dragging');
-      document.body.style.cursor     = 'ew-resize';
-      document.body.style.userSelect = 'none';
-      e.preventDefault();
-    });
-
-    document.addEventListener('mousemove', e => {
-      if (!dragging) return;
-      // Tirer vers la gauche = agrandir (startX - clientX > 0 quand on part à gauche)
-      const delta  = startX - e.clientX;
-      const newW   = Math.min(FIN_MAX_W, Math.max(FIN_MIN_W, startW + delta));
-      panel.style.width = newW + 'px';
-    });
-
-    document.addEventListener('mouseup', () => {
-      if (!dragging) return;
-      dragging = false;
-      handle.classList.remove('dragging');
-      document.body.style.cursor     = '';
-      document.body.style.userSelect = '';
-      // Sauvegarder la nouvelle largeur
-      localStorage.setItem(FIN_WIDTH_KEY, panel.offsetWidth);
-    });
-
-    // Touch support (mobile)
-    handle.addEventListener('touchstart', e => {
-      dragging = true;
-      startX   = e.touches[0].clientX;
-      startW   = panel.offsetWidth;
-      handle.classList.add('dragging');
-      e.preventDefault();
-    }, { passive: false });
-
-    document.addEventListener('touchmove', e => {
-      if (!dragging) return;
-      const delta = startX - e.touches[0].clientX;
-      const newW  = Math.min(FIN_MAX_W, Math.max(FIN_MIN_W, startW + delta));
-      panel.style.width = newW + 'px';
-    });
-
-    document.addEventListener('touchend', () => {
-      if (!dragging) return;
-      dragging = false;
-      handle.classList.remove('dragging');
-      localStorage.setItem(FIN_WIDTH_KEY, panel.offsetWidth);
-    });
+    const handle=document.getElementById('fin-resize-handle'), panel=document.getElementById('fin-panel');
+    if(!handle||!panel) return;
+    const saved=parseInt(localStorage.getItem(FIN_WIDTH_KEY));
+    if(saved&&saved>=FIN_MIN_W) finApplyWidth(saved);
+    let dragging=false,startX=0,startW=0;
+    handle.addEventListener('mousedown',e=>{dragging=true;startX=e.clientX;startW=panel.offsetWidth;handle.classList.add('dragging');document.body.style.cursor='ew-resize';document.body.style.userSelect='none';e.preventDefault();});
+    document.addEventListener('mousemove',e=>{if(!dragging)return;panel.style.width=Math.min(FIN_MAX_W(),Math.max(FIN_MIN_W,startW+(startX-e.clientX)))+'px';});
+    document.addEventListener('mouseup',()=>{if(!dragging)return;dragging=false;handle.classList.remove('dragging');document.body.style.cursor='';document.body.style.userSelect='';localStorage.setItem(FIN_WIDTH_KEY,panel.offsetWidth);});
+    handle.addEventListener('touchstart',e=>{dragging=true;startX=e.touches[0].clientX;startW=panel.offsetWidth;handle.classList.add('dragging');e.preventDefault();},{passive:false});
+    document.addEventListener('touchmove',e=>{if(!dragging)return;panel.style.width=Math.min(FIN_MAX_W(),Math.max(FIN_MIN_W,startW+(startX-e.touches[0].clientX)))+'px';});
+    document.addEventListener('touchend',()=>{if(!dragging)return;dragging=false;handle.classList.remove('dragging');localStorage.setItem(FIN_WIDTH_KEY,panel.offsetWidth);});
   }
 
-  /* ── Initialisation ── */
-  window.finInit = function() {
-    finLoadData();
-    finInitResize();
-  };
-
+  /* ── Init ── */
+  window.finInit = function() { finLoadData(); finInitResize(); };
   finInit();
 
 })(); // fin IIFE panneau financier
