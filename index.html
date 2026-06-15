@@ -3003,6 +3003,7 @@
 <div id="taskbar">
   <button id="start-btn" onclick="toggleStartMenu()">⬡</button>
   <button id="tb-radial-btn" onclick="toggleRadialLauncher()" title="Lanceur radial — toutes les icônes en cercle">✦</button>
+  <button id="tb-widgets-btn" onclick="openWidgetGallery()" title="Widgets du bureau">🧩</button>
   <div id="taskbar-apps"></div>
   <div id="taskbar-right">
     <button id="tb-fs-btn" onclick="toggleFullscreen()" title="Plein écran (F11)">⛶</button>
@@ -3132,6 +3133,7 @@
 
 <div id="context-menu">
   <div class="ctx-item" onclick="openModuleModal()">📦 Ajouter un module (URL)</div>
+  <div class="ctx-item" onclick="openWidgetGallery();closeContextMenu()">🧩 Ajouter un widget</div>
   <div class="ctx-item" onclick="openApp('settings')">⚙️ Paramètres</div>
   <div class="ctx-separator"></div>
   <div class="ctx-item" onclick="openApp('sysmonitor')">📊 Moniteur système</div>
@@ -3141,6 +3143,9 @@
   <div class="ctx-separator"></div>
   <div class="ctx-item" onclick="alignIconsToGrid()">⊞ Aligner sur la grille</div>
   <div class="ctx-item" onclick="autoArrangeIcons()">🔃 Réorganisation automatique</div>
+  <div class="ctx-separator"></div>
+  <div class="ctx-item" onclick="if(window.vdSel)vdSel.toggleMode();closeContextMenu()">☑️ Mode sélection d'icônes</div>
+  <div class="ctx-item" onclick="if(window.vdSel)vdSel.hideSelected();closeContextMenu()">🙈 Masquer la sélection</div>
   <div class="ctx-item" onclick="openHiddenPanel()">👁 Icônes masquées</div>
   <div class="ctx-separator"></div>
   <div class="ctx-item" onclick="changeWallpaper()">🎨 Changer le fond</div>
@@ -3847,10 +3852,17 @@
       el.style.left = pos.x + 'px';
       el.style.top  = pos.y + 'px';
 
-      el.ondblclick = () => { if (!iconJustDragged) openApp(app.id); };
+      el.ondblclick = () => { if (!iconJustDragged && !(window.vdSel && window.vdSel.active())) openApp(app.id); };
 
       el.onmousedown = (e) => {
         if (e.button !== 0) return;
+        // Sélection multiple : Ctrl/Cmd+clic, ou mode sélection libre actif
+        if (e.ctrlKey || e.metaKey || (window.vdSel && window.vdSel.active())) {
+          e.preventDefault();
+          e.stopPropagation();
+          if (window.vdSel) window.vdSel.toggle(app.id, el);
+          return;
+        }
         e.preventDefault();
         e.stopPropagation();
         closeIconCtxMenu();
@@ -4711,6 +4723,13 @@
           <div class="setting-group">
             <label>Taille des icônes du bureau</label>
             <input id="icon-size-slider" type="range" min="60" max="120" value="96" oninput="setIconSize(this.value)">
+          </div>
+          <div class="setting-group" style="margin-top:20px;">
+            <label>🧩 Widgets du bureau</label>
+            <div style="font-size:11px;color:rgba(255,255,255,0.4);margin:4px 0 10px;">Horloge, tâches, agenda, finances, notes, météo, accès rapide, pense-bête.</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <button onclick="openWidgetGallery()" style="padding:10px 18px;border-radius:10px;border:none;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;cursor:pointer;font-size:13px;">🧩 Gérer les widgets</button>
+            </div>
           </div>
           <div class="setting-group" style="margin-top:20px;">
             <label>Affichage</label>
@@ -12256,6 +12275,442 @@ ctLoad();
   window.toggleRadialLauncher=function(){_open?shut():build();};
   window.closeIconPanel=shut;
   window.ipOverlayClick=function(e){if(e.target.id==='icon-panel-overlay')shut();};
+}());
+</script>
+
+<script>
+/* ════════════════ WIDGETS DU BUREAU ════════════════ */
+(function(){
+  var KEY='vd_widgets';
+  var widgets=[];
+
+  /* ── Catalogue des widgets ── */
+  var WG={
+    clock:  {icon:'⏰', name:'Horloge',      desc:'Heure et date en direct',          w:230,h:118, tick:1000},
+    tasks:  {icon:'✅', name:'Tâches',       desc:'Vos tâches à faire',               w:250,h:210, tick:15000},
+    agenda: {icon:'📅', name:'Agenda',       desc:'Prochains événements',             w:250,h:210, tick:30000},
+    finance:{icon:'💰', name:'Finances',     desc:'Solde et flux du mois',            w:236,h:150, tick:20000},
+    notes:  {icon:'🗒️', name:'Notes',        desc:'Vos notes récentes',               w:250,h:200, tick:30000},
+    launch: {icon:'🚀', name:'Accès rapide', desc:'Lancer vos applications',          w:256,h:170, tick:60000},
+    weather:{icon:'🌤️', name:'Météo',        desc:'Météo locale',                     w:230,h:150, tick:900000},
+    sticky: {icon:'📌', name:'Pense-bête',   desc:'Note collante éditable',           w:230,h:200, tick:0}
+  };
+
+  /* ── Persistance ── */
+  function load(){ try{var s=localStorage.getItem(KEY); widgets=s?JSON.parse(s):[];}catch(e){widgets=[];} if(!Array.isArray(widgets))widgets=[]; }
+  function save(){ try{localStorage.setItem(KEY,JSON.stringify(widgets)); if(typeof ghMarkDirty==='function')ghMarkDirty();}catch(e){} }
+
+  /* ── Utilitaires ── */
+  function rj(k,d){ try{var v=localStorage.getItem(k); return v?JSON.parse(v):d;}catch(e){return d;} }
+  function esc(t){return String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+  function eur(n){ try{var c=rj('fin_cfg',{})||{}; return new Intl.NumberFormat('fr-FR',{style:'currency',currency:c.currency||'EUR',maximumFractionDigits:2}).format(n||0);}catch(e){return (n||0).toFixed(2)+' €';} }
+  function todayStr(){ var d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+  function uid(){ return 'wg-'+Date.now()+'-'+Math.floor(Math.random()*1000); }
+
+  /* ── Couche d'affichage ── */
+  function layer(){
+    var d=document.getElementById('vd-widgets');
+    if(!d){
+      var desk=document.getElementById('desktop');
+      if(!desk)return null;
+      d=document.createElement('div'); d.id='vd-widgets';
+      desk.appendChild(d);
+    }
+    return d;
+  }
+
+  /* ════ Corps des widgets ════ */
+  function body(w){
+    switch(w.type){
+      case 'clock': {
+        var d=new Date();
+        return '<div class="wg-clock-time">'+d.toLocaleTimeString('fr-FR')+'</div>'
+              +'<div class="wg-clock-date">'+d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})+'</div>';
+      }
+      case 'tasks': {
+        var ts=rj('vd_tasks',[])||[];
+        var pend=ts.filter(function(t){return t.status!=='done';});
+        var done=ts.length-pend.length;
+        pend.sort(function(a,b){return (a.due||'9999')<(b.due||'9999')?-1:1;});
+        var dot={high:'#f5574f',med:'#f5b14f',low:'#4fd18b'};
+        var rows=pend.slice(0,4).map(function(t){
+          return '<div class="wg-row"><span class="wg-dot" style="background:'+(dot[t.prio]||'#888')+'"></span>'
+                +'<span class="wg-row-txt">'+esc(t.title||'(sans titre)')+'</span>'
+                +(t.due?'<span class="wg-row-sub">'+esc(t.due.slice(5))+'</span>':'')+'</div>';
+        }).join('');
+        return '<div class="wg-stat-line">'+pend.length+' à faire · '+done+' terminées</div>'
+              +(rows||'<div class="wg-empty">Aucune tâche en cours 🎉</div>');
+      }
+      case 'agenda': {
+        var ev=rj('vd_agenda',[])||[]; var t=todayStr();
+        var up=ev.filter(function(e){return (e.date||'')>=t;}).sort(function(a,b){
+          return (a.date+(a.timeStart||''))<(b.date+(b.timeStart||''))?-1:1;});
+        var rows=up.slice(0,4).map(function(e){
+          var dd=new Date(e.date+'T00:00'); var lbl=isNaN(dd)?e.date:dd.toLocaleDateString('fr-FR',{day:'numeric',month:'short'});
+          return '<div class="wg-row"><span class="wg-dot" style="background:'+(e.color||'#667eea')+'"></span>'
+                +'<span class="wg-row-txt">'+esc(e.title||'')+'</span>'
+                +'<span class="wg-row-sub">'+esc(lbl)+(e.timeStart?' '+esc(e.timeStart):'')+'</span></div>';
+        }).join('');
+        return rows||'<div class="wg-empty">Aucun événement à venir</div>';
+      }
+      case 'finance': {
+        var tx=rj('fin_tx',[])||[]; var inc=0,out=0,mi=0,mo=0; var ym=todayStr().slice(0,7);
+        tx.forEach(function(x){
+          var a=+x.amount||0;
+          if(x.type==='income'){inc+=a; if((x.date||'').slice(0,7)===ym)mi+=a;}
+          else{out+=a; if((x.date||'').slice(0,7)===ym)mo+=a;}
+        });
+        var net=inc-out;
+        return '<div class="wg-fin-label">Solde total</div>'
+              +'<div class="wg-fin-bal '+(net>=0?'wg-pos':'wg-neg')+'">'+esc(eur(net))+'</div>'
+              +'<div class="wg-fin-flows"><span class="wg-pos">▲ '+esc(eur(mi))+'</span><span class="wg-neg">▼ '+esc(eur(mo))+'</span></div>'
+              +'<div class="wg-row-sub" style="text-align:center">ce mois-ci</div>';
+      }
+      case 'notes': {
+        var nd=rj('vd_notes_v2',{})||{}; var ns=(nd.notes||[]).slice();
+        ns.sort(function(a,b){return (b.updatedAt||0)-(a.updatedAt||0);});
+        var rows=ns.slice(0,4).map(function(n){
+          var snip=(n.content||'').replace(/\s+/g,' ').trim().slice(0,42);
+          return '<div class="wg-note"><div class="wg-note-t">'+esc(n.title||'Sans titre')+'</div>'
+                +(snip?'<div class="wg-note-s">'+esc(snip)+'</div>':'')+'</div>';
+        }).join('');
+        return rows||'<div class="wg-empty">Aucune note</div>';
+      }
+      case 'launch': {
+        var apps=(window._vdApps||[]).filter(function(a){return !(window._vdIsHidden&&window._vdIsHidden(a.id));}).slice(0,8);
+        var cells=apps.map(function(a){
+          var fav=(window._vdAppFavicon?window._vdAppFavicon(a):null);
+          var ic=fav?'<img src="'+esc(fav)+'" onerror="this.replaceWith(document.createTextNode(\''+esc(a.icon||'📦')+'\'))">':esc(a.icon||'📦');
+          return '<div class="wg-launch-cell" data-app="'+esc(a.id)+'" title="'+esc(a.name)+'">'
+                +'<div class="wg-launch-ic" style="background:'+esc(a.color||'#667eea')+'22">'+ic+'</div></div>';
+        }).join('');
+        return '<div class="wg-launch-grid">'+(cells||'<div class="wg-empty">Aucune application</div>')+'</div>';
+      }
+      case 'weather': {
+        if(w._wx) return '<div class="wg-wx"><div class="wg-wx-ic">'+w._wx.ic+'</div>'
+              +'<div><div class="wg-wx-temp">'+w._wx.temp+'°C</div><div class="wg-row-sub">'+esc(w._wx.lbl)+'</div></div></div>';
+        if(w._wxLoad) return '<div class="wg-empty">Chargement…</div>';
+        return '<button class="wg-wx-btn" data-wx="1">📍 Activer la météo</button>'
+              +(w._wxErr?'<div class="wg-row-sub" style="text-align:center;color:#f5574f">'+esc(w._wxErr)+'</div>':'');
+      }
+    }
+    return '';
+  }
+
+  function fill(w){
+    var b=document.getElementById('wg-body-'+w.id); if(!b)return;
+    if(w.type==='sticky') return; /* géré séparément, ne pas écraser la saisie */
+    b.innerHTML=body(w);
+    if(w.type==='launch'){
+      b.querySelectorAll('.wg-launch-cell').forEach(function(c){
+        c.onclick=function(){ if(window._vdOpenApp)window._vdOpenApp(c.getAttribute('data-app')); };
+      });
+    }
+    if(w.type==='weather'){
+      var wb=b.querySelector('[data-wx]'); if(wb) wb.onclick=function(){ fetchWeather(w); };
+    }
+    w._last=Date.now();
+  }
+
+  /* ── Météo (open-meteo, à la demande) ── */
+  var WX={0:['☀️','Ciel clair'],1:['🌤️','Plutôt clair'],2:['⛅','Nuageux'],3:['☁️','Couvert'],
+    45:['🌫️','Brouillard'],48:['🌫️','Brouillard'],51:['🌦️','Bruine'],53:['🌦️','Bruine'],55:['🌦️','Bruine'],
+    61:['🌧️','Pluie'],63:['🌧️','Pluie'],65:['🌧️','Forte pluie'],71:['🌨️','Neige'],73:['🌨️','Neige'],75:['❄️','Forte neige'],
+    80:['🌦️','Averses'],81:['🌦️','Averses'],82:['⛈️','Fortes averses'],95:['⛈️','Orage'],96:['⛈️','Orage'],99:['⛈️','Orage']};
+  function fetchWeather(w){
+    if(!navigator.geolocation){ w._wxErr='Géolocalisation indisponible'; fill(w); return; }
+    w._wxLoad=true; w._wxErr=''; fill(w);
+    navigator.geolocation.getCurrentPosition(function(p){
+      var u='https://api.open-meteo.com/v1/forecast?latitude='+p.coords.latitude.toFixed(3)
+           +'&longitude='+p.coords.longitude.toFixed(3)+'&current_weather=true';
+      fetch(u).then(function(r){return r.json();}).then(function(j){
+        var c=j.current_weather||{}; var m=WX[c.weathercode]||['🌡️','—'];
+        w._wx={temp:Math.round(c.temperature),ic:m[0],lbl:m[1]}; w._wxLoad=false; w._wxTime=Date.now(); fill(w);
+      }).catch(function(){ w._wxLoad=false; w._wxErr='Météo indisponible'; fill(w); });
+    },function(){ w._wxLoad=false; w._wxErr='Localisation refusée'; fill(w); },{timeout:8000});
+  }
+
+  /* ════ Construction d'une carte ════ */
+  function buildCard(w){
+    var meta=WG[w.type]; if(!meta)return;
+    var lay=layer(); if(!lay)return;
+    var card=document.createElement('div');
+    card.className='wg-card wg-'+w.type;
+    card.id='wg-card-'+w.id;
+    card.style.left=(w.x||20)+'px'; card.style.top=(w.y||20)+'px';
+    card.style.width=meta.w+'px'; card.style.height=meta.h+'px';
+    card.innerHTML='<div class="wg-head" id="wg-head-'+w.id+'">'
+        +'<span class="wg-head-t">'+meta.icon+' '+esc(meta.name)+'</span>'
+        +'<button class="wg-x" title="Retirer">✕</button></div>'
+        +'<div class="wg-body" id="wg-body-'+w.id+'"></div>';
+    lay.appendChild(card);
+    card.querySelector('.wg-x').onclick=function(e){ e.stopPropagation(); removeWidget(w.id); };
+    if(w.type==='sticky'){
+      var b=card.querySelector('.wg-body');
+      var ta=document.createElement('textarea');
+      ta.className='wg-sticky-ta'; ta.placeholder='Écrivez ici…'; ta.value=w.text||'';
+      ta.oninput=function(){ w.text=ta.value; save(); };
+      b.appendChild(ta);
+    } else {
+      fill(w);
+    }
+    enableDrag(w,card,card.querySelector('.wg-head'));
+  }
+
+  /* ── Déplacement ── */
+  function enableDrag(w,card,handle){
+    handle.addEventListener('mousedown',function(e){
+      if(e.button!==0||e.target.classList.contains('wg-x'))return;
+      e.preventDefault();
+      var lay=layer(); var r=lay.getBoundingClientRect();
+      var sx=e.clientX, sy=e.clientY, ox=card.offsetLeft, oy=card.offsetTop;
+      card.classList.add('wg-drag');
+      function mm(ev){
+        var nx=Math.max(0,Math.min(r.width-card.offsetWidth, ox+ev.clientX-sx));
+        var ny=Math.max(0,Math.min(r.height-card.offsetHeight, oy+ev.clientY-sy));
+        card.style.left=nx+'px'; card.style.top=ny+'px';
+      }
+      function mu(){
+        document.removeEventListener('mousemove',mm); document.removeEventListener('mouseup',mu);
+        card.classList.remove('wg-drag');
+        w.x=card.offsetLeft; w.y=card.offsetTop; save();
+      }
+      document.addEventListener('mousemove',mm); document.addEventListener('mouseup',mu);
+    });
+  }
+
+  /* ── Ajout / retrait ── */
+  function nextPos(){
+    var lay=layer(); var w=lay?lay.clientWidth:1000;
+    var n=widgets.length; var col=Math.floor(n/3);
+    return { x:Math.max(20, w-270-col*250), y:20+(n%3)*150 };
+  }
+  function addWidget(type){
+    if(!WG[type])return;
+    var p=nextPos();
+    var w={id:uid(),type:type,x:p.x,y:p.y};
+    if(type==='sticky')w.text='';
+    widgets.push(w); save(); buildCard(w);
+    if(typeof notify==='function')notify(WG[type].icon+' Widget « '+WG[type].name+' » ajouté');
+  }
+  function removeWidget(id){
+    widgets=widgets.filter(function(w){return w.id!==id;}); save();
+    var c=document.getElementById('wg-card-'+id); if(c)c.remove();
+  }
+
+  /* ════ Galerie d'installation ════ */
+  function gallery(){
+    var ov=document.getElementById('wg-gallery'); if(ov)return ov;
+    ov=document.createElement('div'); ov.id='wg-gallery';
+    ov.onclick=function(e){ if(e.target.id==='wg-gallery')closeGallery(); };
+    var cards=Object.keys(WG).map(function(k){
+      var m=WG[k];
+      return '<div class="wg-gal-card" data-type="'+k+'">'
+        +'<div class="wg-gal-ic">'+m.icon+'</div>'
+        +'<div class="wg-gal-name">'+esc(m.name)+'</div>'
+        +'<div class="wg-gal-desc">'+esc(m.desc)+'</div>'
+        +'<div class="wg-gal-add">+ Installer</div></div>';
+    }).join('');
+    ov.innerHTML='<div class="wg-gal-panel"><div class="wg-gal-head">🧩 Widgets <button class="wg-x" id="wg-gal-close">✕</button></div>'
+      +'<div class="wg-gal-grid">'+cards+'</div></div>';
+    document.body.appendChild(ov);
+    ov.querySelector('#wg-gal-close').onclick=closeGallery;
+    ov.querySelectorAll('.wg-gal-card').forEach(function(c){
+      c.onclick=function(){ addWidget(c.getAttribute('data-type')); };
+    });
+    return ov;
+  }
+  function closeGallery(){ var ov=document.getElementById('wg-gallery'); if(ov)ov.classList.remove('open'); }
+  window.openWidgetGallery=function(){ var ov=gallery(); ov.classList.add('open'); };
+
+  /* ── Boucle de rafraîchissement ── */
+  setInterval(function(){
+    var now=Date.now();
+    widgets.forEach(function(w){
+      var m=WG[w.type]; if(!m||!m.tick)return;
+      if(now-(w._last||0)>=m.tick) fill(w);
+    });
+  },1000);
+
+  /* ── Démarrage ── */
+  function init(){ load(); layer(); widgets.forEach(buildCard); }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init);
+  else init();
+
+  /* ── CSS ── */
+  var css=document.createElement('style');
+  css.textContent=
+   '#vd-widgets{position:absolute;inset:0;bottom:var(--tb-desktop-bottom,56px);pointer-events:none;z-index:3;}'
+  +'.wg-card{position:absolute;pointer-events:auto;background:linear-gradient(145deg,rgba(20,16,52,0.86),rgba(28,22,66,0.86));'
+  +'backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,0.10);border-radius:16px;'
+  +'box-shadow:0 14px 44px rgba(0,0,0,0.42);color:#fff;display:flex;flex-direction:column;overflow:hidden;}'
+  +'.wg-card.wg-drag{opacity:.92;z-index:60;box-shadow:0 22px 60px rgba(0,0,0,0.6);}'
+  +'.wg-head{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;cursor:grab;'
+  +'border-bottom:1px solid rgba(255,255,255,0.07);background:rgba(255,255,255,0.03);}'
+  +'.wg-head:active{cursor:grabbing;}'
+  +'.wg-head-t{font-size:12px;font-weight:700;letter-spacing:.3px;color:rgba(255,255,255,0.82);}'
+  +'.wg-x{width:20px;height:20px;border:none;border-radius:6px;background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.55);'
+  +'font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;}'
+  +'.wg-x:hover{background:rgba(245,87,79,0.25);color:#f5574f;}'
+  +'.wg-body{flex:1;padding:10px 12px;overflow:hidden;display:flex;flex-direction:column;gap:5px;}'
+  +'.wg-empty{color:rgba(255,255,255,0.4);font-size:12px;text-align:center;margin:auto;}'
+  +'.wg-stat-line{font-size:11px;color:rgba(255,255,255,0.55);margin-bottom:2px;}'
+  +'.wg-row{display:flex;align-items:center;gap:7px;font-size:12px;}'
+  +'.wg-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}'
+  +'.wg-row-txt{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:rgba(255,255,255,0.88);}'
+  +'.wg-row-sub{font-size:10px;color:rgba(255,255,255,0.45);flex-shrink:0;}'
+  +'.wg-clock-time{font-size:34px;font-weight:800;letter-spacing:1px;text-align:center;margin-top:6px;}'
+  +'.wg-clock-date{font-size:12px;color:rgba(255,255,255,0.6);text-align:center;text-transform:capitalize;}'
+  +'.wg-fin-label{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:rgba(255,255,255,0.45);text-align:center;}'
+  +'.wg-fin-bal{font-size:26px;font-weight:800;text-align:center;}'
+  +'.wg-fin-flows{display:flex;justify-content:space-around;font-size:12px;font-weight:700;margin-top:2px;}'
+  +'.wg-pos{color:#4fd18b;}.wg-neg{color:#f5574f;}'
+  +'.wg-note{border-left:2px solid rgba(102,126,234,0.6);padding-left:7px;}'
+  +'.wg-note-t{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}'
+  +'.wg-note-s{font-size:10px;color:rgba(255,255,255,0.45);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}'
+  +'.wg-launch-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}'
+  +'.wg-launch-cell{cursor:pointer;display:flex;justify-content:center;}'
+  +'.wg-launch-ic{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;overflow:hidden;transition:transform .15s;}'
+  +'.wg-launch-ic img{width:100%;height:100%;object-fit:contain;}'
+  +'.wg-launch-cell:hover .wg-launch-ic{transform:scale(1.12);}'
+  +'.wg-wx{display:flex;align-items:center;gap:12px;justify-content:center;height:100%;}'
+  +'.wg-wx-ic{font-size:42px;}.wg-wx-temp{font-size:26px;font-weight:800;}'
+  +'.wg-wx-btn{margin:auto;padding:9px 14px;border:none;border-radius:10px;background:rgba(102,126,234,0.25);color:#fff;cursor:pointer;font-size:12px;font-weight:600;}'
+  +'.wg-wx-btn:hover{background:rgba(102,126,234,0.45);}'
+  +'.wg-sticky-ta{flex:1;width:100%;border:none;outline:none;resize:none;background:transparent;color:#fff;font-size:13px;font-family:inherit;line-height:1.5;}'
+  +'.wg-sticky .wg-card,.wg-sticky{background:linear-gradient(145deg,rgba(70,58,20,0.88),rgba(82,68,24,0.88));}'
+  +'#wg-gallery{position:fixed;inset:0;z-index:10300;background:rgba(5,4,20,0.55);backdrop-filter:blur(8px);'
+  +'display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s;}'
+  +'#wg-gallery.open{opacity:1;pointer-events:auto;}'
+  +'.wg-gal-panel{background:linear-gradient(145deg,rgba(18,14,50,0.98),rgba(24,20,62,0.98));border:1px solid rgba(255,255,255,0.1);'
+  +'border-radius:20px;padding:18px 18px 22px;width:min(640px,92vw);max-height:80vh;overflow-y:auto;box-shadow:0 24px 80px rgba(0,0,0,0.7);}'
+  +'.wg-gal-head{display:flex;align-items:center;justify-content:space-between;font-size:15px;font-weight:800;color:#fff;margin-bottom:16px;}'
+  +'.wg-gal-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px;}'
+  +'.wg-gal-card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:14px;cursor:pointer;'
+  +'transition:background .15s,border-color .15s,transform .15s;text-align:center;color:#fff;}'
+  +'.wg-gal-card:hover{background:rgba(102,126,234,0.16);border-color:rgba(102,126,234,0.4);transform:translateY(-3px);}'
+  +'.wg-gal-ic{font-size:30px;margin-bottom:6px;}'
+  +'.wg-gal-name{font-size:13px;font-weight:700;}'
+  +'.wg-gal-desc{font-size:11px;color:rgba(255,255,255,0.5);margin:3px 0 9px;min-height:28px;}'
+  +'.wg-gal-add{font-size:11px;font-weight:700;color:#8aa0ff;}';
+  document.head.appendChild(css);
+}());
+</script>
+
+<script>
+/* ════════════════ SÉLECTION MULTIPLE & MASQUAGE GROUPÉ ════════════════ */
+(function(){
+  var selMode=false;
+  var selected={};            /* { appId: true } */
+  function count(){ return Object.keys(selected).length; }
+  function iconEl(id){ return document.querySelector('.desktop-icon[data-id="'+(window.CSS&&CSS.escape?CSS.escape(id):id)+'"]'); }
+
+  function paint(id,on){ var el=iconEl(id); if(el) el.classList.toggle('vd-selected',!!on); }
+
+  function toggle(id,el){
+    if(selected[id]){ delete selected[id]; if(el)el.classList.remove('vd-selected'); else paint(id,false); }
+    else { selected[id]=true; if(el)el.classList.add('vd-selected'); else paint(id,true); }
+    bar();
+  }
+  function clearSel(){ Object.keys(selected).forEach(function(id){paint(id,false);}); selected={}; bar(); }
+
+  function selectAll(){
+    (window._vdApps||[]).forEach(function(a){
+      if(window._vdIsHidden&&window._vdIsHidden(a.id))return;
+      selected[a.id]=true; paint(a.id,true);
+    });
+    bar();
+  }
+
+  function setMode(on){
+    selMode=!!on;
+    document.body.classList.toggle('vd-selmode',selMode);
+    if(!selMode) clearSel(); else bar();
+    if(typeof notify==='function') notify(selMode?'☑️ Mode sélection activé — cliquez les icônes à grouper':'Mode sélection désactivé');
+  }
+  function toggleMode(){ setMode(!selMode); }
+
+  function hideSelected(){
+    var ids=Object.keys(selected);
+    if(ids.length===0){ if(typeof notify==='function')notify('⚠️ Aucune icône sélectionnée'); return; }
+    var n=ids.length;
+    ids.forEach(function(id){ if(window._vdSetDesktopVisible) window._vdSetDesktopVisible(id,false); });
+    selected={}; setMode(false);
+    if(typeof notify==='function') notify('🙈 '+n+' icône'+(n>1?'s':'')+' masquée'+(n>1?'s':'')+' — Clic droit › Icônes masquées pour les réafficher');
+    bar();
+  }
+
+  /* ── Barre d'action flottante ── */
+  function barEl(){
+    var b=document.getElementById('vd-sel-bar');
+    if(!b){
+      b=document.createElement('div'); b.id='vd-sel-bar';
+      b.innerHTML='<span id="vd-sel-count"></span>'
+        +'<button class="vsb-btn vsb-hide" id="vsb-hide">🙈 Masquer la sélection</button>'
+        +'<button class="vsb-btn" id="vsb-all">Tout sélectionner</button>'
+        +'<button class="vsb-btn vsb-x" id="vsb-cancel">✕ Annuler</button>';
+      document.body.appendChild(b);
+      b.querySelector('#vsb-hide').onclick=hideSelected;
+      b.querySelector('#vsb-all').onclick=selectAll;
+      b.querySelector('#vsb-cancel').onclick=function(){ setMode(false); clearSel(); };
+    }
+    return b;
+  }
+  function bar(){
+    var b=barEl(); var n=count();
+    var show=selMode||n>0;
+    b.classList.toggle('show',show);
+    var c=b.querySelector('#vd-sel-count');
+    c.textContent = n>0 ? (n+' sélectionnée'+(n>1?'s':'')) : 'Mode sélection — cliquez les icônes';
+    b.querySelector('#vsb-hide').disabled = n===0;
+  }
+
+  /* ── Double-clic sur le Bureau → bascule le mode sélection libre ── */
+  document.addEventListener('dblclick',function(e){
+    var t=e.target;
+    if(t && (t.id==='desktop' || t.id==='desktop-icons')){
+      toggleMode();
+    }
+  });
+
+  /* ── Échap → quitter ── */
+  document.addEventListener('keydown',function(e){
+    if(e.key==='Escape' && (selMode||count()>0)){ setMode(false); clearSel(); }
+  });
+
+  /* ── API publique (utilisée par les menus & le handler d'icônes) ── */
+  window.vdSel={
+    active:function(){ return selMode; },
+    toggle:toggle,
+    toggleMode:toggleMode,
+    hideSelected:hideSelected,
+    selectAll:selectAll,
+    clear:function(){ setMode(false); clearSel(); }
+  };
+
+  /* ── CSS ── */
+  var s=document.createElement('style');
+  s.textContent=
+   '.desktop-icon.vd-selected{background:rgba(102,126,234,0.30)!important;outline:2px solid #8aa0ff;outline-offset:-2px;border-radius:12px;}'
+  +'.desktop-icon.vd-selected::after{content:"✓";position:absolute;top:3px;right:6px;width:18px;height:18px;border-radius:50%;'
+  +'background:#667eea;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,0.4);}'
+  +'body.vd-selmode .desktop-icon{cursor:pointer;}'
+  +'body.vd-selmode #desktop::before{content:"";position:fixed;inset:0;bottom:56px;border:2px dashed rgba(138,160,255,0.35);pointer-events:none;z-index:2;border-radius:4px;}'
+  +'#vd-sel-bar{position:fixed;left:50%;bottom:72px;transform:translateX(-50%) translateY(20px);z-index:10250;'
+  +'display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:14px;opacity:0;pointer-events:none;'
+  +'background:linear-gradient(145deg,rgba(20,16,52,0.96),rgba(30,24,72,0.96));border:1px solid rgba(255,255,255,0.12);'
+  +'box-shadow:0 16px 50px rgba(0,0,0,0.55);color:#fff;transition:opacity .2s,transform .2s;}'
+  +'#vd-sel-bar.show{opacity:1;pointer-events:auto;transform:translateX(-50%) translateY(0);}'
+  +'#vd-sel-count{font-size:12px;font-weight:700;color:rgba(255,255,255,0.8);padding:0 6px;}'
+  +'.vsb-btn{border:none;border-radius:9px;padding:8px 13px;font-size:12px;font-weight:600;cursor:pointer;'
+  +'background:rgba(255,255,255,0.08);color:#fff;transition:background .15s,opacity .15s;}'
+  +'.vsb-btn:hover{background:rgba(255,255,255,0.16);}'
+  +'.vsb-hide{background:linear-gradient(135deg,#667eea,#764ba2);}'
+  +'.vsb-hide:hover{filter:brightness(1.12);}'
+  +'.vsb-btn:disabled{opacity:0.4;cursor:not-allowed;}'
+  +'.vsb-x{background:rgba(245,87,79,0.18);color:#f5a09a;}'
+  +'.vsb-x:hover{background:rgba(245,87,79,0.32);}';
+  document.head.appendChild(s);
 }());
 </script>
 
