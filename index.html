@@ -11258,13 +11258,20 @@ function ctExportCsv() {
   function finUpdateBalance() {
     var pill = document.getElementById('fin-balance-pill');
     if (!pill) return;
+    /* Le badge reflète le MOIS EN COURS : revenus du mois − dépenses du mois
+       (dépenses simples + échéances de paiement dues ce mois). Cohérent avec
+       les KPI « Revenus / Dépenses ce mois » de l'accueil. */
+    var now = new Date();
+    var ym  = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
     var inc = 0, out = 0;
     finTx.forEach(function(t){
+      if (!t.date || t.date.slice(0,7) !== ym) return;
       if (t.type==='income')       inc += t.amount;
-      else if (t.type==='payment') { /* compté via les échéances */ }
+      else if (t.type==='payment') { /* compté via les échéances du mois */ }
       else                         out += t.amount;
     });
-    var net = inc - out - finInstSumUpTo(finToday());
+    out += finInstSumMonth(ym);
+    var net = inc - out;
     pill.textContent = finBalanceHidden ? '••••••' : finEur(net);
     pill.className   = 'fin-balance-pill ' + (net>=0 ? 'fin-balance-pos' : 'fin-balance-neg');
   }
