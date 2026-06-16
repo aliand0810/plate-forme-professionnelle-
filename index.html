@@ -3747,6 +3747,7 @@
 
   function saveIconPositions() {
     localStorage.setItem('vd_icon_positions', JSON.stringify(iconPositions));
+    if (typeof ghMarkDirty === 'function') ghMarkDirty();
   }
 
   function loadHiddenApps() {
@@ -6933,9 +6934,11 @@
     });
 
     const data = {
-      version:      '3.1',
+      version:      '3.2',
       app:          'Bureau Virtuel Pro',
       exportDate:   new Date().toISOString(),
+      // ── Capture exhaustive (bureau, finances, widgets, futurs projets) ──
+      allData:      vdCollectAllData(),
       // ── Bureau ──
       modules:      apps.filter(a => a.type === 'module'),
       notes:        notesData,
@@ -6978,6 +6981,9 @@
             return;
           }
           const changes = [];
+
+          // ── Restauration générique (finances, widgets, futurs projets…) ──
+          if (data.allData) { vdRestoreAllData(data.allData); changes.push('données complètes'); }
 
           // ── Modules ──
           if (data.modules && Array.isArray(data.modules)) {
@@ -7078,6 +7084,9 @@
           renderDesktopIcons();
           renderStartMenu();
           loadIconPositions();
+          // Rafraîchir finances + widgets
+          try { if (typeof window.finInit === 'function') window.finInit(); } catch(e){}
+          try { if (typeof window.vdWidgetsReload === 'function') window.vdWidgetsReload(); } catch(e){}
 
           if (openWindows['notes']) {
             const body = document.getElementById('winbody-notes');
@@ -7780,6 +7789,40 @@
     ghUpdateLastSyncLabel();
   }
 
+  // ── Capture / restauration GÉNÉRIQUE de toutes les données ───────────
+  // Capture automatiquement TOUTES les clés applicatives (préfixes vd_ / fin_),
+  // donc le bureau, les finances, les widgets ET tout futur projet sont inclus
+  // dans la sauvegarde sans modification supplémentaire.
+  // Exclusions : le token GitHub (vd_github) et les snapshots de profils.
+  function vdCollectAllData() {
+    var out = {};
+    try {
+      for (var i = 0; i < localStorage.length; i++) {
+        var k = localStorage.key(i);
+        if (!k) continue;
+        if (k === GH_KEY) continue;                         // ne jamais exporter le token GitHub
+        if (k.indexOf('vd_profile_data_') === 0) continue;  // profils gérés à part
+        if (k.indexOf('vd_') === 0 || k.indexOf('fin_') === 0) out[k] = localStorage.getItem(k);
+      }
+    } catch(e) {}
+    return out;
+  }
+  function vdRestoreAllData(map) {
+    if (!map || typeof map !== 'object') return;
+    Object.keys(map).forEach(function(k){
+      if (k === GH_KEY) return;
+      if (k.indexOf('vd_profile_data_') === 0) return;
+      try { if (map[k] != null) localStorage.setItem(k, map[k]); } catch(e){}
+    });
+  }
+  // Rafraîchit l'UF après une restauration globale
+  function vdRefreshAfterRestore() {
+    try { if (typeof hiddenApps !== 'undefined') { var h=localStorage.getItem('vd_hidden_icons'); if(h) hiddenApps=JSON.parse(h); } } catch(e){}
+    try { if (typeof renderDesktopIcons === 'function') renderDesktopIcons(); } catch(e){}
+    try { if (typeof window.finInit === 'function') window.finInit(); } catch(e){}
+    try { if (typeof window.vdWidgetsReload === 'function') window.vdWidgetsReload(); } catch(e){}
+  }
+
   // ── Build the full backup payload ────────────────────
   function ghBuildPayload() {
     // Snapshot current profile first
@@ -7791,8 +7834,10 @@
       if (raw) { try { profilesData[p.id] = JSON.parse(raw); } catch(e) {} }
     });
     return JSON.stringify({
-      version: '3.2',
+      version: '3.3',
       exported: new Date().toISOString(),
+      // Capture exhaustive (bureau, finances, widgets, futurs projets)
+      allData:  vdCollectAllData(),
       modules:  JSON.parse(localStorage.getItem('vd_modules')       || '[]'),
       notes:    JSON.parse(localStorage.getItem('vd_notes_v2')      || '{}'),
       agenda:   JSON.parse(localStorage.getItem('vd_agenda')        || '[]'),
@@ -7818,6 +7863,8 @@
 
   // ── Apply a payload (restore) ────────────────────────
   function ghApplyPayload(obj) {
+    // Restauration générique d'abord (finances, widgets, futurs projets…)
+    if (obj.allData) vdRestoreAllData(obj.allData);
     if (obj.modules)       localStorage.setItem('vd_modules',        JSON.stringify(obj.modules));
     if (obj.notes)         localStorage.setItem('vd_notes_v2',       JSON.stringify(obj.notes));
     if (obj.agenda)        localStorage.setItem('vd_agenda',         JSON.stringify(obj.agenda));
@@ -7846,6 +7893,8 @@
         });
       }
     }
+    // Rafraîchir l'interface (bureau, finances, widgets)
+    vdRefreshAfterRestore();
   }
 
   // ── GitHub REST helpers ──────────────────────────────
@@ -8301,6 +8350,9 @@
   // ── Mark dirty on any data change ────────────────────
   // Called whenever we save local data
   function ghMarkDirty() { ghDirty = true; }
+  // Exposé globalement pour que les modules séparés (finances, widgets, sélection…)
+  // déclenchent aussi la synchronisation automatique.
+  window.ghMarkDirty = ghMarkDirty;
 
   // ====================================================
   //  FILE MANAGER v2
@@ -9086,7 +9138,7 @@
 
   const PROFILES_KEY       = 'vd_profiles';
   const ACTIVE_PROFILE_KEY = 'vd_active_profile';
-  const PROFILE_DATA_KEYS  = ['vd_modules','vd_notes_v2','vd_agenda','vd_filesystem','vd_icon_positions','vd_tasks','vd_contacts','vd_wallpaper','vd_wallpaper_imgs','vd_hidden_icons','fin_tx','fin_inst','fin_cfg'];
+  const PROFILE_DATA_KEYS  = ['vd_modules','vd_notes_v2','vd_agenda','vd_filesystem','vd_icon_positions','vd_icon_size','vd_tasks','vd_contacts','vd_wallpaper','vd_wallpaper_imgs','vd_hidden_icons','vd_widgets','vd_calc_hist','vd_tb_mode','vd_tb_opacity','vd_theme','fin_tx','fin_inst','fin_cfg'];
   const PCM_AVATARS = ['👤','👨','👩','🧑','👨‍💼','👩‍💼','🧑‍💻','👨‍🎨','👩‍🎨','🦸','🧙','🤖','😎','🐱','🐸','🦊','🌟','🏆','⚡','🔥'];
   const PCM_COLORS  = ['#667eea','#ec4899','#f97316','#44d17a','#06b6d4','#f5c542','#a855f7','#f5574f','#64748b','#0ea5e9'];
 
@@ -12748,6 +12800,11 @@ ctLoad();
   }
   function closeGallery(){ var ov=document.getElementById('wg-gallery'); if(ov)ov.classList.remove('open'); }
   window.openWidgetGallery=function(){ var ov=gallery(); ov.classList.add('open'); };
+  /* Rechargement complet depuis le stockage (après import / restauration) */
+  window.vdWidgetsReload=function(){
+    var lay=document.getElementById('vd-widgets'); if(lay) lay.innerHTML='';
+    load(); layer(); widgets.forEach(buildCard);
+  };
 
   /* ── Boucle de rafraîchissement ── */
   setInterval(function(){
