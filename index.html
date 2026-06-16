@@ -11231,12 +11231,40 @@ function ctExportCsv() {
     if (el) el.textContent = new Date().toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric'}).toUpperCase();
   }
 
+  /* ══ HELPERS PAIEMENTS / MENSUALITÉS ══
+     Modèle : un paiement est un PLAN. Sa transaction stocke la mensualité (amount),
+     le nombre de mois (months) et le total (total). Les mouvements réels sont les
+     échéances (finInst). Les agrégats (solde, KPI, bilan) comptent les paiements
+     UNIQUEMENT via les échéances, par mois d'échéance — jamais le total d'un coup. */
+  function finPayInfo(tx) {
+    var insts  = finInst.filter(function(i){ return i.parentTx===tx.id; });
+    var months = tx.months || insts.length || 1;
+    var total  = (tx.total != null) ? tx.total
+                 : (insts.length ? insts.reduce(function(s,i){ return s+i.amount; },0) : (tx.amount||0));
+    var monthly= (tx.monthly != null) ? tx.monthly : (months>0 ? total/months : (tx.amount||0));
+    return { monthly: Math.round(monthly*100)/100, months: months, total: Math.round(total*100)/100 };
+  }
+  /* Somme des échéances dont le mois (YYYY-MM) correspond */
+  function finInstSumMonth(ym) {
+    var s=0; finInst.forEach(function(i){ if(i.dueDate && i.dueDate.slice(0,7)===ym) s+=i.amount; });
+    return s;
+  }
+  /* Échéances échues jusqu'à une date incluse (pour le solde réalisé) */
+  function finInstSumUpTo(dateStr) {
+    var s=0; finInst.forEach(function(i){ if(i.dueDate && i.dueDate<=dateStr) s+=i.amount; });
+    return s;
+  }
+
   function finUpdateBalance() {
     var pill = document.getElementById('fin-balance-pill');
     if (!pill) return;
     var inc = 0, out = 0;
-    finTx.forEach(function(t){ if(t.type==='income') inc+=t.amount; else out+=t.amount; });
-    var net = inc - out;
+    finTx.forEach(function(t){
+      if (t.type==='income')       inc += t.amount;
+      else if (t.type==='payment') { /* compté via les échéances */ }
+      else                         out += t.amount;
+    });
+    var net = inc - out - finInstSumUpTo(finToday());
     pill.textContent = finBalanceHidden ? '••••••' : finEur(net);
     pill.className   = 'fin-balance-pill ' + (net>=0 ? 'fin-balance-pos' : 'fin-balance-neg');
   }
@@ -11343,12 +11371,13 @@ function ctExportCsv() {
     var instHtml = '';
     if (showInst) {
       instHtml =
-        '<div class="fin-add-row" style="margin-bottom:12px;">'
-        + '<label class="fin-add-label">Mensualités</label>'
+        '<div class="fin-add-row" style="margin-bottom:6px;">'
+        + '<label class="fin-add-label">Nombre de mois</label>'
         + '<div style="display:flex;gap:8px;align-items:center;">'
-        +   '<input class="fin-input" id="fin-f-months" type="number" min="1" max="60" value="'+finNbMonths+'" style="width:80px;">'
+        +   '<input class="fin-input" id="fin-f-months" type="number" min="1" max="360" value="'+finNbMonths+'" style="width:90px;" oninput="finUpdatePayPreview()">'
         +   '<span style="font-size:11px;color:rgba(255,255,255,0.45);">échéances mensuelles (~30 j)</span>'
         + '</div>'
+        + '<div id="fin-pay-preview" style="margin-top:8px;font-size:12px;color:var(--t-a1);font-weight:600;"></div>'
         + '</div>';
     }
 
@@ -11369,11 +11398,11 @@ function ctExportCsv() {
       + '</div>'
       + '<div class="fin-add-row2">'
       +   '<div>'
-      +     '<label class="fin-add-label">Montant</label>'
-      +     '<input class="fin-input" id="fin-f-amount" type="number" step="0.01" min="0.01" placeholder="0,00">'
+      +     '<label class="fin-add-label">'+(showInst?'Montant / mois':'Montant')+'</label>'
+      +     '<input class="fin-input" id="fin-f-amount" type="number" step="0.01" min="0.01" placeholder="0,00"'+(showInst?' oninput="finUpdatePayPreview()"':'')+'>'
       +   '</div>'
       +   '<div>'
-      +     '<label class="fin-add-label">Date</label>'
+      +     '<label class="fin-add-label">Date'+(showInst?' (1ʳᵉ échéance)':'')+'</label>'
       +     '<input class="fin-input" id="fin-f-date" type="date" value="'+finToday()+'">'
       +   '</div>'
       + '</div>'
@@ -11406,7 +11435,24 @@ function ctExportCsv() {
   function finBindAddForm() {
     var amtEl = document.getElementById('fin-f-amount');
     if (amtEl) setTimeout(function(){ amtEl.focus(); }, 80);
+    finUpdatePayPreview();
   }
+
+  /* Aperçu live : mensualité × mois = total (+ équivalent annuel) */
+  window.finUpdatePayPreview = function() {
+    var prev = document.getElementById('fin-pay-preview');
+    if (!prev) return;
+    var monthly = parseFloat((document.getElementById('fin-f-amount')||{}).value) || 0;
+    var months  = parseInt((document.getElementById('fin-f-months')||{}).value) || 0;
+    if (monthly>0 && months>0) {
+      var total = Math.round(monthly*months*100)/100;
+      var perYear = Math.round(monthly*12*100)/100;
+      prev.innerHTML = '💳 ' + finEur(monthly) + '/mois × ' + months + ' mois = <strong>' + finEur(total) + '</strong>'
+        + ' <span style="color:rgba(255,255,255,0.45);font-weight:400;">(≈ ' + finEur(perYear) + '/an)</span>';
+    } else {
+      prev.textContent = '';
+    }
+  };
 
   window.finSetType = function(type) {
     finTxType = type;
@@ -11453,11 +11499,18 @@ function ctExportCsv() {
       var monthsEl = document.getElementById('fin-f-months');
       var months   = monthsEl ? (parseInt(monthsEl.value) || 1) : 1;
       finNbMonths  = months;
+      /* Le montant saisi est la MENSUALITÉ. On enregistre la mensualité,
+         le nombre de mois et le total sur la transaction. */
+      var monthly  = Math.round(amount * 100) / 100;
+      tx.amount  = monthly;
+      tx.monthly = monthly;
+      tx.months  = months;
+      tx.total   = Math.round(monthly * months * 100) / 100;
       for (var i = 0; i < months; i++) {
         finInst.push({
           id: finId(), parentTx: tx.id,
           label: tx.label, category: tx.category,
-          amount: Math.round(amount / months * 100) / 100,
+          amount: monthly,
           dueDate: finAddDays(date, i * 30), paid: false
         });
       }
@@ -11468,7 +11521,10 @@ function ctExportCsv() {
     finSaveTx();
 
     var typeName = finTxType==='income' ? 'Revenu' : finTxType==='expense' ? 'Dépense' : 'Paiement';
-    finNotify('✅ ' + typeName + ' enregistré — ' + finEur(amount));
+    var doneMsg  = (finTxType==='payment')
+      ? '✅ Paiement enregistré — ' + finEur(tx.monthly) + '/mois × ' + tx.months + ' = ' + finEur(tx.total)
+      : '✅ ' + typeName + ' enregistré — ' + finEur(amount);
+    finNotify(doneMsg);
 
     /* Go back to accueil */
     finActiveTab = 'accueil';
@@ -11538,14 +11594,24 @@ function ctExportCsv() {
     var now = new Date();
     var ym  = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
     var txMonth = finTx.filter(function(t){ return t.date && t.date.slice(0,7) === ym; });
+    /* Échéances (paiements) dues ce mois-ci */
+    var instMonth = finInst.filter(function(i){ return i.dueDate && i.dueDate.slice(0,7) === ym; });
     var totalInc = txMonth.filter(function(t){ return t.type==='income'; }).reduce(function(s,t){ return s+t.amount; }, 0);
-    var totalExp = txMonth.filter(function(t){ return t.type!=='income'; }).reduce(function(s,t){ return s+t.amount; }, 0);
+    /* Dépenses du mois = dépenses simples + échéances de paiement dues ce mois (jamais le total d'un coup) */
+    var expTxMonth = txMonth.filter(function(t){ return t.type!=='income' && t.type!=='payment'; });
+    var totalExp = expTxMonth.reduce(function(s,t){ return s+t.amount; }, 0)
+                 + instMonth.reduce(function(s,i){ return s+i.amount; }, 0);
+    var expCount = expTxMonth.length + instMonth.length;
 
-    /* Dépenses par catégorie */
+    /* Dépenses par catégorie (dépenses simples + échéances du mois) */
     var byCat = {};
-    txMonth.filter(function(t){ return t.type!=='income'; }).forEach(function(t){
+    expTxMonth.forEach(function(t){
       var k = t.category || 'Autre';
       byCat[k] = (byCat[k] || 0) + t.amount;
+    });
+    instMonth.forEach(function(i){
+      var k = i.category || 'Autre';
+      byCat[k] = (byCat[k] || 0) + i.amount;
     });
     var catEntries = Object.keys(byCat).map(function(k){ return [k, byCat[k]]; });
     catEntries.sort(function(a,b){ return b[1]-a[1]; });
@@ -11598,7 +11664,7 @@ function ctExportCsv() {
 
     return '<div class="fin-home-kpi-row">'
       + '<div class="fin-home-kpi"><div class="fin-home-kpi-label">↑ Revenus ce mois</div><div class="fin-home-kpi-value kpi-income">'+finEur(totalInc)+'</div><div class="fin-home-kpi-sub">'+txMonth.filter(function(t){return t.type==='income';}).length+' opér.</div></div>'
-      + '<div class="fin-home-kpi"><div class="fin-home-kpi-label">↓ Dépenses ce mois</div><div class="fin-home-kpi-value kpi-expense">'+finEur(totalExp)+'</div><div class="fin-home-kpi-sub">'+txMonth.filter(function(t){return t.type!=='income';}).length+' opér.</div></div>'
+      + '<div class="fin-home-kpi"><div class="fin-home-kpi-label">↓ Dépenses ce mois</div><div class="fin-home-kpi-value kpi-expense">'+finEur(totalExp)+'</div><div class="fin-home-kpi-sub">'+expCount+' opér.</div></div>'
       + '</div>'
       + '<div class="fin-home-chart-card">'
       +   '<div class="fin-home-chart-hdr"><span class="fin-home-chart-title">Dépenses par catégorie</span><span class="fin-home-chart-month">'+now.toLocaleDateString('fr-FR',{month:'long',year:'numeric'})+'</span></div>'
@@ -11616,17 +11682,27 @@ function ctExportCsv() {
 
   function finTxHomeRow(t) {
     var isInc  = (t.type === 'income');
+    var isPay  = (t.type === 'payment');
     var isPaid = (t.status === 'paid' || !t.status);
-    var col    = CAT_COLORS[t.category] || (isInc ? COL_INCOME : COL_EXPENSE);
+    var col    = CAT_COLORS[t.category] || (isInc ? COL_INCOME : isPay ? COL_PAYMENT : COL_EXPENSE);
     var init   = (t.label || t.category || '?').charAt(0).toUpperCase();
-    var amtCol = isInc ? COL_INCOME : COL_EXPENSE;
+    var amtCol = isInc ? COL_INCOME : isPay ? COL_PAYMENT : COL_EXPENSE;
     var sign   = isInc ? '+' : '−';
-    var stCls  = isInc ? 'income' : isPaid ? 'paid' : 'pending';
-    var stLbl  = isInc ? 'Revenu' : isPaid ? 'Payé'  : 'En attente';
+    var stCls  = isInc ? 'income' : isPay ? 'pending' : isPaid ? 'paid' : 'pending';
+    var stLbl  = isInc ? 'Revenu' : isPay ? 'Mensuel' : isPaid ? 'Payé'  : 'En attente';
+    var amtHtml, catLine;
+    if (isPay) {
+      var p = finPayInfo(t);
+      amtHtml = sign+finEur(p.monthly)+'<span style="font-size:9px;font-weight:600;opacity:.7;">/mois</span>';
+      catLine = finEsc(t.category||'')+'&nbsp;·&nbsp;Total '+finEur(p.total)+' · '+p.months+' mois';
+    } else {
+      amtHtml = sign+finEur(t.amount);
+      catLine = finEsc(t.category||'')+'&nbsp;·&nbsp;'+finFmtDate(t.date);
+    }
     return '<div class="fin-home-tx-item">'
       + '<div class="fin-tx-avatar" style="background:'+col+'">'+init+'</div>'
-      + '<div class="fin-home-tx-info"><div class="fin-home-tx-name">'+finEsc(t.label||t.category||'—')+'</div><div class="fin-home-tx-cat">'+finEsc(t.category||'')+'&nbsp;·&nbsp;'+finFmtDate(t.date)+'</div></div>'
-      + '<div class="fin-home-tx-right"><div class="fin-home-tx-amt" style="color:'+amtCol+'">'+sign+finEur(t.amount)+'</div><span class="fin-tx-status '+stCls+'">'+stLbl+'</span></div>'
+      + '<div class="fin-home-tx-info"><div class="fin-home-tx-name">'+finEsc(t.label||t.category||'—')+'</div><div class="fin-home-tx-cat">'+catLine+'</div></div>'
+      + '<div class="fin-home-tx-right"><div class="fin-home-tx-amt" style="color:'+amtCol+'">'+amtHtml+'</div><span class="fin-tx-status '+stCls+'">'+stLbl+'</span></div>'
       + '</div>';
   }
 
@@ -11636,8 +11712,10 @@ function ctExportCsv() {
     var now = new Date();
     var ym  = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
     var byCat = {};
-    finTx.filter(function(t){ return t.type!=='income' && t.date && t.date.slice(0,7)===ym; })
+    finTx.filter(function(t){ return t.type!=='income' && t.type!=='payment' && t.date && t.date.slice(0,7)===ym; })
          .forEach(function(t){ var k=t.category||'Autre'; byCat[k]=(byCat[k]||0)+t.amount; });
+    finInst.filter(function(i){ return i.dueDate && i.dueDate.slice(0,7)===ym; })
+         .forEach(function(i){ var k=i.category||'Autre'; byCat[k]=(byCat[k]||0)+i.amount; });
     var entries = Object.keys(byCat).map(function(k){ return [k,byCat[k]]; });
     entries.sort(function(a,b){ return b[1]-a[1]; });
     entries = entries.slice(0,8);
@@ -11691,13 +11769,38 @@ function ctExportCsv() {
 
   function finTxHtml(t) {
     var isInc  = (t.type === 'income');
+    var isPay  = (t.type === 'payment');
     var isPaid = (t.status === 'paid' || !t.status);
-    var col    = CAT_COLORS[t.category] || (isInc ? COL_INCOME : COL_EXPENSE);
+    var col    = CAT_COLORS[t.category] || (isInc ? COL_INCOME : isPay ? COL_PAYMENT : COL_EXPENSE);
     var init   = (t.label||t.category||'?').charAt(0).toUpperCase();
-    var amtCol = isInc ? COL_INCOME : COL_EXPENSE;
+    var amtCol = isInc ? COL_INCOME : isPay ? COL_PAYMENT : COL_EXPENSE;
     var sign   = isInc ? '+' : '−';
     var stCls  = isInc ? 'income' : isPaid ? 'paid' : 'pending';
-    var stLbl  = isInc ? 'Revenu' : isPaid ? 'Payé' : 'En attente';
+    var stLbl  = isInc ? 'Revenu' : isPay ? 'Mensuel' : isPaid ? 'Payé' : 'En attente';
+
+    if (isPay) {
+      var p = finPayInfo(t);
+      var paidN = finInst.filter(function(i){ return i.parentTx===t.id && i.paid; }).length;
+      var amtBlock =
+          '<div class="fin-tx-right-block">'
+        +   '<div class="fin-tx-amount" style="color:'+amtCol+'">'+sign+finEur(p.monthly)+'<span style="font-size:10px;font-weight:600;opacity:.7;">/mois</span></div>'
+        +   '<span class="fin-tx-status '+stCls+'">'+stLbl+'</span>'
+        + '</div>';
+      var metaExtra = ' &nbsp;·&nbsp; Total ' + finEur(p.total) + ' sur ' + p.months + ' mois'
+        + ' &nbsp;·&nbsp; ≈ ' + finEur(Math.round(p.monthly*12*100)/100) + '/an'
+        + (paidN>0 ? ' &nbsp;·&nbsp; '+paidN+'/'+p.months+' payée'+(paidN>1?'s':'') : '');
+      return '<div class="fin-tx-item">'
+        + '<div class="fin-tx-avatar" style="background:'+col+'">'+init+'</div>'
+        + '<div class="fin-tx-info"><div class="fin-tx-label">'+finEsc(t.label||t.category)+'</div>'
+        +   '<div class="fin-tx-meta">'+finEsc(t.category)+'&nbsp;·&nbsp;'+finFmtDate(t.date)+(t.note?'&nbsp;·&nbsp;'+finEsc(t.note):'')+metaExtra+'</div></div>'
+        + amtBlock
+        + '<div class="fin-tx-actions">'
+        +   '<button class="fin-tx-btn" onclick="finEditTx(\''+t.id+'\')" title="Modifier">✏️</button>'
+        +   '<button class="fin-tx-btn del" onclick="finDelTx(\''+t.id+'\')" title="Supprimer">🗑</button>'
+        + '</div>'
+        + '</div>';
+    }
+
     return '<div class="fin-tx-item">'
       + '<div class="fin-tx-avatar" style="background:'+col+'">'+init+'</div>'
       + '<div class="fin-tx-info"><div class="fin-tx-label">'+finEsc(t.label||t.category)+'</div><div class="fin-tx-meta">'+finEsc(t.category)+'&nbsp;·&nbsp;'+finFmtDate(t.date)+(t.note?'&nbsp;·&nbsp;'+finEsc(t.note):'')+'</div></div>'
@@ -11713,16 +11816,38 @@ function ctExportCsv() {
     var cats = finGetCats(tx.type);
     var opts = '';
     cats.forEach(function(c){ opts += '<option value="'+finEsc(c)+'"'+(c===tx.category?' selected':'')+'>'+finEsc(c)+'</option>'; });
+    var isPay = (tx.type==='payment');
     var col = tx.type==='income'?COL_INCOME:tx.type==='expense'?COL_EXPENSE:COL_PAYMENT;
+    var p = isPay ? finPayInfo(tx) : null;
+    var amtVal = isPay ? p.monthly : tx.amount;
+    var payRow = isPay
+      ? '<div class="fin-edit-row" style="margin-top:8px;align-items:center;gap:8px;">'
+        + '<input class="fin-input" id="fin-e-months" type="number" min="1" max="360" value="'+p.months+'" placeholder="Nb mois" style="max-width:120px;" oninput="finUpdateEditPayPreview(\''+tx.id+'\')">'
+        + '<span id="fin-e-pay-preview" style="font-size:11px;color:var(--t-a1);font-weight:600;"></span>'
+        + '</div>'
+        + '<div style="font-size:10px;color:rgba(255,255,255,0.4);margin-top:4px;">Montant = mensualité. Les échéances non payées seront recalculées.</div>'
+      : '';
     return '<div class="fin-edit-form" style="border-left:3px solid '+col+'">'
-      + '<div class="fin-edit-row"><input class="fin-input" id="fin-e-label" type="text" value="'+finEsc(tx.label||'')+'" placeholder="Intitulé"><input class="fin-input" id="fin-e-amount" type="number" step="0.01" value="'+tx.amount+'"></div>'
+      + '<div class="fin-edit-row"><input class="fin-input" id="fin-e-label" type="text" value="'+finEsc(tx.label||'')+'" placeholder="Intitulé"><input class="fin-input" id="fin-e-amount" type="number" step="0.01" value="'+amtVal+'" placeholder="'+(isPay?'Montant / mois':'Montant')+'"'+(isPay?' oninput="finUpdateEditPayPreview(\''+tx.id+'\')"':'')+'></div>'
+      + payRow
       + '<div class="fin-edit-row" style="margin-top:8px;"><input class="fin-input" id="fin-e-date" type="date" value="'+finEsc(tx.date||finToday())+'"><select class="fin-input" id="fin-e-cat">'+opts+'</select></div>'
       + '<div class="fin-edit-row" style="margin-top:8px;"><select class="fin-input" id="fin-e-status"><option value="paid"'+(tx.status!=='pending'?' selected':'')+'>✅ Payé</option><option value="pending"'+(tx.status==='pending'?' selected':'')+'>⏳ En attente</option></select><input class="fin-input" id="fin-e-note" type="text" value="'+finEsc(tx.note||'')+'" placeholder="Note"></div>'
       + '<div style="display:flex;gap:8px;margin-top:10px;"><button class="fin-edit-cancel" onclick="finCancelEdit()">Annuler</button><button class="fin-submit-btn" style="flex:1;" onclick="finSaveEdit(\''+tx.id+'\')">✓ Enregistrer</button></div>'
       + '</div>';
   }
 
-  function finBindTransactions() {}
+  function finBindTransactions() { if (finEditId) finUpdateEditPayPreview(finEditId); }
+
+  window.finUpdateEditPayPreview = function() {
+    var prev = document.getElementById('fin-e-pay-preview');
+    if (!prev) return;
+    var monthly = parseFloat((document.getElementById('fin-e-amount')||{}).value) || 0;
+    var months  = parseInt((document.getElementById('fin-e-months')||{}).value) || 0;
+    if (monthly>0 && months>0) {
+      var total = Math.round(monthly*months*100)/100;
+      prev.innerHTML = '= ' + finEur(total) + ' total · ≈ ' + finEur(Math.round(monthly*12*100)/100) + '/an';
+    } else { prev.textContent=''; }
+  };
 
   window.finSetFilter = function(f) { finTxFilter = f; finRender(); };
   window.finSetSearch = function(v) { finTxSearch = v; finRender(); };
@@ -11738,6 +11863,38 @@ function ctExportCsv() {
         nEl=document.getElementById('fin-e-note'),  sEl=document.getElementById('fin-e-status');
     var amt = parseFloat(aEl ? aEl.value : '0');
     if (!amt || amt<=0) { finNotify('⚠️ Montant invalide'); return; }
+
+    if (tx.type === 'payment') {
+      var mEl     = document.getElementById('fin-e-months');
+      var months  = mEl ? (parseInt(mEl.value) || 1) : (tx.months || 1);
+      var monthly = Math.round(amt * 100) / 100;
+      var label   = (lEl && lEl.value.trim()) || tx.label;
+      var cat     = cEl ? cEl.value : tx.category;
+      var start   = (dEl ? dEl.value : tx.date) || finToday();
+      var paidIns = finInst.filter(function(i){ return i.parentTx===tx.id && i.paid; });
+      var others  = finInst.filter(function(i){ return i.parentTx!==tx.id; });
+      var slots   = Math.max(months, paidIns.length);
+      var rebuilt = [];
+      for (var k=0; k<slots; k++) {
+        if (k < paidIns.length) {
+          var pi = paidIns[k]; pi.label=label; pi.category=cat; rebuilt.push(pi);
+        } else {
+          rebuilt.push({ id:finId(), parentTx:tx.id, label:label, category:cat,
+            amount:monthly, dueDate:finAddDays(start, k*30), paid:false });
+        }
+      }
+      finInst = others.concat(rebuilt);
+      tx.label=label; tx.category=cat; tx.date=start;
+      tx.note   = nEl ? nEl.value.trim() : '';
+      tx.status = sEl ? sEl.value : tx.status;
+      tx.amount = monthly; tx.monthly = monthly; tx.months = slots;
+      tx.total  = Math.round(rebuilt.reduce(function(s,i){ return s+i.amount; },0)*100)/100;
+      finSaveInst(); finSaveTx(); finEditId=null;
+      finNotify('✅ Paiement modifié — ' + finEur(monthly) + '/mois × ' + slots);
+      finRender(); finUpdateBalance();
+      return;
+    }
+
     tx.label  = (lEl&&lEl.value.trim()) || tx.label;
     tx.amount = amt;
     tx.date   = dEl ? dEl.value : tx.date;
@@ -11994,12 +12151,13 @@ function ctExportCsv() {
     if (!monthly||monthly<=0) { finNotify('⚠️ Montant mensuel invalide'); if(mEl)mEl.focus(); return; }
     if (!months ||months<=0)  { finNotify('⚠️ Nombre de mois invalide');  if(nEl)nEl.focus(); return; }
     if (btn) { btn.disabled=true; btn.textContent='…'; }
+    var monthlyR    = Math.round(monthly*100)/100;
     var totalAmount = Math.round(monthly*months*100)/100;
     var txId = finId();
-    finTx.push({ id:txId, type:'payment', label:label||cat, category:cat, amount:totalAmount, date:start, note:note, status:'pending' });
+    finTx.push({ id:txId, type:'payment', label:label||cat, category:cat, amount:monthlyR, monthly:monthlyR, months:months, total:totalAmount, date:start, note:note, status:'pending' });
     finSaveTx();
     for (var i=0;i<months;i++) {
-      finInst.push({ id:finId(), parentTx:txId, label:label||cat, category:cat, amount:Math.round(monthly*100)/100, dueDate:finAddDays(start,i*30), paid:false });
+      finInst.push({ id:finId(), parentTx:txId, label:label||cat, category:cat, amount:monthlyR, dueDate:finAddDays(start,i*30), paid:false });
     }
     finSaveInst();
     finNotify('✅ Plan créé : '+months+' × '+finEur(monthly)+' = '+finEur(totalAmount));
@@ -12016,7 +12174,15 @@ function ctExportCsv() {
       if (dEl&&dEl.value) i.dueDate=dEl.value;
     });
     var tx=null; for(var j=0;j<finTx.length;j++){if(finTx[j].id===pid){tx=finTx[j];break;}}
-    if (tx) tx.amount=finInst.filter(function(i){return i.parentTx===pid;}).reduce(function(s,i){return s+i.amount;},0);
+    if (tx) {
+      var grp = finInst.filter(function(i){return i.parentTx===pid;});
+      var tot = Math.round(grp.reduce(function(s,i){return s+i.amount;},0)*100)/100;
+      var firstUnpaid = grp.filter(function(i){return !i.paid;})[0];
+      tx.months  = grp.length;
+      tx.total   = tot;
+      tx.monthly = firstUnpaid ? firstUnpaid.amount : (grp.length ? Math.round(tot/grp.length*100)/100 : tx.amount);
+      tx.amount  = tx.monthly;
+    }
     finSaveInst(); finSaveTx();
     finNotify('✅ '+changed+' mensualité(s) modifiée(s)');
     finMensuelView='list'; finRender();
@@ -12063,7 +12229,8 @@ function ctExportCsv() {
       + '</tr></thead><tbody>';
     months.forEach(function(ym){
       var inc=finTx.filter(function(t){return t.type==='income'&&t.date&&t.date.slice(0,7)===ym;}).reduce(function(s,t){return s+t.amount;},0);
-      var exp=finTx.filter(function(t){return t.type!=='income'&&t.date&&t.date.slice(0,7)===ym;}).reduce(function(s,t){return s+t.amount;},0);
+      var exp=finTx.filter(function(t){return t.type!=='income'&&t.type!=='payment'&&t.date&&t.date.slice(0,7)===ym;}).reduce(function(s,t){return s+t.amount;},0)
+             + finInstSumMonth(ym);
       var net=inc-exp;
       var label=new Date(ym+'-01').toLocaleDateString('fr-FR',{month:'short',year:'numeric'});
       rows+='<tr style="border-top:1px solid rgba(255,255,255,0.05);">'
@@ -12075,7 +12242,8 @@ function ctExportCsv() {
     });
     rows += '</tbody></table>';
     var tInc=finTx.filter(function(t){return t.type==='income';}).reduce(function(s,t){return s+t.amount;},0);
-    var tExp=finTx.filter(function(t){return t.type!=='income';}).reduce(function(s,t){return s+t.amount;},0);
+    var tExp=finTx.filter(function(t){return t.type!=='income'&&t.type!=='payment';}).reduce(function(s,t){return s+t.amount;},0)
+            + finInst.reduce(function(s,i){return s+i.amount;},0);
     var tNet=tInc-tExp;
     return '<div class="fin-section-title">Bilan 6 derniers mois</div>'+rows
       +'<div class="fin-home-kpi-row" style="margin-top:16px;">'
