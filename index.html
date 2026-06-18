@@ -12735,7 +12735,7 @@ ctLoad();
     finance:{icon:'💰', name:'Finances',     desc:'Solde et flux du mois',            w:236,h:150, tick:20000},
     notes:  {icon:'🗒️', name:'Notes',        desc:'Vos notes récentes',               w:250,h:200, tick:30000},
     launch: {icon:'🚀', name:'Accès rapide', desc:'Lancer vos applications',          w:256,h:170, tick:60000},
-    weather:{icon:'🌤️', name:'Météo',        desc:'Météo locale',                     w:230,h:150, tick:900000},
+    weather:{icon:'🌤️', name:'Météo',        desc:'Météo locale + prévisions 7 jours', w:300,h:230, tick:900000},
     sticky: {icon:'📌', name:'Pense-bête',   desc:'Note collante éditable',           w:230,h:200, tick:0}
   };
 
@@ -12820,18 +12820,38 @@ ctLoad();
         return rows||'<div class="wg-empty">Aucune note</div>';
       }
       case 'launch': {
-        var apps=(window._vdApps||[]).filter(function(a){return !(window._vdIsHidden&&window._vdIsHidden(a.id));}).slice(0,8);
-        var cells=apps.map(function(a){
+        var all=(window._vdApps||[]);
+        var list;
+        if(Array.isArray(w.apps)){
+          list=w.apps.map(function(id){ return all.filter(function(a){return a.id===id;})[0]; }).filter(Boolean);
+        } else {
+          list=all.filter(function(a){return !(window._vdIsHidden&&window._vdIsHidden(a.id));}).slice(0,7);
+        }
+        var cells=list.map(function(a){
           var fav=(window._vdAppFavicon?window._vdAppFavicon(a):null);
           var ic=fav?'<img src="'+esc(fav)+'" onerror="this.replaceWith(document.createTextNode(\''+esc(a.icon||'📦')+'\'))">':esc(a.icon||'📦');
           return '<div class="wg-launch-cell" data-app="'+esc(a.id)+'" title="'+esc(a.name)+'">'
                 +'<div class="wg-launch-ic" style="background:'+esc(a.color||'#667eea')+'22">'+ic+'</div></div>';
         }).join('');
-        return '<div class="wg-launch-grid">'+(cells||'<div class="wg-empty">Aucune application</div>')+'</div>';
+        var addTile='<div class="wg-launch-cell wg-launch-add" data-add="1" title="Ajouter / choisir des applications">'
+                +'<div class="wg-launch-ic">＋</div></div>';
+        return '<div class="wg-launch-grid">'+cells+addTile+'</div>';
       }
       case 'weather': {
-        if(w._wx) return '<div class="wg-wx"><div class="wg-wx-ic">'+w._wx.ic+'</div>'
+        if(w._wx){
+          var cur='<div class="wg-wx"><div class="wg-wx-ic">'+w._wx.ic+'</div>'
               +'<div><div class="wg-wx-temp">'+w._wx.temp+'°C</div><div class="wg-row-sub">'+esc(w._wx.lbl)+'</div></div></div>';
+          var week='';
+          if(w._wxDaily && w._wxDaily.length){
+            week='<div class="wg-wx-week">'+w._wxDaily.map(function(d){
+              return '<div class="wg-wx-day"><span class="wg-wx-dn">'+esc(d.day)+'</span>'
+                +'<span class="wg-wx-di">'+d.ic+'</span>'
+                +'<span class="wg-wx-dmax">'+d.max+'°</span>'
+                +'<span class="wg-wx-dmin">'+d.min+'°</span></div>';
+            }).join('')+'</div>';
+          }
+          return cur+week;
+        }
         if(w._wxLoad) return '<div class="wg-empty">Chargement…</div>';
         return '<button class="wg-wx-btn" data-wx="1">📍 Activer la météo</button>'
               +(w._wxErr?'<div class="wg-row-sub" style="text-align:center;color:#f5574f">'+esc(w._wxErr)+'</div>':'');
@@ -12845,9 +12865,10 @@ ctLoad();
     if(w.type==='sticky') return; /* géré séparément, ne pas écraser la saisie */
     b.innerHTML=body(w);
     if(w.type==='launch'){
-      b.querySelectorAll('.wg-launch-cell').forEach(function(c){
+      b.querySelectorAll('.wg-launch-cell[data-app]').forEach(function(c){
         c.onclick=function(){ if(window._vdOpenApp)window._vdOpenApp(c.getAttribute('data-app')); };
       });
+      var addc=b.querySelector('[data-add]'); if(addc) addc.onclick=function(){ launchPicker(w); };
     }
     if(w.type==='weather'){
       var wb=b.querySelector('[data-wx]'); if(wb) wb.onclick=function(){ fetchWeather(w); };
@@ -12856,6 +12877,44 @@ ctLoad();
       var ft=b.querySelector('[data-fin]'); if(ft) ft.onclick=function(){ financeDetail(); };
     }
     w._last=Date.now();
+  }
+
+  /* ── Sélecteur d'applications pour le widget Accès rapide ── */
+  function launchPicker(w){
+    if(!Array.isArray(w.apps)){
+      w.apps=(window._vdApps||[]).filter(function(a){return !(window._vdIsHidden&&window._vdIsHidden(a.id));}).slice(0,7).map(function(a){return a.id;});
+    }
+    var ov=document.getElementById('wg-launch-picker');
+    if(!ov){
+      ov=document.createElement('div'); ov.id='wg-launch-picker'; ov.className='wg-modal';
+      ov.onclick=function(e){ if(e.target.id==='wg-launch-picker') ov.classList.remove('open'); };
+      document.body.appendChild(ov);
+    }
+    function render(){
+      var all=(window._vdApps||[]);
+      var cards=all.length ? all.map(function(a){
+        var on=w.apps.indexOf(a.id)>=0;
+        var fav=(window._vdAppFavicon?window._vdAppFavicon(a):null);
+        var ic=fav?'<img src="'+esc(fav)+'" onerror="this.replaceWith(document.createTextNode(\''+esc(a.icon||'📦')+'\'))">':esc(a.icon||'📦');
+        return '<div class="wlp-item'+(on?' on':'')+'" data-id="'+esc(a.id)+'">'
+          +'<div class="wlp-ic" style="background:'+esc(a.color||'#667eea')+'22">'+ic+'</div>'
+          +'<div class="wlp-name">'+esc(a.name||'')+'</div>'
+          +'<div class="wlp-check">'+(on?'✓':'+')+'</div></div>';
+      }).join('') : '<div class="wg-empty">Aucune application disponible</div>';
+      ov.innerHTML='<div class="wlp-panel"><div class="wlp-head">🚀 Choisir les applications'
+        +'<button class="wg-x" id="wlp-close">✕</button></div>'
+        +'<div class="wlp-sub">Touchez pour ajouter ou retirer du widget</div>'
+        +'<div class="wlp-grid">'+cards+'</div></div>';
+      ov.querySelector('#wlp-close').onclick=function(){ ov.classList.remove('open'); };
+      ov.querySelectorAll('.wlp-item').forEach(function(it){
+        it.onclick=function(){
+          var id=it.getAttribute('data-id'); var i=w.apps.indexOf(id);
+          if(i>=0) w.apps.splice(i,1); else w.apps.push(id);
+          save(); fill(w); render();
+        };
+      });
+    }
+    render(); ov.classList.add('open');
   }
 
   /* ── Vue détaillée des dépenses du mois (clic sur le widget Finances) ── */
@@ -12916,10 +12975,27 @@ ctLoad();
     w._wxLoad=true; w._wxErr=''; fill(w);
     navigator.geolocation.getCurrentPosition(function(p){
       var u='https://api.open-meteo.com/v1/forecast?latitude='+p.coords.latitude.toFixed(3)
-           +'&longitude='+p.coords.longitude.toFixed(3)+'&current_weather=true';
+           +'&longitude='+p.coords.longitude.toFixed(3)+'&current_weather=true'
+           +'&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=7';
       fetch(u).then(function(r){return r.json();}).then(function(j){
         var c=j.current_weather||{}; var m=WX[c.weathercode]||['🌡️','—'];
-        w._wx={temp:Math.round(c.temperature),ic:m[0],lbl:m[1]}; w._wxLoad=false; w._wxTime=Date.now(); fill(w);
+        w._wx={temp:Math.round(c.temperature),ic:m[0],lbl:m[1]};
+        var DOW=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+        w._wxDaily=[];
+        var dd=j.daily;
+        if(dd&&dd.time){
+          for(var i=0;i<dd.time.length&&i<7;i++){
+            var dm=WX[dd.weathercode[i]]||['🌡️',''];
+            var dt=new Date(dd.time[i]+'T12:00');
+            w._wxDaily.push({
+              day:i===0?'Auj':DOW[dt.getDay()],
+              ic:dm[0],
+              max:Math.round(dd.temperature_2m_max[i]),
+              min:Math.round(dd.temperature_2m_min[i])
+            });
+          }
+        }
+        w._wxLoad=false; w._wxTime=Date.now(); fill(w);
       }).catch(function(){ w._wxLoad=false; w._wxErr='Météo indisponible'; fill(w); });
     },function(){ w._wxLoad=false; w._wxErr='Localisation refusée'; fill(w); },{timeout:8000});
   }
@@ -13072,10 +13148,30 @@ ctLoad();
   +'.wg-launch-ic{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;overflow:hidden;transition:transform .15s;}'
   +'.wg-launch-ic img{width:100%;height:100%;object-fit:contain;}'
   +'.wg-launch-cell:hover .wg-launch-ic{transform:scale(1.12);}'
-  +'.wg-wx{display:flex;align-items:center;gap:12px;justify-content:center;height:100%;}'
+  +'.wg-launch-add .wg-launch-ic{background:rgba(255,255,255,0.06)!important;border:1px dashed rgba(255,255,255,0.25);color:rgba(255,255,255,0.6);font-size:22px;font-weight:300;}'
+  +'.wg-launch-add:hover .wg-launch-ic{color:#fff;border-color:rgba(138,160,255,0.6);}'
+  +'.wlp-panel{background:linear-gradient(145deg,rgba(18,14,50,0.98),rgba(24,20,62,0.98));border:1px solid rgba(255,255,255,0.1);border-radius:20px;width:min(440px,92vw);max-height:80vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,0.7);color:#fff;}'
+  +'.wlp-head{display:flex;align-items:center;justify-content:space-between;padding:16px 18px 4px;font-size:15px;font-weight:800;}'
+  +'.wlp-sub{padding:0 18px 12px;font-size:11px;color:rgba(255,255,255,0.45);}'
+  +'.wlp-grid{overflow-y:auto;padding:6px 10px 14px;display:grid;grid-template-columns:1fr;gap:4px;}'
+  +'.wlp-item{display:flex;align-items:center;gap:11px;padding:8px 10px;border-radius:11px;cursor:pointer;border:1px solid transparent;transition:background .15s,border-color .15s;}'
+  +'.wlp-item:hover{background:rgba(255,255,255,0.05);}'
+  +'.wlp-item.on{background:rgba(102,126,234,0.14);border-color:rgba(102,126,234,0.35);}'
+  +'.wlp-ic{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;overflow:hidden;flex-shrink:0;}'
+  +'.wlp-ic img{width:100%;height:100%;object-fit:contain;}'
+  +'.wlp-name{flex:1;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}'
+  +'.wlp-check{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.5);}'
+  +'.wlp-item.on .wlp-check{background:#667eea;color:#fff;}'
+  +'.wg-wx{display:flex;align-items:center;gap:12px;justify-content:center;padding:4px 0 8px;}'
   +'.wg-wx-ic{font-size:42px;}.wg-wx-temp{font-size:26px;font-weight:800;}'
   +'.wg-wx-btn{margin:auto;padding:9px 14px;border:none;border-radius:10px;background:rgba(102,126,234,0.25);color:#fff;cursor:pointer;font-size:12px;font-weight:600;}'
   +'.wg-wx-btn:hover{background:rgba(102,126,234,0.45);}'
+  +'.wg-wx-week{display:flex;gap:3px;justify-content:space-between;border-top:1px solid rgba(255,255,255,0.08);padding-top:8px;}'
+  +'.wg-wx-day{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:0;}'
+  +'.wg-wx-dn{font-size:9px;font-weight:700;color:rgba(255,255,255,0.55);text-transform:uppercase;}'
+  +'.wg-wx-di{font-size:18px;line-height:1.1;}'
+  +'.wg-wx-dmax{font-size:11px;font-weight:700;color:#fff;}'
+  +'.wg-wx-dmin{font-size:10px;color:rgba(255,255,255,0.45);}'
   +'.wg-sticky-ta{flex:1;width:100%;border:none;outline:none;resize:none;background:transparent;color:#fff;font-size:13px;font-family:inherit;line-height:1.5;}'
   +'.wg-sticky .wg-card,.wg-sticky{background:linear-gradient(145deg,rgba(70,58,20,0.88),rgba(82,68,24,0.88));}'
   +'#wg-gallery{position:fixed;inset:0;z-index:10300;background:rgba(5,4,20,0.55);backdrop-filter:blur(8px);'
