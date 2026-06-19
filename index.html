@@ -31,7 +31,7 @@
   #desktop-icons {
     position: absolute;
     inset: 0;
-    bottom: var(--tb-desktop-bottom, 56px);
+    bottom: var(--tb-desktop-bottom, 72px);
     transition: bottom .3s ease;
   }
 
@@ -201,7 +201,7 @@
     bottom: 0;
     left: 0;
     right: 0;
-    height: 56px;
+    height: 72px;
     background: rgba(15, 12, 41, 0.92);
     backdrop-filter: blur(20px);
     border-top: 1px solid rgba(255,255,255,0.1);
@@ -224,12 +224,17 @@
   #taskbar.tb-floating {
     left: 50%; right: auto;
     transform: translateX(-50%);
-    width: min(680px, 92vw);
-    bottom: 10px;
+    width: auto; max-width: 96vw;
+    bottom: 12px;
+    padding: 0 10px;
     border-radius: 20px;
     border: 1px solid rgba(255,255,255,0.13);
     box-shadow: 0 8px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(102,126,234,0.12);
+    overflow: hidden;
   }
+  /* En mode flottant la barre s'ajuste à son contenu : les espaces ne forcent plus l'étirement */
+  #taskbar.tb-floating .tb-grp-spaces { flex: 0 1 auto; min-width: 0; }
+  #taskbar.tb-floating .tb-pod-search { flex: 0 1 170px; }
   #taskbar.tb-floating.tb-autohide { transform: translateX(-50%) translateY(calc(100% + 14px)); }
   #taskbar.tb-floating.tb-autohide.tb-visible { transform: translateX(-50%) translateY(0); }
 
@@ -3000,26 +3005,64 @@
   <div id="desktop-trash-label">Corbeille</div>
 </div>
 
-<div id="taskbar">
-  <button id="start-btn" onclick="toggleStartMenu()">⬡</button>
-  <button id="tb-radial-btn" onclick="toggleRadialLauncher()" title="Lanceur radial — toutes les icônes en cercle">✦</button>
-  <button id="tb-widgets-btn" onclick="openWidgetGallery()" title="Widgets du bureau">🧩</button>
-  <div id="taskbar-apps"></div>
-  <div id="taskbar-right">
-    <button id="tb-fs-btn" onclick="toggleFullscreen()" title="Plein écran (F11)">⛶</button>
-    <button id="tb-refresh-btn" onclick="location.reload()" title="Recharger la page (Ctrl+R)">↺</button>
-    <button id="tb-install-btn" onclick="pwaInstall()" title="Installer Bureau Virtuel sur cet ordinateur">
-      📲 Installer
-    </button>
-    <div id="tb-github" title="Historique des sauvegardes (Ctrl+S pour sauvegarder)" onclick="ghOpenHistoryPanel()">
-      <div id="tb-gh-dot" class="off"></div>
-      <div class="tb-gh-info">
-        <span id="tb-gh-label">GitHub</span>
-        <div class="tb-gh-bar-wrap">
-          <div class="tb-gh-bar-fill" id="tb-gh-bar"></div>
-        </div>
+<div id="taskbar" class="tb-pro">
+  <!-- Lanceur -->
+  <div class="tb-pod tb-pod-launcher">
+    <button id="start-btn" onclick="toggleStartMenu()" title="Menu Démarrer">⬡</button>
+  </div>
+
+  <!-- Recherche -->
+  <div class="tb-pod tb-pod-search">
+    <span class="tb-search-ic">🔍</span>
+    <input id="tb-search" type="text" placeholder="Rechercher une application…" autocomplete="off" autocapitalize="none" spellcheck="false" onkeydown="tbSearchKey(event)">
+  </div>
+
+  <!-- Applications -->
+  <div class="tb-pod tb-grp" data-cap="Applications">
+    <div class="tb-grp-row">
+      <button id="tb-widgets-btn" class="tb-gi tb-gi-active" onclick="openWidgetGallery()" title="Widgets du bureau">🧩<i class="tb-gdot dot-violet"></i></button>
+      <button id="tb-radial-btn" class="tb-gi" onclick="toggleRadialLauncher()" title="Lanceur radial">✦<i class="tb-gdot dot-green"></i></button>
+      <button id="tb-fs-btn" class="tb-gi" onclick="toggleFullscreen()" title="Plein écran (F11)">⛶</button>
+      <button id="tb-refresh-btn" class="tb-gi" onclick="location.reload()" title="Recharger (Ctrl+R)">↺</button>
+      <button id="tb-install-btn" class="tb-gi" onclick="pwaInstall()" title="Installer l'application" style="display:none;">📲</button>
+    </div>
+  </div>
+
+  <!-- Espaces de travail (fenêtres ouvertes) -->
+  <div class="tb-pod tb-grp tb-grp-spaces" data-cap="Espaces de Travail">
+    <div id="taskbar-apps"></div>
+  </div>
+
+  <!-- Vue Financière -->
+  <div class="tb-pod tb-grp tb-grp-fin" data-cap="Vue Financière" onclick="finToggle()" title="Panneau financier">
+    <div class="tb-grp-row">
+      <div id="tb-fin-btn" class="tb-fin-ic">◈</div>
+      <div class="tb-fin-txt">
+        <span class="tb-fin-l">Investissements</span>
+        <span id="tb-fin-val" class="tb-fin-v">Portefeuille —</span>
       </div>
     </div>
+  </div>
+
+  <!-- Timer Productivité -->
+  <div class="tb-pod tb-grp tb-grp-timer" data-cap="Timer Productivité" onclick="tbTimerToggle()" oncontextmenu="tbTimerReset();return false;" title="Minuteur (clic : démarrer/pause · clic droit : réinitialiser)">
+    <div class="tb-timer-ring">
+      <svg viewBox="0 0 40 40"><circle class="tb-tr-bg" cx="20" cy="20" r="17"></circle><circle id="tb-tr-fg" class="tb-tr-fg" cx="20" cy="20" r="17"></circle></svg>
+      <span id="tb-timer-txt">25m00</span>
+    </div>
+  </div>
+
+  <!-- Thème -->
+  <div class="tb-pod tb-grp tb-grp-theme" data-cap="Thème" onclick="themeTogglePicker()" title="Changer de thème">
+    <div class="tb-grp-row">
+      <button id="tb-theme-btn" class="tb-gi">🎨</button>
+      <span class="tb-theme-cur">Thème Actuel</span>
+    </div>
+  </div>
+
+  <!-- Réseau / Batterie / Horloge -->
+  <div class="tb-pod tb-grp tb-grp-sys" data-cap="Réseau 5G">
+    <div class="tb-grp-row">
     <div id="tb-network" title="Cliquez pour tester la connexion" onclick="netOpenPanel()" style="cursor:pointer;">
       <div class="tb-bars">
         <div class="tb-bar" data-bar="1"></div>
@@ -3038,9 +3081,23 @@
       </div>
       <span id="tb-bat-pct">--%</span>
     </div>
-    <button id="tb-fin-btn" onclick="finToggle()" title="Panneau financier">💰</button>
-    <button id="tb-theme-btn" onclick="themeTogglePicker()" title="Changer de thème">🎨</button>
     <div id="clock"></div>
+    </div>
+  </div>
+
+  <!-- Sauvegarde GitHub (discret) -->
+  <div id="tb-github" class="tb-pod tb-pod-gh" title="Historique des sauvegardes (Ctrl+S)" onclick="ghOpenHistoryPanel()">
+    <div id="tb-gh-dot" class="off"></div>
+    <div class="tb-gh-info">
+      <span id="tb-gh-label">Sync</span>
+      <div class="tb-gh-bar-wrap"><div class="tb-gh-bar-fill" id="tb-gh-bar"></div></div>
+    </div>
+  </div>
+
+  <!-- Étincelle + interrupteur -->
+  <div class="tb-pod tb-pod-end">
+    <span class="tb-spark">✦</span>
+    <label class="tb-switch"><input type="checkbox" id="tb-labels-toggle" checked onchange="tbToggleLabels(this.checked)"><span class="tb-switch-tr"></span></label>
   </div>
 </div>
 
@@ -3523,6 +3580,7 @@
 <script>
   let windowZIndex = 100;
   let openWindows = {};
+  let activeWindowId = null;
   let startMenuOpen = false;
   let calcFocused = false;
 
@@ -3925,18 +3983,26 @@
   function renderTaskbarApps() {
     const container = document.getElementById('taskbar-apps');
     container.innerHTML = '';
-    Object.keys(openWindows).forEach(id => {
+    const ids = Object.keys(openWindows);
+    const n = ids.length;
+    /* Mode compact (icônes seules) quand plusieurs fenêtres sont ouvertes */
+    container.classList.toggle('tb-many', n > 4);
+    ids.forEach(id => {
       const app = apps.find(a => a.id === id) || { icon: '📦', name: id };
       const btn = document.createElement('button');
-      btn.className = 'taskbar-item active';
+      btn.className = 'taskbar-item' + (id === activeWindowId ? ' active' : '');
+      btn.title = app.name;
       btn.onclick = () => focusWindow(id);
       const faviconUrl = getAppFavicon(app);
       const iconHtml = faviconUrl
         ? `<img class="tb-favicon" src="${faviconUrl}" alt="" onerror="this.outerHTML='${app.icon || '📦'}'">`
         : `<span>${app.icon}</span>`;
-      btn.innerHTML = `${iconHtml} ${app.name}`;
+      btn.innerHTML = `${iconHtml}<span class="tb-item-name">${app.name}</span>`;
       container.appendChild(btn);
     });
+    /* Met à jour l'étiquette de la section avec le nombre de fenêtres */
+    const pod = container.closest('.tb-grp-spaces');
+    if (pod) pod.setAttribute('data-cap', n > 1 ? ('Espaces · ' + n + ' fenêtres') : 'Espaces de Travail');
   }
 
   // ====== WINDOW SYSTEM ======
@@ -4135,6 +4201,7 @@
       initBuiltinApp(appId);
     }
 
+    activeWindowId = appId;
     renderTaskbarApps();
     notify(`${app.icon} ${app.name} ouvert`);
   }
@@ -4157,6 +4224,10 @@
       w.el.remove();
       delete openWindows[appId];
       if (appId === 'calculator') calcFocused = false;
+      if (activeWindowId === appId) {
+        var rest = Object.keys(openWindows);
+        activeWindowId = rest.length ? rest[rest.length-1] : null;
+      }
       renderTaskbarApps();
     }
   }
@@ -4171,6 +4242,8 @@
     if (w) {
       w.el.style.display = 'flex';
       w.el.style.zIndex = ++windowZIndex;
+      activeWindowId = appId;
+      renderTaskbarApps();
     }
   }
 
@@ -5080,7 +5153,7 @@
       document.documentElement.style.setProperty('--tb-desktop-bottom', '0px');
     } else {
       /* normal */
-      document.documentElement.style.setProperty('--tb-desktop-bottom', '56px');
+      document.documentElement.style.setProperty('--tb-desktop-bottom', '72px');
     }
 
     if (!silent) localStorage.setItem('vd_tb_mode', mode);
@@ -12735,7 +12808,7 @@ ctLoad();
     finance:{icon:'💰', name:'Finances',     desc:'Solde et flux du mois',            w:236,h:150, tick:20000},
     notes:  {icon:'🗒️', name:'Notes',        desc:'Vos notes récentes',               w:250,h:200, tick:30000},
     launch: {icon:'🚀', name:'Accès rapide', desc:'Lancer vos applications',          w:256,h:170, tick:60000},
-    weather:{icon:'🌤️', name:'Météo',        desc:'Météo locale + prévisions 7 jours', w:300,h:230, tick:900000},
+    weather:{icon:'🌤️', name:'Météo',        desc:'Météo (ville/CP) + prévisions 7 j', w:300,h:252, tick:900000},
     sticky: {icon:'📌', name:'Pense-bête',   desc:'Note collante éditable',           w:230,h:200, tick:0}
   };
 
@@ -12838,7 +12911,19 @@ ctLoad();
         return '<div class="wg-launch-grid">'+cells+addTile+'</div>';
       }
       case 'weather': {
+        var errLine=w._wxErr?'<div class="wg-row-sub" style="text-align:center;color:#f5574f">'+esc(w._wxErr)+'</div>':'';
+        if(w._wxEdit){
+          return '<div class="wg-wx-form">'
+            +'<input class="wg-wx-input" id="wgwx-q-'+w.id+'" type="text" placeholder="Ville ou code postal" value="'+esc(w._wxQ||'')+'" autocomplete="off" spellcheck="false">'
+            +'<div class="wg-wx-frow">'
+            +'<button class="wg-wx-btn2 prim" data-wxsearch="1">🔎 Rechercher</button>'
+            +'<button class="wg-wx-btn2" data-wxgps="1">📍 GPS</button>'
+            +'</div>'+errLine+'</div>';
+        }
+        if(w._wxLoad) return '<div class="wg-empty">Chargement…</div>';
         if(w._wx){
+          var head='<div class="wg-wx-head"><span class="wg-wx-loc">📍 '+esc(w._wxName||'Ma position')+'</span>'
+            +'<button class="wg-wx-edit" data-wxedit="1" title="Changer de lieu">✎</button></div>';
           var cur='<div class="wg-wx"><div class="wg-wx-ic">'+w._wx.ic+'</div>'
               +'<div><div class="wg-wx-temp">'+w._wx.temp+'°C</div><div class="wg-row-sub">'+esc(w._wx.lbl)+'</div></div></div>';
           var week='';
@@ -12850,11 +12935,9 @@ ctLoad();
                 +'<span class="wg-wx-dmin">'+d.min+'°</span></div>';
             }).join('')+'</div>';
           }
-          return cur+week;
+          return head+cur+week;
         }
-        if(w._wxLoad) return '<div class="wg-empty">Chargement…</div>';
-        return '<button class="wg-wx-btn" data-wx="1">📍 Activer la météo</button>'
-              +(w._wxErr?'<div class="wg-row-sub" style="text-align:center;color:#f5574f">'+esc(w._wxErr)+'</div>':'');
+        return '<div class="wg-wx-empty"><button class="wg-wx-btn" data-wxedit="1">📍 Choisir un lieu</button>'+errLine+'</div>';
       }
     }
     return '';
@@ -12871,7 +12954,10 @@ ctLoad();
       var addc=b.querySelector('[data-add]'); if(addc) addc.onclick=function(){ launchPicker(w); };
     }
     if(w.type==='weather'){
-      var wb=b.querySelector('[data-wx]'); if(wb) wb.onclick=function(){ fetchWeather(w); };
+      var be=b.querySelector('[data-wxedit]'); if(be) be.onclick=function(){ w._wxEdit=true; w._wxErr=''; fill(w); var qi=document.getElementById('wgwx-q-'+w.id); if(qi)qi.focus(); };
+      var bs=b.querySelector('[data-wxsearch]'); if(bs) bs.onclick=function(){ var inp=document.getElementById('wgwx-q-'+w.id); geocodeWeather(w, inp?inp.value:''); };
+      var bg=b.querySelector('[data-wxgps]'); if(bg) bg.onclick=function(){ fetchWeather(w); };
+      var qi2=document.getElementById('wgwx-q-'+w.id); if(qi2) qi2.onkeydown=function(e){ if(e.key==='Enter'){ geocodeWeather(w, qi2.value); } };
     }
     if(w.type==='finance'){
       var ft=b.querySelector('[data-fin]'); if(ft) ft.onclick=function(){ financeDetail(); };
@@ -12883,6 +12969,7 @@ ctLoad();
   function launchPicker(w){
     if(!Array.isArray(w.apps)){
       w.apps=(window._vdApps||[]).filter(function(a){return !(window._vdIsHidden&&window._vdIsHidden(a.id));}).slice(0,7).map(function(a){return a.id;});
+      save(); /* fige la sélection par défaut dès l'ouverture */
     }
     var ov=document.getElementById('wg-launch-picker');
     if(!ov){
@@ -12970,34 +13057,53 @@ ctLoad();
     45:['🌫️','Brouillard'],48:['🌫️','Brouillard'],51:['🌦️','Bruine'],53:['🌦️','Bruine'],55:['🌦️','Bruine'],
     61:['🌧️','Pluie'],63:['🌧️','Pluie'],65:['🌧️','Forte pluie'],71:['🌨️','Neige'],73:['🌨️','Neige'],75:['❄️','Forte neige'],
     80:['🌦️','Averses'],81:['🌦️','Averses'],82:['⛈️','Fortes averses'],95:['⛈️','Orage'],96:['⛈️','Orage'],99:['⛈️','Orage']};
+  function wxApply(w,j){
+    var c=j.current_weather||{}; var m=WX[c.weathercode]||['🌡️','—'];
+    w._wx={temp:Math.round(c.temperature),ic:m[0],lbl:m[1]};
+    var DOW=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam']; w._wxDaily=[];
+    var dd=j.daily;
+    if(dd&&dd.time){
+      for(var i=0;i<dd.time.length&&i<7;i++){
+        var dm=WX[dd.weathercode[i]]||['🌡️',''];
+        var dt=new Date(dd.time[i]+'T12:00');
+        w._wxDaily.push({ day:i===0?'Auj':DOW[dt.getDay()], ic:dm[0],
+          max:Math.round(dd.temperature_2m_max[i]), min:Math.round(dd.temperature_2m_min[i]) });
+      }
+    }
+    w._wxLoad=false; w._wxErr=''; w._wxEdit=false; w._wxTime=Date.now();
+  }
+  function wxUrl(lat,lon){
+    return 'https://api.open-meteo.com/v1/forecast?latitude='+(+lat).toFixed(3)
+      +'&longitude='+(+lon).toFixed(3)+'&current_weather=true'
+      +'&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=7';
+  }
+  /* Récupère la météo pour des coordonnées et mémorise le lieu (persistant) */
+  function fetchWeatherCoords(w,lat,lon,name){
+    w._wxLoad=true; w._wxErr=''; fill(w);
+    fetch(wxUrl(lat,lon)).then(function(r){return r.json();}).then(function(j){
+      wxApply(w,j); w._wxName=name||w._wxName||'Ma position';
+      w.loc={name:w._wxName,lat:+lat,lon:+lon}; save(); fill(w);
+    }).catch(function(){ w._wxLoad=false; w._wxErr='Météo indisponible'; fill(w); });
+  }
+  /* Recherche d'un lieu par nom de ville ou code postal (open-meteo geocoding) */
+  function geocodeWeather(w,q){
+    q=(q||'').trim(); if(!q){ w._wxEdit=true; w._wxErr='Saisissez une ville ou un code postal'; fill(w); return; }
+    w._wxQ=q; w._wxLoad=true; w._wxErr=''; fill(w);
+    var gu='https://geocoding-api.open-meteo.com/v1/search?name='+encodeURIComponent(q)+'&count=1&language=fr&format=json';
+    fetch(gu).then(function(r){return r.json();}).then(function(j){
+      var res=(j.results||[])[0];
+      if(!res){ w._wxLoad=false; w._wxEdit=true; w._wxErr='Lieu « '+q+' » introuvable'; fill(w); return; }
+      var nm=res.name+(res.admin1?', '+res.admin1:'')+(res.country_code?' ('+res.country_code+')':'');
+      fetchWeatherCoords(w,res.latitude,res.longitude,nm);
+    }).catch(function(){ w._wxLoad=false; w._wxEdit=true; w._wxErr='Recherche impossible (réseau)'; fill(w); });
+  }
+  /* GPS */
   function fetchWeather(w){
-    if(!navigator.geolocation){ w._wxErr='Géolocalisation indisponible'; fill(w); return; }
+    if(!navigator.geolocation){ w._wxEdit=true; w._wxErr='GPS indisponible — saisissez une ville'; fill(w); return; }
     w._wxLoad=true; w._wxErr=''; fill(w);
     navigator.geolocation.getCurrentPosition(function(p){
-      var u='https://api.open-meteo.com/v1/forecast?latitude='+p.coords.latitude.toFixed(3)
-           +'&longitude='+p.coords.longitude.toFixed(3)+'&current_weather=true'
-           +'&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=7';
-      fetch(u).then(function(r){return r.json();}).then(function(j){
-        var c=j.current_weather||{}; var m=WX[c.weathercode]||['🌡️','—'];
-        w._wx={temp:Math.round(c.temperature),ic:m[0],lbl:m[1]};
-        var DOW=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
-        w._wxDaily=[];
-        var dd=j.daily;
-        if(dd&&dd.time){
-          for(var i=0;i<dd.time.length&&i<7;i++){
-            var dm=WX[dd.weathercode[i]]||['🌡️',''];
-            var dt=new Date(dd.time[i]+'T12:00');
-            w._wxDaily.push({
-              day:i===0?'Auj':DOW[dt.getDay()],
-              ic:dm[0],
-              max:Math.round(dd.temperature_2m_max[i]),
-              min:Math.round(dd.temperature_2m_min[i])
-            });
-          }
-        }
-        w._wxLoad=false; w._wxTime=Date.now(); fill(w);
-      }).catch(function(){ w._wxLoad=false; w._wxErr='Météo indisponible'; fill(w); });
-    },function(){ w._wxLoad=false; w._wxErr='Localisation refusée'; fill(w); },{timeout:8000});
+      fetchWeatherCoords(w,p.coords.latitude,p.coords.longitude,'Ma position');
+    },function(){ w._wxLoad=false; w._wxEdit=true; w._wxErr='Localisation refusée'; fill(w); },{timeout:8000});
   }
 
   /* ════ Construction d'une carte ════ */
@@ -13023,6 +13129,10 @@ ctLoad();
       b.appendChild(ta);
     } else {
       fill(w);
+      /* Météo : recharge automatiquement le dernier lieu enregistré */
+      if(w.type==='weather' && w.loc && w.loc.lat!=null && !w._wx){
+        fetchWeatherCoords(w, w.loc.lat, w.loc.lon, w.loc.name);
+      }
     }
     enableDrag(w,card,card.querySelector('.wg-head'));
   }
@@ -13115,7 +13225,7 @@ ctLoad();
   /* ── CSS ── */
   var css=document.createElement('style');
   css.textContent=
-   '#vd-widgets{position:absolute;inset:0;bottom:var(--tb-desktop-bottom,56px);pointer-events:none;z-index:3;}'
+   '#vd-widgets{position:absolute;inset:0;bottom:var(--tb-desktop-bottom,72px);pointer-events:none;z-index:3;}'
   +'.wg-card{position:absolute;pointer-events:auto;background:linear-gradient(145deg,rgba(20,16,52,0.86),rgba(28,22,66,0.86));'
   +'backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,0.10);border-radius:16px;'
   +'box-shadow:0 14px 44px rgba(0,0,0,0.42);color:#fff;display:flex;flex-direction:column;overflow:hidden;}'
@@ -13172,6 +13282,19 @@ ctLoad();
   +'.wg-wx-di{font-size:18px;line-height:1.1;}'
   +'.wg-wx-dmax{font-size:11px;font-weight:700;color:#fff;}'
   +'.wg-wx-dmin{font-size:10px;color:rgba(255,255,255,0.45);}'
+  +'.wg-wx-head{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:2px;}'
+  +'.wg-wx-loc{font-size:11px;font-weight:600;color:rgba(255,255,255,0.8);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}'
+  +'.wg-wx-edit{flex-shrink:0;width:22px;height:22px;border:none;border-radius:7px;background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.6);font-size:11px;cursor:pointer;}'
+  +'.wg-wx-edit:hover{background:rgba(102,126,234,0.4);color:#fff;}'
+  +'.wg-wx-empty{display:flex;flex-direction:column;gap:8px;align-items:center;justify-content:center;height:100%;}'
+  +'.wg-wx-form{display:flex;flex-direction:column;gap:9px;justify-content:center;height:100%;}'
+  +'.wg-wx-input{width:100%;box-sizing:border-box;padding:9px 11px;border-radius:10px;border:1px solid rgba(255,255,255,0.14);background:rgba(0,0,0,0.25);color:#fff;font-size:13px;outline:none;}'
+  +'.wg-wx-input:focus{border-color:rgba(102,126,234,0.6);}'
+  +'.wg-wx-frow{display:flex;gap:7px;}'
+  +'.wg-wx-btn2{flex:1;padding:9px;border:none;border-radius:10px;background:rgba(255,255,255,0.08);color:#fff;font-size:12px;font-weight:600;cursor:pointer;}'
+  +'.wg-wx-btn2:hover{background:rgba(255,255,255,0.16);}'
+  +'.wg-wx-btn2.prim{background:linear-gradient(135deg,#667eea,#764ba2);}'
+  +'.wg-wx-btn2.prim:hover{filter:brightness(1.12);}'
   +'.wg-sticky-ta{flex:1;width:100%;border:none;outline:none;resize:none;background:transparent;color:#fff;font-size:13px;font-family:inherit;line-height:1.5;}'
   +'.wg-sticky .wg-card,.wg-sticky{background:linear-gradient(145deg,rgba(70,58,20,0.88),rgba(82,68,24,0.88));}'
   +'#wg-gallery{position:fixed;inset:0;z-index:10300;background:rgba(5,4,20,0.55);backdrop-filter:blur(8px);'
@@ -13327,6 +13450,133 @@ ctLoad();
   +'.vsb-x{background:rgba(245,87,79,0.18);color:#f5a09a;}'
   +'.vsb-x:hover{background:rgba(245,87,79,0.32);}';
   document.head.appendChild(s);
+}());
+</script>
+
+<script>
+/* ════════════════ BARRE DES TÂCHES PRO (style futuriste) ════════════════ */
+(function(){
+  /* ── Minuteur de productivité ── */
+  var DUR=25*60, left=DUR, running=false, iv=null;
+  var R=17, C=2*Math.PI*R;
+  function fmt(s){ var m=Math.floor(s/60), ss=s%60; return m+'m'+String(ss).padStart(2,'0'); }
+  function paint(){
+    var t=document.getElementById('tb-timer-txt'); if(t)t.textContent=fmt(left);
+    var fg=document.getElementById('tb-tr-fg'); if(fg){ fg.style.strokeDasharray=C.toFixed(1); fg.style.strokeDashoffset=(C*(1-left/DUR)).toFixed(1); }
+    var pod=document.querySelector('.tb-grp-timer'); if(pod) pod.classList.toggle('running',running);
+  }
+  window.tbTimerToggle=function(){
+    if(running){ running=false; if(iv)clearInterval(iv); }
+    else { if(left<=0) left=DUR; running=true;
+      iv=setInterval(function(){ left--; if(left<=0){ left=0; clearInterval(iv); running=false; if(typeof notify==='function')notify('⏱️ Minuteur de productivité terminé !'); } paint(); },1000); }
+    paint();
+  };
+  window.tbTimerReset=function(){ if(iv)clearInterval(iv); running=false; left=DUR; paint(); };
+
+  /* ── Pastille financière (portefeuille) ── */
+  function compact(n){ var a=Math.abs(n); if(a>=1e6)return (n/1e6).toFixed(2)+'M'; if(a>=1e3)return (n/1e3).toFixed(1)+'k'; return n.toFixed(0); }
+  window.tbFinUpdate=function(){
+    var el=document.getElementById('tb-fin-val'); if(!el)return;
+    try{
+      var tx=JSON.parse(localStorage.getItem('fin_tx')||'[]');
+      var inst=JSON.parse(localStorage.getItem('fin_inst')||'[]');
+      var cfg=JSON.parse(localStorage.getItem('fin_cfg')||'{}');
+      var inc=0,exp=0; tx.forEach(function(t){ var a=+t.amount||0; if(t.type==='income')inc+=a; else if(t.type!=='payment')exp+=a; });
+      var today=new Date().toISOString().slice(0,10);
+      var paid=inst.filter(function(i){return i.dueDate&&i.dueDate<=today;}).reduce(function(s,i){return s+(+i.amount||0);},0);
+      el.textContent='Portefeuille '+(cfg.currency||'EUR')+' '+compact(inc-exp-paid);
+    }catch(e){ el.textContent='Portefeuille —'; }
+  };
+
+  /* ── Recherche d'application ── */
+  window.tbSearchKey=function(e){
+    if(e.key!=='Enter')return;
+    var raw=(e.target.value||'').trim(); var q=raw.toLowerCase(); if(!q)return;
+    var apps=(window._vdApps||[]);
+    var hit=apps.filter(function(a){return (a.name||'').toLowerCase().indexOf(q)>=0;})[0];
+    if(hit&&window._vdOpenApp){ window._vdOpenApp(hit.id); e.target.value=''; }
+    else if(typeof notify==='function') notify('Aucune application « '+raw+' »');
+  };
+
+  /* ── Interrupteur d'étiquettes ── */
+  window.tbToggleLabels=function(on){
+    var tb=document.getElementById('taskbar'); if(tb) tb.classList.toggle('tb-nolabels',!on);
+    try{ localStorage.setItem('vd_tb_labels', on?'1':'0'); }catch(e){}
+  };
+
+  function init(){
+    window.tbTimerReset();
+    window.tbFinUpdate();
+    setInterval(window.tbFinUpdate, 20000);
+    var pref=null; try{ pref=localStorage.getItem('vd_tb_labels'); }catch(e){}
+    var on = pref!=='0';
+    var cb=document.getElementById('tb-labels-toggle'); if(cb) cb.checked=on;
+    window.tbToggleLabels(on);
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
+
+  /* ── CSS ── */
+  var css=document.createElement('style');
+  css.textContent=
+   '.tb-pro{gap:6px!important;padding:0 10px!important;align-items:stretch!important;}'
+  +'.tb-pro>.tb-pod{display:flex;align-items:center;flex-shrink:0;}'
+  +'.tb-pro .tb-grp{position:relative;flex-direction:column;justify-content:center;gap:3px;padding:5px 12px 3px;border-radius:14px;background:rgba(255,255,255,0.035);border:1px solid rgba(255,255,255,0.06);}'
+  +'.tb-pro .tb-grp::after{content:attr(data-cap);display:block;font-size:8.5px;letter-spacing:.3px;color:rgba(255,255,255,0.4);text-align:center;white-space:nowrap;line-height:1;}'
+  +'.tb-pro.tb-nolabels .tb-grp{padding-top:0;padding-bottom:0;}'
+  +'.tb-pro.tb-nolabels .tb-grp::after{display:none;}'
+  +'.tb-grp-row{display:flex;align-items:center;gap:7px;justify-content:center;}'
+  +'.tb-pod-launcher #start-btn{width:46px;height:46px;border-radius:13px;border:none;cursor:pointer;background:linear-gradient(135deg,#5b6bd6,#7d52c7);color:#fff;font-size:20px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 18px rgba(123,82,199,0.5),inset 0 0 14px rgba(255,255,255,0.12);transition:transform .15s,box-shadow .15s;}'
+  +'.tb-pod-launcher #start-btn:hover{transform:scale(1.06);box-shadow:0 0 26px rgba(123,82,199,0.75);}'
+  +'.tb-pod-search{flex:0 1 230px;min-width:110px;gap:8px;padding:0 12px;height:46px;border-radius:13px;background:rgba(0,0,0,0.28);border:1px solid rgba(255,255,255,0.07);}'
+  +'.tb-search-ic{font-size:13px;opacity:.55;}'
+  +'#tb-search{flex:1;min-width:0;background:none;border:none;outline:none;color:#fff;font-size:12.5px;}'
+  +'#tb-search::placeholder{color:rgba(255,255,255,0.3);}'
+  +'.tb-gi{width:34px;height:34px;border-radius:10px;border:none;cursor:pointer;position:relative;background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.82);font-size:15px;display:flex;align-items:center;justify-content:center;transition:background .15s,color .15s,transform .15s;}'
+  +'.tb-gi:hover{background:rgba(255,255,255,0.15);color:#fff;transform:translateY(-1px);}'
+  +'.tb-gi-active{background:#fff;color:#5b6bd6;box-shadow:0 0 14px rgba(255,255,255,0.4);}'
+  +'.tb-gdot{position:absolute;width:6px;height:6px;border-radius:50%;top:-1px;right:-1px;}'
+  +'.dot-violet{background:#b07bff;box-shadow:0 0 6px #b07bff;}'
+  +'.dot-green{background:#43E97B;box-shadow:0 0 6px #43E97B;top:auto;bottom:-1px;right:auto;left:-1px;}'
+  +'.tb-grp-spaces{flex:1 1 auto;min-width:60px;max-width:360px;}'
+  +'.tb-grp-spaces .tb-grp-row{justify-content:flex-start;width:100%;}'
+  +'.tb-grp-spaces #taskbar-apps{display:flex;gap:5px;overflow-x:auto;max-width:100%;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,0.25) transparent;padding-bottom:2px;}'
+  +'.tb-grp-spaces #taskbar-apps::-webkit-scrollbar{height:4px;}'
+  +'.tb-grp-spaces #taskbar-apps::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.22);border-radius:2px;}'
+  +'.tb-grp-spaces #taskbar-apps:empty::after{content:"Aucune fenêtre";font-size:10px;color:rgba(255,255,255,0.3);white-space:nowrap;}'
+  +'.tb-pro .taskbar-item{height:34px;min-width:0;max-width:150px;padding:0 9px;font-size:11px;border-radius:9px;background:rgba(255,255,255,0.06);opacity:0.72;flex-shrink:0;transition:opacity .15s,background .15s;}'
+  +'.tb-pro .taskbar-item:hover{opacity:1;}'
+  +'.tb-pro .taskbar-item.active{opacity:1;background:rgba(102,126,234,0.4);box-shadow:0 0 0 1px rgba(138,160,255,0.5);}'
+  +'.tb-item-name{max-width:96px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}'
+  +'#taskbar-apps.tb-many .tb-item-name{display:none;}'
+  +'#taskbar-apps.tb-many .taskbar-item{min-width:32px;padding:0 8px;justify-content:center;gap:0;}'
+  +'.tb-grp-fin{cursor:pointer;}'
+  +'.tb-grp-fin:hover{background:rgba(138,160,255,0.10);}'
+  +'.tb-fin-ic{font-size:24px;line-height:1;color:#8aa0ff;text-shadow:0 0 14px rgba(138,160,255,0.75);}'
+  +'.tb-fin-txt{display:flex;flex-direction:column;line-height:1.15;}'
+  +'.tb-fin-l{font-size:8.5px;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:.3px;}'
+  +'.tb-fin-v{font-size:12px;font-weight:700;color:#fff;}'
+  +'.tb-grp-timer{cursor:pointer;}'
+  +'.tb-timer-ring{position:relative;width:42px;height:42px;}'
+  +'.tb-timer-ring svg{width:42px;height:42px;transform:rotate(-90deg);}'
+  +'.tb-tr-bg{fill:none;stroke:rgba(255,255,255,0.12);stroke-width:3;}'
+  +'.tb-tr-fg{fill:none;stroke:#3fd0ff;stroke-width:3;stroke-linecap:round;filter:drop-shadow(0 0 4px rgba(63,208,255,0.7));transition:stroke-dashoffset .5s linear;}'
+  +'#tb-timer-txt{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;}'
+  +'.tb-grp-timer.running .tb-tr-fg{stroke:#43E97B;filter:drop-shadow(0 0 5px rgba(67,233,123,0.8));}'
+  +'.tb-grp-theme{cursor:pointer;}'
+  +'.tb-grp-theme #tb-theme-btn{font-size:18px;}'
+  +'.tb-theme-cur{font-size:11px;color:rgba(255,255,255,0.7);white-space:nowrap;}'
+  +'.tb-grp-sys #clock{font-size:11px;color:#eee;text-align:right;line-height:1.15;}'
+  +'.tb-grp-sys .tb-grp-row{gap:10px;}'
+  +'.tb-pod-gh{cursor:pointer;align-self:center;}'
+  +'.tb-pod-end{gap:9px;padding-left:4px;align-self:center;}'
+  +'.tb-spark{color:rgba(255,255,255,0.7);font-size:15px;}'
+  +'.tb-switch{position:relative;display:inline-block;width:40px;height:22px;cursor:pointer;}'
+  +'.tb-switch input{display:none;}'
+  +'.tb-switch-tr{position:absolute;inset:0;border-radius:22px;background:rgba(255,255,255,0.15);transition:background .2s;}'
+  +'.tb-switch-tr::before{content:"";position:absolute;width:16px;height:16px;border-radius:50%;background:#fff;top:3px;left:3px;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,0.4);}'
+  +'.tb-switch input:checked + .tb-switch-tr{background:#34c759;}'
+  +'.tb-switch input:checked + .tb-switch-tr::before{transform:translateX(18px);}';
+  document.head.appendChild(css);
 }());
 </script>
 
