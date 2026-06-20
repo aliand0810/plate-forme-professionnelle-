@@ -2992,6 +2992,42 @@
     text-transform: uppercase; letter-spacing: .3px;
   }
 
+  /* ── Popup de partage de module entre profils ── */
+  #vd-share-overlay {
+    position: fixed; inset: 0; z-index: 10400;
+    background: rgba(5,4,20,0.55); backdrop-filter: blur(8px);
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none; transition: opacity .2s;
+  }
+  #vd-share-overlay.open { opacity: 1; pointer-events: auto; }
+  .vsh-panel {
+    background: linear-gradient(145deg, rgba(18,14,50,0.98), rgba(24,20,62,0.98));
+    border: 1px solid rgba(255,255,255,0.1); border-radius: 18px;
+    width: min(420px, 92vw); max-height: 80vh; overflow: hidden;
+    display: flex; flex-direction: column; color: #fff;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.7);
+  }
+  .vsh-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 15px 18px; font-size: 14px; font-weight: 800;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+  }
+  .vsh-x { width: 26px; height: 26px; border: none; border-radius: 8px;
+    background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.6); cursor: pointer; font-size: 12px; }
+  .vsh-x:hover { background: rgba(245,87,79,0.25); color: #f5574f; }
+  .vsh-list { overflow-y: auto; padding: 8px; }
+  .vsh-row {
+    display: flex; align-items: center; gap: 12px; padding: 11px 12px;
+    border-radius: 12px; cursor: pointer; border: 1px solid transparent; transition: background .15s, border-color .15s;
+  }
+  .vsh-row:hover { background: rgba(255,255,255,0.05); }
+  .vsh-row.on { background: rgba(102,126,234,0.16); border-color: rgba(102,126,234,0.4); }
+  .vsh-ic { font-size: 20px; width: 26px; text-align: center; flex-shrink: 0; }
+  .vsh-tx { flex: 1; min-width: 0; }
+  .vsh-t { font-size: 13px; font-weight: 600; }
+  .vsh-s { font-size: 11px; color: rgba(255,255,255,0.45); }
+  .vsh-chk { width: 22px; text-align: center; color: #8aa0ff; font-weight: 700; flex-shrink: 0; }
+
 </style>
 </head>
 <body>
@@ -3365,6 +3401,7 @@
   <div class="icon-ctx-item"                  onclick="iconCtxHide()">👁 Masquer l'icône</div>
   <div class="icon-ctx-sep" id="ictx-sep-mod" style="display:none"></div>
   <div class="icon-ctx-item" id="ictx-edit"   onclick="iconCtxEdit()" style="display:none">✏️ Modifier</div>
+  <div class="icon-ctx-item" id="ictx-share"  onclick="iconCtxShare()" style="display:none">🔗 Partager entre profils…</div>
   <div class="icon-ctx-item danger" id="ictx-del" onclick="iconCtxDel()" style="display:none">🗑️ Supprimer</div>
 </div>
 
@@ -3770,6 +3807,14 @@
     { id: 'contacts',    name: 'Contacts',    icon: '👥', color: '#3b82f6', type: 'builtin' },
   ];
 
+  /* ── Partage de modules entre profils ──
+     vd_modules   : modules PRIVÉS du profil actif (isolés)
+     vd_shared_modules : modules PARTAGÉS (global), chacun avec share='all' | profileId */
+  function vdSharedGet() { try { return JSON.parse(localStorage.getItem('vd_shared_modules') || '[]'); } catch(e) { return []; } }
+  function vdSharedSet(arr) { try { localStorage.setItem('vd_shared_modules', JSON.stringify(arr || [])); } catch(e) {} if (typeof ghMarkDirty==='function') ghMarkDirty(); }
+  function vdSharedRemove(id) { vdSharedSet(vdSharedGet().filter(function(m){ return m.id !== id; })); }
+  function vdModuleIsShared(a) { return !!(a && a.share && a.share !== 'private'); }
+
   function loadModules() {
     try {
       const saved = localStorage.getItem('vd_modules');
@@ -3778,10 +3823,19 @@
         mods.forEach(m => { if (!apps.find(a => a.id === m.id)) apps.push(m); });
       }
     } catch(e) {}
+    // Modules partagés visibles par le profil actif (tous, ou ciblés sur ce profil)
+    try {
+      vdSharedGet().forEach(function(m){
+        if (m.share === 'all' || m.share === activeProfileId) {
+          if (!apps.find(function(a){ return a.id === m.id; })) apps.push(m);
+        }
+      });
+    } catch(e) {}
   }
 
   function saveModules() {
-    const mods = apps.filter(a => a.type === 'module');
+    /* Ne persiste dans vd_modules QUE les modules privés du profil ; les partagés vivent dans vd_shared_modules */
+    const mods = apps.filter(a => a.type === 'module' && !vdModuleIsShared(a));
     try {
       localStorage.setItem('vd_modules', JSON.stringify(mods));
     } catch(e) {
@@ -3795,6 +3849,76 @@
     }
     ghMarkDirty();
   }
+
+  /* Reconstruit la liste d'apps (builtins + privés + partagés visibles) et rafraîchit l'UI */
+  function rebuildAppsFromStores() {
+    apps = apps.filter(a => a.type === 'builtin');
+    loadModules();
+    window._vdApps = apps; /* garde widgets / lanceur synchronisés */
+    renderDesktopIcons();
+    if (typeof renderStartMenu === 'function') renderStartMenu();
+  }
+
+  /* Change le partage d'un module : target = 'private' | 'all' | <profileId> */
+  window.vdShareModule = function(appId, target) {
+    var app = apps.find(function(a){ return a.id === appId; });
+    if (!app) { var s0 = vdSharedGet().filter(function(m){ return m.id === appId; })[0]; if (s0) app = s0; }
+    if (!app) return;
+    var shared = vdSharedGet().filter(function(m){ return m.id !== appId; });
+    if (target === 'private') {
+      app.share = 'private';
+      vdSharedSet(shared);               /* retiré du partage */
+      if (!apps.find(function(a){ return a.id === appId; })) apps.push(app);
+      saveModules();                     /* devient privé au profil actif */
+    } else {
+      app.share = target;                /* 'all' ou profileId */
+      var clone = Object.assign({}, app);
+      shared.push(clone);
+      vdSharedSet(shared);
+      saveModules();                     /* retiré de vd_modules (car partagé) */
+    }
+    rebuildAppsFromStores();
+    if (typeof notify === 'function') {
+      var lbl = target === 'all' ? 'tous les profils'
+        : target === 'private' ? 'ce profil uniquement'
+        : 'un profil spécifique';
+      notify('🔗 « ' + (app.name || 'Module') + " » : partagé avec " + lbl);
+    }
+  };
+
+  /* Popup de choix du partage */
+  window.vdShareOpen = function(appId) {
+    var app = apps.find(function(a){ return a.id === appId; });
+    if (!app) return;
+    var cur = vdModuleIsShared(app) ? app.share : 'private';
+    var ov = document.getElementById('vd-share-overlay');
+    if (!ov) {
+      ov = document.createElement('div'); ov.id = 'vd-share-overlay';
+      ov.onclick = function(e){ if (e.target.id === 'vd-share-overlay') ov.classList.remove('open'); };
+      document.body.appendChild(ov);
+    }
+    function row(val, ic, title, sub) {
+      var on = (cur === val);
+      return '<div class="vsh-row'+(on?' on':'')+'" data-val="'+val+'">'
+        +'<span class="vsh-ic">'+ic+'</span>'
+        +'<div class="vsh-tx"><div class="vsh-t">'+title+'</div><div class="vsh-s">'+sub+'</div></div>'
+        +'<span class="vsh-chk">'+(on?'✓':'')+'</span></div>';
+    }
+    var rows = row('private','🔒','Privé','Visible uniquement dans ce profil')
+             + row('all','🌐','Tous les profils','Visible partout');
+    (profiles||[]).forEach(function(p){
+      if (p.id === activeProfileId) return; /* "tous" couvre déjà le profil actif */
+      rows += row(p.id, p.avatar || '👤', escHtml(p.name), 'Partager avec ce profil précis');
+    });
+    ov.innerHTML = '<div class="vsh-panel">'
+      +'<div class="vsh-head"><span>🔗 Partager « '+escHtml(app.name||'Module')+' »</span><button class="vsh-x" id="vsh-close">✕</button></div>'
+      +'<div class="vsh-list">'+rows+'</div></div>';
+    ov.querySelector('#vsh-close').onclick = function(){ ov.classList.remove('open'); };
+    ov.querySelectorAll('.vsh-row').forEach(function(r){
+      r.onclick = function(){ var v = r.getAttribute('data-val'); ov.classList.remove('open'); window.vdShareModule(appId, v); };
+    });
+    ov.classList.add('open');
+  };
 
   // ====== ICON POSITIONS ======
   function loadIconPositions() {
@@ -4401,7 +4525,8 @@
         () => {
           apps = apps.filter(a => a.id !== appId);
           delete iconPositions[appId];
-          saveModules(); renderDesktopIcons();
+          vdSharedRemove(appId);
+          saveModules(); window._vdApps = apps; renderDesktopIcons();
           notify('🗑️ "' + app.name + '" supprimé');
         },
         '🗑️', 'Supprimer', 'danger'
@@ -6018,9 +6143,10 @@
       'Supprimer tous les modules',
       `Cette action supprimera ${n} module(s) installé(s). Impossible d'annuler.`,
       () => {
-        apps.filter(a => a.type === 'module').forEach(m => { if (openWindows[m.id]) closeWindow(m.id); });
+        apps.filter(a => a.type === 'module').forEach(m => { if (openWindows[m.id]) closeWindow(m.id); vdSharedRemove(m.id); });
         apps = apps.filter(a => a.type !== 'module');
         localStorage.removeItem('vd_modules');
+        window._vdApps = apps;
         renderDesktopIcons();
         renderStartMenu();
         notify('🗑️ Tous les modules supprimés');
@@ -6039,7 +6165,9 @@
       () => {
         if (openWindows[id]) closeWindow(id);
         apps = apps.filter(a => a.id !== id);
+        vdSharedRemove(id);   /* retire aussi de la liste partagée si nécessaire */
         saveModules();
+        window._vdApps = apps;
         renderDesktopIcons();
         renderStartMenu();
         notify(`🗑️ Module "${mod.name}" supprimé`);
@@ -7274,13 +7402,15 @@
     const menu = document.getElementById('icon-ctx-menu');
     const editEl = document.getElementById('ictx-edit');
     const delEl  = document.getElementById('ictx-del');
+    const shareEl= document.getElementById('ictx-share');
     const sepMod = document.getElementById('ictx-sep-mod');
     if (editEl) editEl.style.display = isModule ? 'flex' : 'none';
+    if (shareEl)shareEl.style.display= isModule ? 'flex' : 'none';
     if (delEl)  delEl.style.display  = isModule ? 'flex' : 'none';
     if (sepMod) sepMod.style.display = isModule ? 'block' : 'none';
     menu.style.display = 'block';
     const vw = window.innerWidth, vh = window.innerHeight;
-    const mw = 200, mh = isModule ? 168 : 90;
+    const mw = 220, mh = isModule ? 200 : 90;
     menu.style.left = Math.min(e.clientX, vw - mw - 6) + 'px';
     menu.style.top  = Math.min(e.clientY, vh - mh - 6) + 'px';
   }
@@ -7292,6 +7422,7 @@
 
   function iconCtxOpen()  { if (iconCtxId) openApp(iconCtxId);                       closeIconCtxMenu(); }
   function iconCtxEdit()  { if (iconCtxId) openEditModuleModal(iconCtxId);            closeIconCtxMenu(); }
+  function iconCtxShare() { if (iconCtxId) vdShareOpen(iconCtxId);                    closeIconCtxMenu(); }
   function iconCtxDel()   { if (iconCtxId) deleteSingleModule(iconCtxId);             closeIconCtxMenu(); }
 
   function iconCtxHide() {
@@ -9373,6 +9504,7 @@
     // Reload state — reset to built-ins then reload saved modules for this profile
     apps = apps.filter(a => a.type === 'builtin');
     loadModules();
+    window._vdApps = apps; /* synchronise widgets / lanceur après changement de profil */
     if (typeof wpApplySaved === 'function') wpApplySaved();
     if (typeof themeInit === 'function') themeInit();
     if (typeof tkLoad === 'function') { tkLoad(); if (openWindows['tasks'] && document.getElementById('tk-content')) tkRender(); }
