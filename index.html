@@ -9343,7 +9343,7 @@
 
   const PROFILES_KEY       = 'vd_profiles';
   const ACTIVE_PROFILE_KEY = 'vd_active_profile';
-  const PROFILE_DATA_KEYS  = ['vd_modules','vd_notes_v2','vd_agenda','vd_filesystem','vd_icon_positions','vd_icon_size','vd_tasks','vd_contacts','vd_wallpaper','vd_wallpaper_imgs','vd_hidden_icons','vd_widgets','vd_calc_hist','vd_tb_mode','vd_tb_opacity','vd_theme','fin_tx','fin_inst','fin_cfg'];
+  const PROFILE_DATA_KEYS  = ['vd_modules','vd_notes_v2','vd_agenda','vd_filesystem','vd_icon_positions','vd_icon_size','vd_tasks','vd_contacts','vd_wallpaper','vd_wallpaper_imgs','vd_hidden_icons','vd_widgets','vd_calc_hist','vd_tb_mode','vd_tb_opacity','vd_theme','fin_tx','fin_inst','fin_cfg','fin_goals'];
   const PCM_AVATARS = ['👤','👨','👩','🧑','👨‍💼','👩‍💼','🧑‍💻','👨‍🎨','👩‍🎨','🦸','🧙','🤖','😎','🐱','🐸','🦊','🌟','🏆','⚡','🔥'];
   const PCM_COLORS  = ['#667eea','#ec4899','#f97316','#44d17a','#06b6d4','#f5c542','#a855f7','#f5574f','#64748b','#0ea5e9'];
 
@@ -9369,14 +9369,22 @@
 
   function loadProfileData(id) {
     const raw = localStorage.getItem('vd_profile_data_' + id);
-    if (!raw) return;
+    if (!raw) {
+      /* Profil sans instantané (ex. nouvellement créé) → démarrer ISOLÉ et vide,
+         au lieu d'hériter des données du profil précédent. */
+      PROFILE_DATA_KEYS.forEach(k => localStorage.removeItem(k));
+      return;
+    }
     try {
       const snapshot = JSON.parse(raw);
       PROFILE_DATA_KEYS.forEach(k => {
         if (snapshot[k] != null) localStorage.setItem(k, snapshot[k]);
         else localStorage.removeItem(k);
       });
-    } catch(e) {}
+    } catch(e) {
+      /* Instantané corrompu → repartir vide pour préserver l'isolation */
+      PROFILE_DATA_KEYS.forEach(k => localStorage.removeItem(k));
+    }
   }
 
   async function hashPassword(str) {
@@ -9496,7 +9504,9 @@
   }
 
   function activateProfile(id) {
-    if (activeProfileId && activeProfileId !== id) saveCurrentProfileData();
+    /* Toujours figer les données du profil courant avant de charger celles du cible
+       (évite toute perte si on re-sélectionne le profil actif). */
+    if (activeProfileId) saveCurrentProfileData();
     activeProfileId = id;
     localStorage.setItem(ACTIVE_PROFILE_KEY, id);
     loadProfileData(id);
@@ -9509,10 +9519,18 @@
     if (typeof themeInit === 'function') themeInit();
     if (typeof tkLoad === 'function') { tkLoad(); if (openWindows['tasks'] && document.getElementById('tk-content')) tkRender(); }
     if (typeof ctLoad === 'function') { ctLoad(); if (openWindows['contacts'] && document.getElementById('ct-content')) ctRender(); }
+    /* Recharge les finances du profil (isolation des données financières) */
+    if (typeof window.finInit === 'function') { try { window.finInit(); } catch(e){} }
+    var _finPanel = document.getElementById('fin-panel');
+    if (_finPanel && _finPanel.classList.contains('open') && typeof window.finOpen === 'function') { try { window.finOpen(); } catch(e){} }
+    if (typeof window.tbFinUpdate === 'function') { try { window.tbFinUpdate(); } catch(e){} }
+    if (typeof window.vdWidgetsReload === 'function') { try { window.vdWidgetsReload(); } catch(e){} }
     renderDesktopIcons();
     renderStartMenu();
     notesData = loadNotesData();
     if (openWindows['notes']) { renderFolderList(); renderNoteList(); renderNoteEditor(); }
+    /* Persiste immédiatement l'instantané du profil nouvellement actif */
+    saveCurrentProfileData();
     const p = profiles.find(x => x.id === id);
     notify(`👤 Profil "${p ? escHtml(p.name) : ''}" activé`);
     updateSmProfileBadge();
