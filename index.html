@@ -11,6 +11,84 @@
 <meta name="description" content="Votre espace de travail numérique personnel">
 <link rel="apple-touch-icon" id="pwa-apple-icon">
 <title>Bureau Virtuel Pro</title>
+
+<script>
+/* ════════════ CLOISONNEMENT STRICT DES DONNÉES PAR PROFIL ════════════
+   Intercepte localStorage : toutes les clés "personnelles" (modules, finances,
+   notes, agenda, tâches, contacts, widgets, apparence…) sont physiquement
+   stockées dans un espace de noms propre au profil actif (vd_p_<id>__<clé>).
+   Aucune donnée ne peut donc fuiter d'un profil à l'autre.
+   Clés GLOBALES (non cloisonnées) : la liste des profils, le profil actif,
+   la config GitHub, les modules explicitement partagés, le flag de migration. */
+(function(){
+  if (window.__vdNsInstalled) return;
+  var SCOPED = {
+    'vd_modules':1,'vd_notes_v2':1,'vd_agenda':1,'vd_filesystem':1,'vd_icon_positions':1,
+    'vd_icon_size':1,'vd_tasks':1,'vd_contacts':1,'vd_wallpaper':1,'vd_wallpaper_imgs':1,
+    'vd_hidden_icons':1,'vd_widgets':1,'vd_calc_hist':1,'vd_tb_mode':1,'vd_tb_opacity':1,
+    'vd_theme':1,'fin_tx':1,'fin_inst':1,'fin_cfg':1,'fin_goals':1
+  };
+  var ACTIVE_KEY = 'vd_active_profile';
+  var proto = window.Storage.prototype;
+  var _get = proto.getItem, _set = proto.setItem, _rem = proto.removeItem;
+  var RAW = {
+    get: function(k){ return _get.call(localStorage, k); },
+    set: function(k,v){ return _set.call(localStorage, k, v); },
+    rem: function(k){ return _rem.call(localStorage, k); }
+  };
+  function pid(){ return RAW.get(ACTIVE_KEY) || 'profile-default'; }
+  function phys(p,k){ return 'vd_p_' + p + '__' + k; }
+
+  /* ── Migration unique : déplace les données existantes vers les espaces de noms ── */
+  try {
+    if (RAW.get('vd_ns_migrated') !== '1') {
+      var active = RAW.get(ACTIVE_KEY) || 'profile-default';
+      var profs = [];
+      try { profs = JSON.parse(RAW.get('vd_profiles') || '[]'); } catch(e){}
+      // 1) PRIORITÉ : les données "live" actuelles appartiennent au profil ACTIF
+      //    (couvre le cas d'un instantané périmé : on ne perd jamais les données courantes)
+      Object.keys(SCOPED).forEach(function(k){
+        var v = RAW.get(k);
+        if (v != null && RAW.get(phys(active,k)) == null) RAW.set(phys(active,k), v);
+      });
+      // 2) Les instantanés par profil remplissent les espaces de noms encore vides
+      //    (profils non actifs, ou actif sans donnée live)
+      profs.forEach(function(p){
+        var snapRaw = RAW.get('vd_profile_data_' + p.id);
+        if (!snapRaw) return;
+        try { var snap = JSON.parse(snapRaw);
+          Object.keys(SCOPED).forEach(function(k){
+            if (snap[k] != null && RAW.get(phys(p.id,k)) == null) RAW.set(phys(p.id,k), snap[k]);
+          });
+        } catch(e){}
+      });
+      // 3) Purge des anciennes clés non cloisonnées (copie vérifiée au préalable)
+      Object.keys(SCOPED).forEach(function(k){
+        var cur = RAW.get(k);
+        if (cur == null) return;
+        if (RAW.get(phys(active,k)) != null) RAW.rem(k);
+      });
+      RAW.set('vd_ns_migrated','1');
+    }
+  } catch(e){ /* migration best-effort */ }
+
+  /* ── Interception (uniquement localStorage ; sessionStorage non affecté) ── */
+  proto.getItem = function(k){ return _get.call(this, (this===localStorage && SCOPED[k]) ? phys(pid(), k) : k); };
+  proto.setItem = function(k,v){ return _set.call(this, (this===localStorage && SCOPED[k]) ? phys(pid(), k) : k, v); };
+  proto.removeItem = function(k){ return _rem.call(this, (this===localStorage && SCOPED[k]) ? phys(pid(), k) : k); };
+
+  /* Outils exposés pour la gestion des profils */
+  window.__vdNsInstalled = true;
+  window.vdProfilePurge = function(profileId){
+    /* Supprime physiquement TOUTES les données cloisonnées d'un profil */
+    try {
+      Object.keys(SCOPED).forEach(function(k){ RAW.rem(phys(profileId,k)); });
+      RAW.rem('vd_profile_data_' + profileId);
+    } catch(e){}
+  };
+})();
+</script>
+
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -3027,6 +3105,35 @@
   .vsh-t { font-size: 13px; font-weight: 600; }
   .vsh-s { font-size: 11px; color: rgba(255,255,255,0.45); }
   .vsh-chk { width: 22px; text-align: center; color: #8aa0ff; font-weight: 700; flex-shrink: 0; }
+
+  /* ── Modale de suppression de profil (sécurisée) ── */
+  .vd-modal2 {
+    position: fixed; inset: 0; z-index: 10500;
+    background: rgba(5,4,20,0.6); backdrop-filter: blur(8px);
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none; transition: opacity .2s;
+  }
+  .vd-modal2.open { opacity: 1; pointer-events: auto; }
+  .vd-m2-panel {
+    background: linear-gradient(145deg, rgba(28,16,30,0.98), rgba(30,18,40,0.98));
+    border: 1px solid rgba(245,87,79,0.3); border-radius: 18px;
+    width: min(420px, 92vw); overflow: hidden; color: #fff;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.7);
+  }
+  .vd-m2-head { padding: 16px 18px; font-size: 15px; font-weight: 800; border-bottom: 1px solid rgba(255,255,255,0.08); }
+  .vd-m2-body { padding: 16px 18px; font-size: 13px; line-height: 1.55; color: rgba(255,255,255,0.82); }
+  .vd-m2-note { margin-top: 10px; font-size: 12px; color: rgba(255,255,255,0.45); }
+  .vd-m2-pw { margin-top: 14px; display: flex; flex-direction: column; gap: 5px; }
+  .vd-m2-pw label { font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.55); text-transform: uppercase; letter-spacing: .4px; }
+  .vd-m2-pw input { padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.14); background: rgba(0,0,0,0.3); color: #fff; font-size: 14px; outline: none; }
+  .vd-m2-pw input:focus { border-color: rgba(245,87,79,0.6); }
+  .vd-m2-err { min-height: 16px; margin-top: 7px; font-size: 12px; color: #f5574f; }
+  .vd-m2-actions { display: flex; gap: 10px; padding: 0 18px 18px; }
+  .vd-m2-cancel, .vd-m2-del { flex: 1; padding: 11px; border: none; border-radius: 11px; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .vd-m2-cancel { background: rgba(255,255,255,0.08); color: #fff; }
+  .vd-m2-cancel:hover { background: rgba(255,255,255,0.16); }
+  .vd-m2-del { background: linear-gradient(135deg, #f5574f, #c31432); color: #fff; }
+  .vd-m2-del:hover { filter: brightness(1.1); }
 
 </style>
 </head>
@@ -9360,32 +9467,14 @@
     localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles));
   }
 
-  function saveCurrentProfileData() {
-    if (!activeProfileId) return;
-    const snapshot = {};
-    PROFILE_DATA_KEYS.forEach(k => { snapshot[k] = localStorage.getItem(k); });
-    localStorage.setItem('vd_profile_data_' + activeProfileId, JSON.stringify(snapshot));
-  }
-
-  function loadProfileData(id) {
-    const raw = localStorage.getItem('vd_profile_data_' + id);
-    if (!raw) {
-      /* Profil sans instantané (ex. nouvellement créé) → démarrer ISOLÉ et vide,
-         au lieu d'hériter des données du profil précédent. */
-      PROFILE_DATA_KEYS.forEach(k => localStorage.removeItem(k));
-      return;
-    }
-    try {
-      const snapshot = JSON.parse(raw);
-      PROFILE_DATA_KEYS.forEach(k => {
-        if (snapshot[k] != null) localStorage.setItem(k, snapshot[k]);
-        else localStorage.removeItem(k);
-      });
-    } catch(e) {
-      /* Instantané corrompu → repartir vide pour préserver l'isolation */
-      PROFILE_DATA_KEYS.forEach(k => localStorage.removeItem(k));
-    }
-  }
+  /* ── Cloisonnement physique actif (voir <head>) ──
+     Les données de chaque profil sont stockées dans un espace de noms séparé
+     (vd_p_<id>__<clé>) via l'interception de localStorage. Le basculement de
+     profil se fait simplement en changeant le profil actif puis en rechargeant
+     les modules : aucune copie/échange de clés n'est nécessaire. Ces deux
+     fonctions sont donc neutralisées pour ne pas écraser les espaces de noms. */
+  function saveCurrentProfileData() { /* no-op : persistance automatique par espace de noms */ }
+  function loadProfileData(id) { /* no-op : les données sont déjà cloisonnées par profil */ }
 
   async function hashPassword(str) {
     const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
@@ -9659,14 +9748,58 @@
     if (profiles.length <= 1) { notify('❌ Impossible de supprimer le seul profil'); return; }
     const p = profiles.find(x => x.id === id);
     if (!p) return;
-    confirmDialog('Supprimer le profil', `Supprimer définitivement "${escHtml(p.name)}" et toutes ses données ?`, () => {
+    const needPw = !!p.passwordHash;
+
+    let ov = document.getElementById('vd-delprof-overlay');
+    if (!ov) {
+      ov = document.createElement('div'); ov.id = 'vd-delprof-overlay'; ov.className = 'vd-modal2';
+      ov.onclick = function(e){ if (e.target.id === 'vd-delprof-overlay') ov.classList.remove('open'); };
+      document.body.appendChild(ov);
+    }
+    ov.innerHTML =
+      '<div class="vd-m2-panel">'
+      + '<div class="vd-m2-head">🗑️ Supprimer le profil</div>'
+      + '<div class="vd-m2-body">Le profil <b>' + escHtml(p.name) + '</b> et <b>toutes ses données</b> '
+      +   '(applications, finances, notes, agenda, tâches, widgets…) seront <b>définitivement supprimés</b>. Action irréversible.'
+      +   (needPw
+            ? '<div class="vd-m2-pw"><label>🔒 Mot de passe du profil</label>'
+              + '<input type="password" id="vd-delprof-pw" placeholder="••••••••" autocomplete="off"></div>'
+              + '<div class="vd-m2-err" id="vd-delprof-err"></div>'
+            : '<div class="vd-m2-note">Ce profil n\'a pas de mot de passe.</div>')
+      + '</div>'
+      + '<div class="vd-m2-actions">'
+      +   '<button class="vd-m2-cancel" id="vd-delprof-cancel">Annuler</button>'
+      +   '<button class="vd-m2-del" id="vd-delprof-go">Supprimer définitivement</button>'
+      + '</div></div>';
+    ov.classList.add('open');
+    document.getElementById('vd-delprof-cancel').onclick = function(){ ov.classList.remove('open'); };
+    if (needPw) setTimeout(function(){ var i = document.getElementById('vd-delprof-pw'); if (i) i.focus(); }, 60);
+
+    async function doDelete() {
+      if (needPw) {
+        const inp = document.getElementById('vd-delprof-pw');
+        const ok = await verifyPassword(inp ? inp.value : '', p.passwordHash);
+        if (!ok) {
+          const er = document.getElementById('vd-delprof-err');
+          if (er) er.textContent = '❌ Mot de passe incorrect';
+          if (inp) { inp.value = ''; inp.focus(); }
+          return;
+        }
+      }
+      /* Purge physique de toutes les données cloisonnées du profil */
+      if (typeof window.vdProfilePurge === 'function') window.vdProfilePurge(id);
       profiles = profiles.filter(x => x.id !== id);
-      localStorage.removeItem('vd_profile_data_' + id);
       saveProfiles();
+      ov.classList.remove('open');
       if (activeProfileId === id) activateProfile(profiles[0].id);
       renderSettingsProfiles();
+      if (document.getElementById('profile-screen') && document.getElementById('profile-screen').classList.contains('visible')) renderPscCards();
+      updateSmProfileBadge();
       notify(`🗑️ Profil "${escHtml(p.name)}" supprimé`);
-    }, '🗑️', 'Supprimer');
+    }
+    document.getElementById('vd-delprof-go').onclick = doDelete;
+    const pwInp = document.getElementById('vd-delprof-pw');
+    if (pwInp) pwInp.onkeydown = function(e){ if (e.key === 'Enter') doDelete(); };
   }
 
   // ====================================================
