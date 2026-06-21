@@ -12511,7 +12511,7 @@ function ctExportCsv() {
         finInst.push({
           id: finId(), parentTx: tx.id,
           label: tx.label, category: tx.category,
-          amount: monthly,
+          amount: monthly, image: image,   /* l'image s'applique à toutes les échéances */
           dueDate: finAddDays(date, i * 30), paid: false
         });
       }
@@ -12902,10 +12902,10 @@ function ctExportCsv() {
       var rebuilt = [];
       for (var k=0; k<slots; k++) {
         if (k < paidIns.length) {
-          var pi = paidIns[k]; pi.label=label; pi.category=cat; rebuilt.push(pi);
+          var pi = paidIns[k]; pi.label=label; pi.category=cat; pi.image=tx.image; rebuilt.push(pi);
         } else {
           rebuilt.push({ id:finId(), parentTx:tx.id, label:label, category:cat,
-            amount:monthly, dueDate:finAddDays(start, k*30), paid:false });
+            amount:monthly, image:tx.image, dueDate:finAddDays(start, k*30), paid:false });
         }
       }
       finInst = others.concat(rebuilt);
@@ -13024,10 +13024,14 @@ function ctExportCsv() {
 
       var open = !!finMensuelExpanded[pid];
       var nextDue = sorted.filter(function(i){ return !i.paid; })[0];
+      var planImg = (tx && tx.image) || (items[0] && items[0].image) || '';
+      var planAvatar = planImg
+        ? '<div class="fin-tx-avatar fin-tx-avatar-img" style="width:36px;height:36px;flex-shrink:0;" title="Voir l\'image" onclick="event.stopPropagation();finImgView(\''+finEsc(planImg)+'\')"><img src="'+finEsc(planImg)+'" alt="" onerror="var d=this.parentElement;d.classList.remove(\'fin-tx-avatar-img\');d.onclick=null;d.style.background=\''+col+'\';d.textContent=\''+lbl.charAt(0)+'\';"></div>'
+        : '<div class="fin-tx-avatar" style="background:'+col+';width:36px;height:36px;font-size:14px;flex-shrink:0;">'+(lbl.charAt(0))+'</div>';
       html += '<div class="fin-inst-card'+(open?' open':'')+'" id="fin-inst-'+pid+'">'
         /* En-tête cliquable (résumé toujours visible) */
         + '<div class="fin-inst-hdr" onclick="finMensuelToggle(\''+pid+'\')">'
-        +   '<div class="fin-tx-avatar" style="background:'+col+';width:36px;height:36px;font-size:14px;flex-shrink:0;">'+(lbl.charAt(0))+'</div>'
+        +   planAvatar
         +   '<div style="flex:1;min-width:0;">'
         +     '<div class="fin-inst-label">'+lbl+'</div>'
         +     '<div class="fin-inst-meta" style="font-size:10px;margin-top:2px;">'+finEur(perMonth)+'/mois × '+totalMths+' · '+paidCount+'/'+totalMths+' payées'+(nextDue?' · prochaine '+finFmtDate(nextDue.dueDate):'')+'</div>'
