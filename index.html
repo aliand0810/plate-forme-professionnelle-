@@ -3158,6 +3158,31 @@
     text-transform: uppercase; letter-spacing: .3px;
   }
 
+  /* ── Confirmation « ajouté au bureau » (au-dessus de l'éditeur plein écran) ── */
+  #note-pinned-toast, #note-pin-choose {
+    position: fixed; inset: 0; z-index: 100000; pointer-events: none;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; transition: opacity .2s;
+    background: rgba(5,4,20,0.45); backdrop-filter: blur(3px);
+  }
+  #note-pinned-toast.show, #note-pin-choose.show { opacity: 1; pointer-events: auto; }
+  #note-pinned-toast .npt-card, #note-pin-choose .npt-card {
+    pointer-events: auto; width: min(380px, 90vw);
+    background: linear-gradient(145deg, rgba(18,30,24,0.99), rgba(16,24,40,0.99));
+    border: 1px solid rgba(67,209,122,0.4); border-radius: 18px; padding: 22px;
+    text-align: center; color: #fff; box-shadow: 0 24px 80px rgba(0,0,0,0.75), 0 0 30px rgba(67,209,122,0.25);
+    animation: nptPop .25s cubic-bezier(.34,1.4,.64,1);
+  }
+  @keyframes nptPop { from { transform: scale(.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .npt-ic { font-size: 46px; line-height: 1; }
+  .npt-t { font-size: 18px; font-weight: 800; margin: 10px 0 6px; }
+  .npt-s { font-size: 13px; line-height: 1.55; color: rgba(255,255,255,0.75); }
+  .npt-actions { display: flex; gap: 10px; margin-top: 18px; }
+  .npt-btn { flex: 1; padding: 11px; border: none; border-radius: 11px; font-size: 13px; font-weight: 700; cursor: pointer; background: rgba(255,255,255,0.1); color: #fff; }
+  .npt-btn:hover { background: rgba(255,255,255,0.18); }
+  .npt-btn.prim { background: linear-gradient(135deg, #43d17a, #06b6d4); color: #06210f; }
+  .npt-btn.prim:hover { filter: brightness(1.1); }
+
   /* ── Aperçu d'ancrage de fenêtre (snap) ── */
   #win-snap-preview {
     position: fixed; z-index: 9000; pointer-events: none;
@@ -3169,6 +3194,33 @@
     transition: opacity .12s ease, left .12s ease, top .12s ease, width .12s ease, height .12s ease;
   }
   #win-snap-preview.show { opacity: 1; }
+
+  /* ── Sélecteur d'icône (emoji) ── */
+  #icon-picker {
+    position: fixed; inset: 0; z-index: 10450;
+    background: rgba(5,4,20,0.55); backdrop-filter: blur(8px);
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none; transition: opacity .2s;
+  }
+  #icon-picker.open { opacity: 1; pointer-events: auto; }
+  .ip2-panel {
+    background: linear-gradient(145deg, rgba(18,14,50,0.98), rgba(24,20,62,0.98));
+    border: 1px solid rgba(255,255,255,0.1); border-radius: 18px;
+    width: min(420px, 92vw); max-height: 80vh; overflow: hidden; color: #fff;
+    display: flex; flex-direction: column; box-shadow: 0 24px 80px rgba(0,0,0,0.7);
+  }
+  .ip2-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 15px 16px; font-size: 13px; font-weight: 800; border-bottom: 1px solid rgba(255,255,255,0.07); }
+  .ip2-x { width: 26px; height: 26px; border: none; border-radius: 8px; background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.6); cursor: pointer; flex-shrink: 0; }
+  .ip2-x:hover { background: rgba(245,87,79,0.25); color: #f5574f; }
+  .ip2-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 6px; padding: 14px; overflow-y: auto; }
+  .ip2-em { aspect-ratio: 1; border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; background: rgba(255,255,255,0.04); font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background .12s, transform .12s; }
+  .ip2-em:hover { background: rgba(102,126,234,0.25); transform: scale(1.12); }
+  .ip2-em.on { background: rgba(102,126,234,0.3); border-color: rgba(138,160,255,0.6); }
+  .ip2-custom { padding: 0 14px 16px; display: flex; flex-direction: column; gap: 6px; }
+  .ip2-custom label { font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: .4px; }
+  .ip2-custom input { flex: 1; padding: 9px 11px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.14); background: rgba(0,0,0,0.25); color: #fff; font-size: 18px; outline: none; text-align: center; }
+  .ip2-apply { border: none; border-radius: 10px; padding: 0 14px; font-size: 12px; font-weight: 700; cursor: pointer; background: linear-gradient(135deg,#667eea,#764ba2); color: #fff; }
+  .ip2-apply:hover { filter: brightness(1.12); }
 
   /* ── Popup de partage de module entre profils ── */
   #vd-share-overlay {
@@ -3635,6 +3687,7 @@
   <div class="icon-ctx-item"                  onclick="iconCtxHide()">👁 Masquer l'icône</div>
   <div class="icon-ctx-sep" id="ictx-sep-mod" style="display:none"></div>
   <div class="icon-ctx-item" id="ictx-edit"   onclick="iconCtxEdit()" style="display:none">✏️ Modifier</div>
+  <div class="icon-ctx-item" id="ictx-icon"   onclick="iconCtxIcon()" style="display:none">🎨 Changer l'icône</div>
   <div class="icon-ctx-item" id="ictx-share"  onclick="iconCtxShare()" style="display:none">🔗 Partager entre profils…</div>
   <div class="icon-ctx-item danger" id="ictx-del" onclick="iconCtxDel()" style="display:none">🗑️ Supprimer</div>
 </div>
@@ -3840,7 +3893,8 @@
     <span class="neo-stats" id="neo-stats">0 mots · 0 car.</span>
     <div class="neo-footer-right">
       <button class="neo-action-btn" onclick="noteEditorExport('txt')">⬇ .txt</button>
-      <button class="neo-action-btn primary" onclick="noteEditorExport('html')">⬇ .html</button>
+      <button class="neo-action-btn" onclick="noteEditorExport('html')">⬇ .html</button>
+      <button class="neo-action-btn primary" onclick="notePinToDesktop()" title="Créer une icône HTML exécutable sur le bureau">🖥️ Sur le bureau</button>
       <button class="neo-action-btn danger" onclick="deleteCurrentNoteFromEditor()">🗑 Supprimer</button>
     </div>
   </div>
@@ -3964,6 +4018,7 @@
 
   // Retourne le meilleur favicon disponible pour une app
   function getAppFavicon(app) {
+    if (app.useEmoji) return null;            /* icône emoji choisie par l'utilisateur */
     if (app.type !== 'module' || !app.url) return null;
     return app.faviconUrl || getFaviconUrl(app.url);
   }
@@ -4068,8 +4123,8 @@
   }
 
   function saveModules() {
-    /* Ne persiste dans vd_modules QUE les modules privés du profil ; les partagés vivent dans vd_shared_modules */
-    const mods = apps.filter(a => a.type === 'module' && !vdModuleIsShared(a));
+    /* Persiste les modules privés + les notes HTML épinglées (vd_modules, par profil) ; les partagés vivent dans vd_shared_modules */
+    const mods = apps.filter(a => (a.type === 'module' || a.type === 'htmlnote') && !vdModuleIsShared(a));
     try {
       localStorage.setItem('vd_modules', JSON.stringify(mods));
     } catch(e) {
@@ -4554,6 +4609,13 @@
 
         body.appendChild(iframeEl);
       }
+    } else if (app.type === 'htmlnote') {
+      /* Note HTML épinglée : exécutée dans un iframe isolé (sandbox sans same-origin) */
+      const ifr = document.createElement('iframe');
+      ifr.setAttribute('sandbox', 'allow-scripts allow-popups allow-forms allow-modals');
+      ifr.style.cssText = 'width:100%;height:100%;border:none;display:block;background:#fff;';
+      ifr.srcdoc = app.html || '<p style="font-family:sans-serif;padding:24px;color:#555">Document vide</p>';
+      body.appendChild(ifr);
     } else {
       body.innerHTML = getBuiltinContent(appId);
       initBuiltinApp(appId);
@@ -4813,10 +4875,10 @@
       return;
     }
 
-    if (app.type === 'module') {
+    if (app.type === 'module' || app.type === 'htmlnote') {
       confirmDialog(
         'Retirer du bureau',
-        'Supprimer le module "' + app.name + '" ?',
+        'Supprimer "' + app.name + '" ?',
         () => {
           apps = apps.filter(a => a.id !== appId);
           delete iconPositions[appId];
@@ -7436,6 +7498,111 @@
     notify(`📤 Note exportée en .${format}`);
   }
 
+  // Confirmation visible PAR-DESSUS l'éditeur plein écran
+  function noteShowPinned(name, updated) {
+    var ov = document.getElementById('note-pinned-toast');
+    if (!ov) { ov = document.createElement('div'); ov.id = 'note-pinned-toast'; document.body.appendChild(ov); }
+    ov.innerHTML = '<div class="npt-card">'
+      + '<div class="npt-ic">🖥️</div>'
+      + '<div class="npt-t">' + (updated ? 'Icône mise à jour ✅' : 'Ajouté au bureau ✅') + '</div>'
+      + '<div class="npt-s">« ' + escHtml(name) + ' » ' + (updated ? 'a été mise à jour' : 'est sur le bureau') + ' (icône 📄). Fermez l\'éditeur pour la voir et double-cliquez dessus pour l\'ouvrir.</div>'
+      + '<div class="npt-actions">'
+      +   '<button class="npt-btn" id="npt-stay">Continuer l\'édition</button>'
+      +   '<button class="npt-btn prim" id="npt-view">🖥️ Voir sur le bureau</button>'
+      + '</div></div>';
+    ov.classList.add('show');
+    var stay = ov.querySelector('#npt-stay'); if (stay) stay.onclick = function(){ ov.classList.remove('show'); };
+    var view = ov.querySelector('#npt-view'); if (view) view.onclick = function(){
+      ov.classList.remove('show');
+      if (typeof closeNoteEditor === 'function') closeNoteEditor();
+      if (openWindows['notes'] && typeof closeWindow === 'function') closeWindow('notes');
+    };
+  }
+
+  // Construit le document HTML final selon le mode choisi
+  function notePinBuildHtml(note, mode, src) {
+    const title = (note.title || 'Note').trim();
+    if (mode === 'html') {
+      const lower = (src || '').trim().toLowerCase();
+      if (lower.indexOf('<!doctype') === 0 || lower.indexOf('<html') === 0) return src;
+      return '<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">'
+           + '<meta name="viewport" content="width=device-width,initial-scale=1">'
+           + '<style>html,body{margin:0;}body{font-family:\'Segoe UI\',system-ui,sans-serif;color:#1a1a1a;line-height:1.6;}</style>'
+           + '</head><body>' + src + '</body></html>';
+    }
+    /* mode texte → markdown rendu */
+    return '<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">'
+         + '<style>body{font-family:\'Segoe UI\',sans-serif;max-width:820px;margin:24px auto;padding:0 20px;color:#222;line-height:1.7;}h1,h2,h3{color:#111;}code{background:#f0f0f0;padding:2px 6px;border-radius:4px;}</style>'
+         + '</head><body><h1>' + escHtml(title) + '</h1>' + mdToHtml(note.content || '') + '</body></html>';
+  }
+
+  // Crée (ou met à jour) l'icône du bureau
+  function notePinCreate(note, nid, mode, src) {
+    const title = (note.title || 'Note').trim();
+    const html  = notePinBuildHtml(note, mode, src);
+    const ic    = (mode === 'html') ? '🌐' : '📄';
+    const existing = apps.find(a => a.type === 'htmlnote' && a.noteId === nid);
+    if (existing) {
+      existing.html = html; existing.name = (title.slice(0,24) || 'Note'); existing.icon = ic;
+      saveModules(); window._vdApps = apps; renderDesktopIcons();
+      noteShowPinned(existing.name, true);
+      return;
+    }
+    const palette = ['#e96c63','#f59e0b','#43c6ac','#6c63ff','#ec4899','#06b6d4','#10b981'];
+    const app = {
+      id: 'htmlnote-' + Date.now(), name: (title.slice(0,24) || 'Note'),
+      icon: ic, color: palette[apps.length % palette.length],
+      type: 'htmlnote', html: html, noteId: nid, created: Date.now()
+    };
+    apps.push(app);
+    if (!iconPositions[app.id]) { iconPositions[app.id] = getNextFreePos(app.id); saveIconPositions(); }
+    saveModules(); window._vdApps = apps; renderDesktopIcons();
+    noteShowPinned(app.name, false);
+  }
+
+  // Choix Texte / Aperçu HTML
+  function notePinChoose(note, nid, htmlSrc, txtSrc) {
+    var ov = document.getElementById('note-pin-choose');
+    if (!ov) { ov = document.createElement('div'); ov.id = 'note-pin-choose'; ov.className = 'npt-modal';
+      ov.onclick = function(e){ if (e.target.id === 'note-pin-choose') ov.classList.remove('show'); };
+      document.body.appendChild(ov); }
+    ov.innerHTML = '<div class="npt-card"><div class="npt-ic">🖥️</div>'
+      + '<div class="npt-t">Ajouter au bureau</div>'
+      + '<div class="npt-s">Que voulez-vous épingler sur le bureau ?</div>'
+      + '<div class="npt-actions" style="flex-direction:column;">'
+      +   '<button class="npt-btn prim" id="npc-html">🌐 Aperçu HTML (interactif)</button>'
+      +   '<button class="npt-btn" id="npc-text">📝 Texte mis en forme</button>'
+      +   '<button class="npt-btn" id="npc-cancel" style="background:transparent;color:rgba(255,255,255,0.5);">Annuler</button>'
+      + '</div></div>';
+    ov.classList.add('show');
+    ov.querySelector('#npc-html').onclick   = function(){ ov.classList.remove('show'); notePinCreate(note, nid, 'html', htmlSrc); };
+    ov.querySelector('#npc-text').onclick   = function(){ ov.classList.remove('show'); notePinCreate(note, nid, 'text', txtSrc); };
+    ov.querySelector('#npc-cancel').onclick = function(){ ov.classList.remove('show'); };
+  }
+
+  // ── Épingler la note sur le bureau ──
+  window.notePinToDesktop = function() {
+   try {
+    var nid = currentNoteId;
+    if (!nid) { notify('⚠️ Ouvrez d\'abord une note'); return; }
+    if (typeof saveCurrentNote === 'function') saveCurrentNote(true);
+    const note = (notesData && notesData.notes || []).find(n => n.id === nid);
+    if (!note) { notify('⚠️ Note introuvable'); return; }
+    /* Sources : HTML (onglet HTML / aperçu) et texte (onglet Texte) */
+    var hEl = document.getElementById('neo-html-code');
+    var cEl = document.getElementById('neo-content-inp');
+    var htmlSrc = ((hEl && hEl.value) || note.htmlContent || '').trim();
+    var txtSrc  = ((cEl && cEl.value) || note.content || '').trim();
+    if (htmlSrc && txtSrc)      notePinChoose(note, nid, htmlSrc, txtSrc);
+    else if (htmlSrc)           notePinCreate(note, nid, 'html', htmlSrc);
+    else if (txtSrc)            notePinCreate(note, nid, 'text', txtSrc);
+    else                        notePinCreate(note, nid, 'text', '');
+   } catch(e) {
+    notify('❌ Impossible d\'ajouter au bureau : ' + (e && e.message ? e.message : e));
+    try { console.error('[notePinToDesktop]', e); } catch(_){}
+   }
+  };
+
   function mdToHtml(md) {
     return md
       .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
@@ -7674,7 +7841,7 @@
     const iconEl = e.target.closest('.desktop-icon');
     if (iconEl) {
       const app = apps.find(a => a.id === iconEl.dataset.id);
-      showIconCtxMenu(e, iconEl.dataset.id, app && app.type === 'module');
+      showIconCtxMenu(e, iconEl.dataset.id, app && app.type === 'module', app && app.type === 'htmlnote');
     } else {
       closeIconCtxMenu();
       const menu = document.getElementById('context-menu');
@@ -7756,7 +7923,7 @@
   function closeContextMenu() { document.getElementById('context-menu').style.display = 'none'; }
 
   // ── Icon right-click context menu ────────────────────────────────────────
-  function showIconCtxMenu(e, appId, isModule) {
+  function showIconCtxMenu(e, appId, isModule, isHtmlNote) {
     closeContextMenu();
     iconCtxId = appId;
     const menu = document.getElementById('icon-ctx-menu');
@@ -7764,13 +7931,16 @@
     const delEl  = document.getElementById('ictx-del');
     const shareEl= document.getElementById('ictx-share');
     const sepMod = document.getElementById('ictx-sep-mod');
+    const manageable = isModule || isHtmlNote; /* supprimable / icône modifiable */
+    const iconEl = document.getElementById('ictx-icon');
     if (editEl) editEl.style.display = isModule ? 'flex' : 'none';
+    if (iconEl) iconEl.style.display = manageable ? 'flex' : 'none';
     if (shareEl)shareEl.style.display= isModule ? 'flex' : 'none';
-    if (delEl)  delEl.style.display  = isModule ? 'flex' : 'none';
-    if (sepMod) sepMod.style.display = isModule ? 'block' : 'none';
+    if (delEl)  delEl.style.display  = manageable ? 'flex' : 'none';
+    if (sepMod) sepMod.style.display = manageable ? 'block' : 'none';
     menu.style.display = 'block';
     const vw = window.innerWidth, vh = window.innerHeight;
-    const mw = 220, mh = isModule ? 200 : 90;
+    const mw = 220, mh = isModule ? 230 : (manageable ? 150 : 90);
     menu.style.left = Math.min(e.clientX, vw - mw - 6) + 'px';
     menu.style.top  = Math.min(e.clientY, vh - mh - 6) + 'px';
   }
@@ -7783,6 +7953,56 @@
   function iconCtxOpen()  { if (iconCtxId) openApp(iconCtxId);                       closeIconCtxMenu(); }
   function iconCtxEdit()  { if (iconCtxId) openEditModuleModal(iconCtxId);            closeIconCtxMenu(); }
   function iconCtxShare() { if (iconCtxId) vdShareOpen(iconCtxId);                    closeIconCtxMenu(); }
+  function iconCtxIcon()  { if (iconCtxId) openIconPicker(iconCtxId);                 closeIconCtxMenu(); }
+
+  /* ── Sélecteur d'icône (emoji) pour un élément du bureau ── */
+  const ICON_CHOICES = ['📄','📝','🌐','📊','📈','📅','✅','💰','🎯','📌','📁','🗂️','🔧','⚙️','🧩','🚀','💡','🔔','⭐','🔥','🎨','🎵','🎮','📷','🎬','📚','🧠','💻','🖥️','📱','🛒','🏠','🏦','💳','🔒','🌙','☀️','🌍','⚡','❤️','✨','🧾','📦','🗒️','🔗','🧮','🗓️','🏷️'];
+  function openIconPicker(appId) {
+    const app = apps.find(a => a.id === appId);
+    if (!app) return;
+    var ov = document.getElementById('icon-picker');
+    if (!ov) { ov = document.createElement('div'); ov.id = 'icon-picker';
+      ov.onclick = function(e){ if (e.target.id === 'icon-picker') ov.classList.remove('open'); };
+      document.body.appendChild(ov); }
+    var cur = app.icon || '📦';
+    var grid = ICON_CHOICES.map(function(em){
+      return '<button class="ip2-em' + (em===cur?' on':'') + '" data-em="' + em + '">' + em + '</button>';
+    }).join('');
+    ov.innerHTML = '<div class="ip2-panel">'
+      + '<div class="ip2-head">🎨 Choisir une icône — « ' + escHtml(app.name||'') + ' »<button class="ip2-x" id="ip2-close">✕</button></div>'
+      + '<div class="ip2-grid">' + grid + '</div>'
+      + '<div class="ip2-custom"><label>Icône personnalisée (emoji)</label>'
+      +   '<div style="display:flex;gap:8px;"><input id="ip2-input" type="text" maxlength="4" placeholder="ex : 🐱" value="' + escHtml(cur) + '">'
+      +   '<button class="ip2-apply" id="ip2-apply">Appliquer</button></div></div>'
+      + '</div>';
+    ov.classList.add('open');
+    ov.querySelector('#ip2-close').onclick = function(){ ov.classList.remove('open'); };
+    ov.querySelectorAll('.ip2-em').forEach(function(b){
+      b.onclick = function(){ applyIconChange(appId, b.getAttribute('data-em')); ov.classList.remove('open'); };
+    });
+    ov.querySelector('#ip2-apply').onclick = function(){
+      var v = (document.getElementById('ip2-input').value || '').trim();
+      if (v) { applyIconChange(appId, v); ov.classList.remove('open'); }
+    };
+  }
+  function applyIconChange(appId, emoji) {
+    const app = apps.find(a => a.id === appId);
+    if (!app) return;
+    app.icon = emoji;
+    app.faviconUrl = null;       /* l'emoji choisi remplace le favicon éventuel */
+    app.useEmoji = true;
+    if (typeof vdModuleIsShared === 'function' && vdModuleIsShared(app)) {
+      var sh = vdSharedGet().map(function(m){ if (m.id===appId){ m.icon=emoji; m.faviconUrl=null; } return m; });
+      vdSharedSet(sh);
+    } else {
+      saveModules();
+    }
+    window._vdApps = apps;
+    renderDesktopIcons();
+    if (typeof renderStartMenu === 'function') renderStartMenu();
+    if (typeof renderTaskbarApps === 'function') renderTaskbarApps();
+    notify('🎨 Icône modifiée');
+  }
   function iconCtxDel()   { if (iconCtxId) deleteSingleModule(iconCtxId);             closeIconCtxMenu(); }
 
   function iconCtxHide() {
@@ -13669,6 +13889,7 @@ ctLoad();
         if(w._wxLoad) return '<div class="wg-empty">Chargement…</div>';
         if(w._wx){
           var head='<div class="wg-wx-head"><span class="wg-wx-loc">📍 '+esc(w._wxName||'Ma position')+'</span>'
+            +(w._wxTz!=null?'<span class="wgwx-clock" id="wgwx-clock-'+w.id+'" title="Heure locale'+(w._wxTzName?' ('+esc(w._wxTzName)+')':'')+'">🕐 '+wxLocalTime(w)+'</span>':'')
             +'<span class="wgwx-next" id="wgwx-next-'+w.id+'" title="Temps restant avant l\'actualisation automatique">⟳ '+wxNextText(w)+'</span>'
             +'<button class="wg-wx-edit" data-wxedit="1" title="Changer de lieu">✎</button></div>';
           var cur='<div class="wg-wx"><div class="wg-wx-ic">'+w._wx.ic+'</div>'
@@ -13817,7 +14038,17 @@ ctLoad();
           max:Math.round(dd.temperature_2m_max[i]), min:Math.round(dd.temperature_2m_min[i]) });
       }
     }
+    /* Fuseau horaire du lieu (pour afficher l'heure locale) */
+    w._wxTz = (typeof j.utc_offset_seconds === 'number') ? j.utc_offset_seconds : null;
+    w._wxTzName = j.timezone_abbreviation || j.timezone || '';
     w._wxLoad=false; w._wxErr=''; w._wxEdit=false; w._wxTime=Date.now();
+  }
+  /* Heure locale au lieu concerné (HH:MM) */
+  function wxLocalTime(w){
+    if(!w || w._wxTz==null) return '';
+    var utcMs = Date.now() + (new Date().getTimezoneOffset()*60000);
+    var d = new Date(utcMs + w._wxTz*1000);
+    return ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);
   }
   function wxUrl(lat,lon){
     return 'https://api.open-meteo.com/v1/forecast?latitude='+(+lat).toFixed(3)
@@ -13984,12 +14215,14 @@ ctLoad();
     });
   },1000);
 
-  /* ── Compte à rebours avant l'actualisation météo (mise à jour du badge chaque seconde) ── */
+  /* ── Mise à jour chaque seconde : compte à rebours + heure locale du lieu ── */
   setInterval(function(){
     widgets.forEach(function(w){
       if(w.type!=='weather' || !w._wx) return;
       var el=document.getElementById('wgwx-next-'+w.id);
       if(el) el.textContent='⟳ '+wxNextText(w);
+      var cl=document.getElementById('wgwx-clock-'+w.id);
+      if(cl && w._wxTz!=null) cl.textContent='🕐 '+wxLocalTime(w);
     });
   },1000);
 
@@ -14060,7 +14293,9 @@ ctLoad();
   +'.wg-wx-dmin{font-size:10px;color:rgba(255,255,255,0.45);}'
   +'.wg-wx-head{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:2px;}'
   +'.wgwx-next{font-size:9px;font-weight:700;color:#8aa0ff;background:rgba(102,126,234,0.16);border:1px solid rgba(102,126,234,0.3);border-radius:8px;padding:2px 6px;white-space:nowrap;letter-spacing:.2px;}'
-  +'.wg-wx-loc{font-size:11px;font-weight:600;color:rgba(255,255,255,0.8);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}'
+  +'.wgwx-clock{font-size:9px;font-weight:700;color:#7fe0ff;background:rgba(63,208,255,0.14);border:1px solid rgba(63,208,255,0.3);border-radius:8px;padding:2px 6px;white-space:nowrap;letter-spacing:.2px;}'
+  +'.wg-wx-loc{flex:1;min-width:0;font-size:11px;font-weight:600;color:rgba(255,255,255,0.8);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}'
+  +'.wg-wx-head{flex-wrap:wrap;}'
   +'.wg-wx-edit{flex-shrink:0;width:22px;height:22px;border:none;border-radius:7px;background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.6);font-size:11px;cursor:pointer;}'
   +'.wg-wx-edit:hover{background:rgba(102,126,234,0.4);color:#fff;}'
   +'.wg-wx-empty{display:flex;flex-direction:column;gap:8px;align-items:center;justify-content:center;height:100%;}'
@@ -14181,10 +14416,16 @@ ctLoad();
     b.querySelector('#vsb-hide').disabled = n===0;
   }
 
-  /* ── Double-clic sur le Bureau → bascule le mode sélection libre ── */
+  /* ── Double-clic sur une zone VIDE du bureau → bascule le mode sélection libre ── */
   document.addEventListener('dblclick',function(e){
-    var t=e.target;
-    if(t && (t.id==='desktop' || t.id==='desktop-icons')){
+    var t=e.target; if(!t||!t.closest) return;
+    /* Ignorer si on double-clique sur une icône, une fenêtre, un widget, un menu, la barre… */
+    if (t.closest('.desktop-icon') || t.closest('.window') || t.closest('#taskbar') ||
+        t.closest('#vd-widgets') || t.closest('.wg-card') || t.closest('#context-menu') ||
+        t.closest('#icon-ctx-menu') || t.closest('#fin-panel') || t.closest('#start-menu') ||
+        t.closest('input') || t.closest('textarea') || t.closest('button')) return;
+    /* Zone vide du bureau (le conteneur lui-même ou la couche d'icônes) */
+    if (t.closest('#desktop') || t.id==='desktop' || t.id==='desktop-icons') {
       toggleMode();
     }
   });
