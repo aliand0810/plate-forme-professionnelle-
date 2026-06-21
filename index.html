@@ -12402,6 +12402,11 @@ function ctExportCsv() {
       +     '<input class="fin-input" id="fin-f-note" type="text" placeholder="Optionnel">'
       +   '</div>'
       + '</div>'
+      + '<div class="fin-add-row">'
+      +   '<label class="fin-add-label">Image (lien web) — optionnel</label>'
+      +   '<input class="fin-input" id="fin-f-image" type="text" placeholder="https://… reçu / justificatif" autocomplete="off" autocapitalize="none" spellcheck="false" oninput="finImgPreview()">'
+      +   '<div id="fin-f-imgprev"></div>'
+      + '</div>'
       + instHtml
       + '<div style="display:flex;gap:10px;margin-top:20px;">'
       +   '<button class="fin-edit-cancel" onclick="finCloseAddSheet()">✕ Annuler</button>'
@@ -12409,6 +12414,21 @@ function ctExportCsv() {
       + '</div>'
       + '</div>';
   }
+
+  /* Aperçu de l'image (lien) dans le formulaire */
+  window.finImgPreview = function() {
+    var u = ((document.getElementById('fin-f-image')||{}).value || '').trim();
+    var box = document.getElementById('fin-f-imgprev'); if (!box) return;
+    box.innerHTML = u ? '<img src="'+finEsc(u)+'" alt="" class="fin-img-thumbprev" onerror="this.style.display=\'none\'">' : '';
+  };
+  /* Visionneuse plein écran d'image */
+  window.finImgView = function(url) {
+    var ov = document.getElementById('fin-img-viewer');
+    if (!ov) { ov = document.createElement('div'); ov.id = 'fin-img-viewer';
+      ov.onclick = function(){ ov.classList.remove('open'); }; document.body.appendChild(ov); }
+    ov.innerHTML = '<img src="'+finEsc(url)+'" alt="">';
+    ov.classList.add('open');
+  };
 
   function finBindAddForm() {
     var amtEl = document.getElementById('fin-f-amount');
@@ -12454,6 +12474,8 @@ function ctExportCsv() {
     var cat    = catEl    ? catEl.value                : '';
     var note   = noteEl   ? noteEl.value.trim()        : '';
     var status = statusEl ? statusEl.value             : 'paid';
+    var imageEl= document.getElementById('fin-f-image');
+    var image  = imageEl  ? imageEl.value.trim()       : '';
 
     if (!amount || isNaN(amount) || amount <= 0) {
       finNotify('⚠️ Montant invalide — saisissez un nombre positif');
@@ -12470,6 +12492,7 @@ function ctExportCsv() {
       amount: Math.round(amount * 100) / 100,
       date: date,
       note: note,
+      image: image,
       status: status
     };
 
@@ -12755,6 +12778,12 @@ function ctExportCsv() {
     var sign   = isInc ? '+' : '−';
     var stCls  = isInc ? 'income' : isPaid ? 'paid' : 'pending';
     var stLbl  = isInc ? 'Revenu' : isPay ? 'Mensuel' : isPaid ? 'Payé' : 'En attente';
+    /* Avatar = image si fournie (cliquable), sinon la lettre colorée. Repli sur la lettre si l'image échoue. */
+    var avatar = t.image
+      ? '<div class="fin-tx-avatar fin-tx-avatar-img" title="Voir l\'image" onclick="event.stopPropagation();finImgView(\''+finEsc(t.image)+'\')">'
+        + '<img src="'+finEsc(t.image)+'" alt="" onerror="var d=this.parentElement;d.classList.remove(\'fin-tx-avatar-img\');d.onclick=null;d.style.background=\''+col+'\';d.textContent=\''+init+'\';">'
+        + '</div>'
+      : '<div class="fin-tx-avatar" style="background:'+col+'">'+init+'</div>';
 
     if (isPay) {
       var p = finPayInfo(t);
@@ -12768,7 +12797,7 @@ function ctExportCsv() {
         + ' &nbsp;·&nbsp; ≈ ' + finEur(Math.round(p.monthly*12*100)/100) + '/an'
         + (paidN>0 ? ' &nbsp;·&nbsp; '+paidN+'/'+p.months+' payée'+(paidN>1?'s':'') : '');
       return '<div class="fin-tx-item">'
-        + '<div class="fin-tx-avatar" style="background:'+col+'">'+init+'</div>'
+        + avatar
         + '<div class="fin-tx-info"><div class="fin-tx-label">'+finEsc(t.label||t.category)+'</div>'
         +   '<div class="fin-tx-meta">'+finEsc(t.category)+'&nbsp;·&nbsp;'+finFmtDate(t.date)+(t.note?'&nbsp;·&nbsp;'+finEsc(t.note):'')+metaExtra+'</div></div>'
         + amtBlock
@@ -12780,7 +12809,7 @@ function ctExportCsv() {
     }
 
     return '<div class="fin-tx-item">'
-      + '<div class="fin-tx-avatar" style="background:'+col+'">'+init+'</div>'
+      + avatar
       + '<div class="fin-tx-info"><div class="fin-tx-label">'+finEsc(t.label||t.category)+'</div><div class="fin-tx-meta">'+finEsc(t.category)+'&nbsp;·&nbsp;'+finFmtDate(t.date)+(t.note?'&nbsp;·&nbsp;'+finEsc(t.note):'')+'</div></div>'
       + '<div class="fin-tx-right-block"><div class="fin-tx-amount" style="color:'+amtCol+'">'+sign+finEur(t.amount)+'</div><span class="fin-tx-status '+stCls+'">'+stLbl+'</span></div>'
       + '<div class="fin-tx-actions">'
@@ -12810,6 +12839,7 @@ function ctExportCsv() {
       + payRow
       + '<div class="fin-edit-row" style="margin-top:8px;"><input class="fin-input" id="fin-e-date" type="date" value="'+finEsc(tx.date||finToday())+'"><select class="fin-input" id="fin-e-cat">'+opts+'</select></div>'
       + '<div class="fin-edit-row" style="margin-top:8px;"><select class="fin-input" id="fin-e-status"><option value="paid"'+(tx.status!=='pending'?' selected':'')+'>✅ Payé</option><option value="pending"'+(tx.status==='pending'?' selected':'')+'>⏳ En attente</option></select><input class="fin-input" id="fin-e-note" type="text" value="'+finEsc(tx.note||'')+'" placeholder="Note"></div>'
+      + '<div class="fin-edit-row" style="margin-top:8px;"><input class="fin-input" id="fin-e-image" type="text" value="'+finEsc(tx.image||'')+'" placeholder="Image (lien web) — optionnel" autocapitalize="none" spellcheck="false"></div>'
       + '<div style="display:flex;gap:8px;margin-top:10px;"><button class="fin-edit-cancel" onclick="finCancelEdit()">Annuler</button><button class="fin-submit-btn" style="flex:1;" onclick="finSaveEdit(\''+tx.id+'\')">✓ Enregistrer</button></div>'
       + '</div>';
   }
@@ -12853,9 +12883,11 @@ function ctExportCsv() {
     if (!tx) return;
     var lEl=document.getElementById('fin-e-label'), aEl=document.getElementById('fin-e-amount'),
         dEl=document.getElementById('fin-e-date'),  cEl=document.getElementById('fin-e-cat'),
-        nEl=document.getElementById('fin-e-note'),  sEl=document.getElementById('fin-e-status');
+        nEl=document.getElementById('fin-e-note'),  sEl=document.getElementById('fin-e-status'),
+        imgEl=document.getElementById('fin-e-image');
     var amt = parseFloat(aEl ? aEl.value : '0');
     if (!amt || amt<=0) { finNotify('⚠️ Montant invalide'); return; }
+    if (imgEl) tx.image = imgEl.value.trim();
 
     if (tx.type === 'payment') {
       var mEl     = document.getElementById('fin-e-months');
@@ -13645,7 +13677,17 @@ function ctExportCsv() {
       +'.fin-cat-row:hover{background:rgba(255,255,255,0.04);}'
       +'.fin-home-kpi{transition:transform .15s;}'
       +'.fin-home-kpi:hover{transform:translateY(-2px);}'
-      +'.fin-tx-item,.fin-home-tx-item{transition:background .15s;}';
+      +'.fin-tx-item,.fin-home-tx-item{transition:background .15s;}'
+      /* ══ Image (lien) sur transaction ══ */
+      +'.fin-tx-avatar-img{padding:0!important;overflow:hidden;cursor:pointer;transition:transform .12s;}'
+      +'.fin-tx-avatar-img img{width:100%;height:100%;object-fit:cover;display:block;}'
+      +'.fin-tx-avatar-img:hover{transform:scale(1.08);}'
+      +'.fin-tx-thumb{width:34px;height:34px;border-radius:8px;object-fit:cover;cursor:pointer;flex-shrink:0;border:1px solid rgba(255,255,255,0.15);margin-right:4px;transition:transform .12s;}'
+      +'.fin-tx-thumb:hover{transform:scale(1.12);}'
+      +'.fin-img-thumbprev{margin-top:8px;max-height:110px;max-width:100%;border-radius:10px;border:1px solid rgba(255,255,255,0.12);object-fit:contain;display:block;}'
+      +'#fin-img-viewer{position:fixed;inset:0;z-index:100050;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.85);backdrop-filter:blur(6px);opacity:0;pointer-events:none;transition:opacity .2s;cursor:zoom-out;}'
+      +'#fin-img-viewer.open{opacity:1;pointer-events:auto;}'
+      +'#fin-img-viewer img{max-width:92vw;max-height:92vh;border-radius:12px;box-shadow:0 24px 80px rgba(0,0,0,0.7);}';
     document.head.appendChild(style);
   })();
 
