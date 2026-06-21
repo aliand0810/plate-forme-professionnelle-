@@ -13186,12 +13186,16 @@ function ctExportCsv() {
     var lbl      = finEsc((tx&&tx.label)||(tx&&tx.category)||'Paiement');
     var today    = finToday();
 
+    var catOpts  = finGetCats('payment').map(function(c){ return '<option value="'+finEsc(c)+'"'+((tx&&tx.category)===c?' selected':'')+'>'+finEsc(c)+'</option>'; }).join('');
+    var freqOpts = ['month','sem','year'].map(function(f){ return '<option value="'+f+'"'+(((tx&&tx.freq)||'month')===f?' selected':'')+'>'+finFreqInfo(f).name+'</option>'; }).join('');
+
     var rowsHtml = '';
     items.forEach(function(i,idx){
+      var partial = !i.paid && (+i.paidAmount||0) > 0;
       var overdue = !i.paid && i.dueDate < today;
-      var bgCol   = i.paid?'rgba(16,185,129,0.07)':overdue?'rgba(245,87,79,0.07)':'rgba(255,255,255,0.03)';
-      var statusLbl = i.paid ? '✅ PAYÉ' : overdue ? '⚠️ EN RETARD' : '🔵 À VENIR';
-      var statusCol = i.paid ? '#10b981'           : overdue ? '#f5574f'             : 'rgba(255,255,255,0.4)';
+      var bgCol   = i.paid?'rgba(16,185,129,0.07)':partial?'rgba(245,177,79,0.08)':overdue?'rgba(245,87,79,0.07)':'rgba(255,255,255,0.03)';
+      var statusLbl = i.paid ? '✅ PAYÉ' : partial ? '🟡 PARTIEL' : overdue ? '⚠️ EN RETARD' : '🔵 À VENIR';
+      var statusCol = i.paid ? '#10b981' : partial ? '#f5b14f'    : overdue ? '#f5574f'      : 'rgba(255,255,255,0.4)';
       rowsHtml +=
         '<div style="background:'+bgCol+';border-radius:10px;padding:10px 12px;margin-bottom:6px;">'
         + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">'
@@ -13203,8 +13207,9 @@ function ctExportCsv() {
         +   '<div><label class="fin-add-label">Date d\'échéance</label><input class="fin-input" id="fime-date-'+i.id+'" type="date" value="'+finEsc(i.dueDate||today)+'"'+(i.paid?' disabled':'')+'></div>'
         + '</div>'
         + (!i.paid
-          ? '<div style="margin-top:8px;display:flex;gap:6px;">'
-          +   '<button class="fin-pay-btn" onclick="finPayInst(\''+i.id+'\')">✓ Marquer payé</button>'
+          ? (partial ? '<div style="margin-top:6px;font-size:10px;color:#f5b14f;">Déjà payé '+finEur(i.paidAmount)+' · reste '+finEur(finInstRemaining(i))+'</div>' : '')
+          + '<div style="margin-top:8px;display:flex;gap:6px;">'
+          +   '<button class="fin-pay-btn" onclick="finPayInst(\''+i.id+'\')">💳 '+(partial?'Compléter':'Payer (tout/partie)')+'</button>'
           +   '<button class="fin-type-btn" style="padding:4px 10px;font-size:10px;color:#f5574f;border-color:rgba(245,87,79,0.3);" onclick="finDeleteInst(\''+i.id+'\')">🗑</button>'
           + '</div>'
           : '<div style="margin-top:6px;font-size:10px;color:rgba(255,255,255,0.35);">Payé le '+finFmtDate(i.paidDate||i.dueDate)+'</div>')
@@ -13219,6 +13224,13 @@ function ctExportCsv() {
       +     '<div style="font-size:10px;color:rgba(255,255,255,0.4);margin-top:2px;">Versé '+finEur(paidAmt)+' sur '+finEur(totalAmt)+'</div>'
       +   '</div>'
       + '</div>'
+      /* Paramètres du plan modifiables */
+      + '<div class="fin-add-row"><label class="fin-add-label">Intitulé</label><input class="fin-input" id="fime-label" type="text" value="'+lbl+'"></div>'
+      + '<div class="fin-add-row2">'
+      +   '<div><label class="fin-add-label">Catégorie</label><select class="fin-input" id="fime-cat">'+catOpts+'</select></div>'
+      +   '<div><label class="fin-add-label">Fréquence</label><select class="fin-input" id="fime-freq">'+freqOpts+'</select></div>'
+      + '</div>'
+      + '<div style="font-size:10px;color:rgba(255,255,255,0.35);margin:2px 0 12px;">Changer la fréquence ré-espace les échéances non payées.</div>'
       + rowsHtml
       + '<div style="display:flex;gap:10px;margin-top:14px;">'
       +   '<button class="fin-edit-cancel" style="color:#f5574f;border-color:rgba(245,87,79,0.3);" onclick="finDelInstGroup(\''+pid+'\')">🗑 Supprimer tout</button>'
@@ -13255,15 +13267,32 @@ function ctExportCsv() {
   };
 
   window.finMensuelSaveEdit = function(pid) {
-    var items = finInst.filter(function(i){ return i.parentTx===pid&&!i.paid; });
+    var unpaid = finInst.filter(function(i){ return i.parentTx===pid&&!i.paid; });
     var changed = 0;
-    items.forEach(function(i){
+    unpaid.forEach(function(i){
       var aEl=document.getElementById('fime-amt-'+i.id);
       var dEl=document.getElementById('fime-date-'+i.id);
       if (aEl){ var v=parseFloat(aEl.value); if(v>0){i.amount=Math.round(v*100)/100; changed++;} }
       if (dEl&&dEl.value) i.dueDate=dEl.value;
     });
     var tx=null; for(var j=0;j<finTx.length;j++){if(finTx[j].id===pid){tx=finTx[j];break;}}
+    /* Paramètres du plan : intitulé, catégorie, fréquence */
+    var lblEl=document.getElementById('fime-label'), catEl=document.getElementById('fime-cat'), frEl=document.getElementById('fime-freq');
+    var newLabel = lblEl ? lblEl.value.trim() : (tx&&tx.label);
+    var newCat   = catEl ? catEl.value : (tx&&tx.category);
+    var oldFreq  = (tx&&tx.freq)||'month';
+    var newFreq  = frEl ? frEl.value : oldFreq;
+    if (tx) { tx.label=newLabel||tx.label; tx.category=newCat||tx.category; tx.freq=newFreq; }
+    /* Propage intitulé/catégorie à toutes les échéances */
+    finInst.forEach(function(i){ if(i.parentTx===pid){ i.label=tx?tx.label:i.label; i.category=tx?tx.category:i.category; } });
+    /* Si la fréquence a changé → ré-espacer les échéances NON payées à partir de la 1ʳᵉ non payée */
+    if (newFreq !== oldFreq) {
+      var fdays = finFreqInfo(newFreq).days;
+      var ordered = finInst.filter(function(i){return i.parentTx===pid && !i.paid;})
+                           .sort(function(a,b){ return (a.dueDate||'').localeCompare(b.dueDate||''); });
+      var base = (ordered[0] && ordered[0].dueDate) || finToday();
+      ordered.forEach(function(i,idx){ i.dueDate = finAddDays(base, idx*fdays); });
+    }
     if (tx) {
       var grp = finInst.filter(function(i){return i.parentTx===pid;});
       var tot = Math.round(grp.reduce(function(s,i){return s+i.amount;},0)*100)/100;
@@ -13274,8 +13303,8 @@ function ctExportCsv() {
       tx.amount  = tx.monthly;
     }
     finSaveInst(); finSaveTx();
-    finNotify('✅ '+changed+' mensualité(s) modifiée(s)');
-    finMensuelView='list'; finRender();
+    finNotify('✅ Plan mis à jour'+(changed?' ('+changed+' échéance'+(changed>1?'s':'')+')':''));
+    finMensuelView='list'; finRender(); finUpdateBalance();
   };
 
   function finApplyPayment(id, amt) {
