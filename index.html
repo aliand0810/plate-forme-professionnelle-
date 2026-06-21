@@ -36,7 +36,9 @@
     set: function(k,v){ return _set.call(localStorage, k, v); },
     rem: function(k){ return _rem.call(localStorage, k); }
   };
-  function pid(){ return RAW.get(ACTIVE_KEY) || 'profile-default'; }
+  /* Cache du profil actif pour éviter une lecture localStorage à CHAQUE accès (perf) */
+  var _pidCache = null;
+  function pid(){ if(_pidCache==null) _pidCache = RAW.get(ACTIVE_KEY) || 'profile-default'; return _pidCache; }
   function phys(p,k){ return 'vd_p_' + p + '__' + k; }
 
   /* ── Migration unique : déplace les données existantes vers les espaces de noms ── */
@@ -74,8 +76,14 @@
 
   /* ── Interception (uniquement localStorage ; sessionStorage non affecté) ── */
   proto.getItem = function(k){ return _get.call(this, (this===localStorage && SCOPED[k]) ? phys(pid(), k) : k); };
-  proto.setItem = function(k,v){ return _set.call(this, (this===localStorage && SCOPED[k]) ? phys(pid(), k) : k, v); };
-  proto.removeItem = function(k){ return _rem.call(this, (this===localStorage && SCOPED[k]) ? phys(pid(), k) : k); };
+  proto.setItem = function(k,v){
+    if (this===localStorage && k===ACTIVE_KEY) _pidCache = v; /* invalide le cache au changement de profil */
+    return _set.call(this, (this===localStorage && SCOPED[k]) ? phys(pid(), k) : k, v);
+  };
+  proto.removeItem = function(k){
+    if (this===localStorage && k===ACTIVE_KEY) _pidCache = null;
+    return _rem.call(this, (this===localStorage && SCOPED[k]) ? phys(pid(), k) : k);
+  };
 
   /* Outils exposés pour la gestion des profils */
   window.__vdNsInstalled = true;
@@ -11373,7 +11381,7 @@ const wpSolidColors = ['#0f0c29','#16213e','#0f172a','#1e293b','#312e81','#134e4
 const wpPhotoIds = [1015, 1018, 1036, 1043, 29, 110];
 
 function wpGetImgs() { try { return JSON.parse(localStorage.getItem(WP_IMGS_KEY) || '[]'); } catch(e) { return []; } }
-function wpImgCss(u) { return 'url("' + u + '") center center / cover no-repeat fixed #0f0c29'; }
+function wpImgCss(u) { return 'url("' + u + '") center center / cover no-repeat #0f0c29'; }
 
 function wpApply(css, silent) {
   document.getElementById('desktop').style.background = css;
@@ -14199,6 +14207,7 @@ ctLoad();
 
   /* ── Boucle de rafraîchissement ── */
   setInterval(function(){
+    if(document.hidden || !widgets.length) return;  /* pas de travail si onglet masqué / aucun widget */
     var now=Date.now();
     widgets.forEach(function(w){
       var m=WG[w.type]; if(!m||!m.tick)return;
@@ -14217,6 +14226,7 @@ ctLoad();
 
   /* ── Mise à jour chaque seconde : compte à rebours + heure locale du lieu ── */
   setInterval(function(){
+    if(document.hidden) return;
     widgets.forEach(function(w){
       if(w.type!=='weather' || !w._wx) return;
       var el=document.getElementById('wgwx-next-'+w.id);
