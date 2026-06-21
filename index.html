@@ -26,7 +26,7 @@
     'vd_modules':1,'vd_notes_v2':1,'vd_agenda':1,'vd_filesystem':1,'vd_icon_positions':1,
     'vd_icon_size':1,'vd_tasks':1,'vd_contacts':1,'vd_wallpaper':1,'vd_wallpaper_imgs':1,
     'vd_hidden_icons':1,'vd_widgets':1,'vd_calc_hist':1,'vd_tb_mode':1,'vd_tb_opacity':1,
-    'vd_theme':1,'fin_tx':1,'fin_inst':1,'fin_cfg':1,'fin_goals':1
+    'vd_theme':1,'vd_theme_accent':1,'fin_tx':1,'fin_inst':1,'fin_cfg':1,'fin_goals':1
   };
   var ACTIVE_KEY = 'vd_active_profile';
   var proto = window.Storage.prototype;
@@ -2367,6 +2367,14 @@
     min-width: 78px;
   }
   #tb-github:hover { background:rgba(255,255,255,0.09); }
+  .tb-gh-savebtn {
+    flex-shrink:0; width:30px; height:30px; border:none; border-radius:9px; cursor:pointer;
+    background:linear-gradient(135deg,#43d17a,#06b6d4); color:#fff; font-size:14px;
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:0 0 10px rgba(67,209,122,0.35); transition:transform .12s, filter .12s, box-shadow .12s;
+  }
+  .tb-gh-savebtn:hover { transform:scale(1.08); filter:brightness(1.1); box-shadow:0 0 16px rgba(67,209,122,0.55); }
+  .tb-gh-savebtn:active { transform:scale(0.94); }
   #tb-gh-dot {
     width:7px; height:7px; border-radius:50%;
     background:#555; transition:background .3s; flex-shrink:0;
@@ -2889,6 +2897,63 @@
     --t-active:  rgba(236,72,153,0.17);
   }
 
+  /* ── GRAPHITE ────────────────────────────────────────── */
+  [data-theme="graphite"] {
+    --t-desk:    linear-gradient(135deg,#1e2227 0%,#14171b 55%,#0c0e11 100%);
+    --t-taskbar: rgba(10,12,15,0.95); --t-taskbar-rgb:10,12,15; --t-taskbar-b:rgba(148,163,184,0.22);
+    --t-win:     rgba(20,23,28,0.97); --t-win-b:rgba(148,163,184,0.16);
+    --t-win-sh:  0 8px 44px rgba(0,0,0,0.4);
+    --t-win-hdr: rgba(148,163,184,0.05);
+    --t-start:   rgba(14,16,20,0.97); --t-panel:rgba(14,16,20,0.97); --t-panel-b:rgba(148,163,184,0.2);
+    --t-a1:#94a3b8; --t-a2:#64748b;
+    --t-agrad:   linear-gradient(135deg,#94a3b8 0%,#64748b 100%);
+    --t-aglow:   rgba(148,163,184,0.5);
+    --t-asub:    rgba(148,163,184,0.1); --t-asub-h:rgba(148,163,184,0.22);
+    --t-active:  rgba(148,163,184,0.18);
+  }
+  /* ── RUBIS ───────────────────────────────────────────── */
+  [data-theme="rubis"] {
+    --t-desk:    radial-gradient(ellipse at 70% 20%,#2a0008 0%,#120006 55%,#0a0205 100%);
+    --t-taskbar: rgba(14,1,4,0.95); --t-taskbar-rgb:14,1,4; --t-taskbar-b:rgba(239,68,68,0.28);
+    --t-win:     rgba(20,4,8,0.97); --t-win-b:rgba(239,68,68,0.18);
+    --t-win-sh:  0 8px 44px rgba(239,68,68,0.15);
+    --t-win-hdr: rgba(239,68,68,0.05);
+    --t-start:   rgba(14,1,4,0.97); --t-panel:rgba(14,1,4,0.97); --t-panel-b:rgba(239,68,68,0.24);
+    --t-a1:#ef4444; --t-a2:#b91c1c;
+    --t-agrad:   linear-gradient(135deg,#ef4444 0%,#b91c1c 100%);
+    --t-aglow:   rgba(239,68,68,0.62);
+    --t-asub:    rgba(239,68,68,0.1); --t-asub-h:rgba(239,68,68,0.22);
+    --t-active:  rgba(239,68,68,0.18);
+  }
+  /* ── AMÉTHYSTE ───────────────────────────────────────── */
+  [data-theme="amethyste"] {
+    --t-desk:    radial-gradient(ellipse at 30% 30%,#1e0a35 0%,#100320 55%,#0a0216 100%);
+    --t-taskbar: rgba(12,3,24,0.95); --t-taskbar-rgb:12,3,24; --t-taskbar-b:rgba(168,85,247,0.28);
+    --t-win:     rgba(18,6,32,0.97); --t-win-b:rgba(168,85,247,0.18);
+    --t-win-sh:  0 8px 44px rgba(168,85,247,0.15);
+    --t-win-hdr: rgba(168,85,247,0.05);
+    --t-start:   rgba(12,3,24,0.97); --t-panel:rgba(12,3,24,0.97); --t-panel-b:rgba(168,85,247,0.24);
+    --t-a1:#a855f7; --t-a2:#6d28d9;
+    --t-agrad:   linear-gradient(135deg,#a855f7 0%,#6d28d9 100%);
+    --t-aglow:   rgba(168,85,247,0.6);
+    --t-asub:    rgba(168,85,247,0.1); --t-asub-h:rgba(168,85,247,0.22);
+    --t-active:  rgba(168,85,247,0.18);
+  }
+  /* ── VAPORWAVE ───────────────────────────────────────── */
+  [data-theme="vapor"] {
+    --t-desk:    linear-gradient(135deg,#2b1055 0%,#7597de 100%);
+    --t-taskbar: rgba(20,6,46,0.92); --t-taskbar-rgb:20,6,46; --t-taskbar-b:rgba(255,95,210,0.3);
+    --t-win:     rgba(26,10,54,0.95); --t-win-b:rgba(34,211,238,0.22);
+    --t-win-sh:  0 8px 48px rgba(255,95,210,0.18);
+    --t-win-hdr: rgba(255,95,210,0.06);
+    --t-start:   rgba(20,6,46,0.96); --t-panel:rgba(20,6,46,0.96); --t-panel-b:rgba(34,211,238,0.26);
+    --t-a1:#ff5fd2; --t-a2:#22d3ee;
+    --t-agrad:   linear-gradient(135deg,#ff5fd2 0%,#22d3ee 100%);
+    --t-aglow:   rgba(255,95,210,0.62);
+    --t-asub:    rgba(255,95,210,0.12); --t-asub-h:rgba(255,95,210,0.24);
+    --t-active:  rgba(34,211,238,0.2);
+  }
+
   /* Zone glisser-déposer fond d'écran */
   #wp-drop-zone:hover, #wp-drop-zone.drag-over {
     border-color: var(--t-a1) !important;
@@ -2955,6 +3020,29 @@
   [data-tptheme="ocean"]     .tp-preview::after { background:linear-gradient(90deg,#06b6d4,#3b82f6); box-shadow:0 0 8px rgba(6,182,212,.7); }
   [data-tptheme="sakura"]    .tp-preview { background:radial-gradient(ellipse at 60% 25%,#1a0330,#0d0218); }
   [data-tptheme="sakura"]    .tp-preview::after { background:linear-gradient(90deg,#ec4899,#a855f7); box-shadow:0 0 8px rgba(236,72,153,.7); }
+  [data-tptheme="graphite"]  .tp-preview { background:linear-gradient(135deg,#1e2227,#0c0e11); }
+  [data-tptheme="graphite"]  .tp-preview::after { background:linear-gradient(90deg,#94a3b8,#64748b); box-shadow:0 0 8px rgba(148,163,184,.6); }
+  [data-tptheme="rubis"]     .tp-preview { background:radial-gradient(ellipse at 70% 20%,#2a0008,#0a0205); }
+  [data-tptheme="rubis"]     .tp-preview::after { background:linear-gradient(90deg,#ef4444,#b91c1c); box-shadow:0 0 8px rgba(239,68,68,.7); }
+  [data-tptheme="amethyste"] .tp-preview { background:radial-gradient(ellipse at 30% 30%,#1e0a35,#0a0216); }
+  [data-tptheme="amethyste"] .tp-preview::after { background:linear-gradient(90deg,#a855f7,#6d28d9); box-shadow:0 0 8px rgba(168,85,247,.7); }
+  [data-tptheme="vapor"]     .tp-preview { background:linear-gradient(135deg,#2b1055,#7597de); }
+  [data-tptheme="vapor"]     .tp-preview::after { background:linear-gradient(90deg,#ff5fd2,#22d3ee); box-shadow:0 0 8px rgba(255,95,210,.7); }
+
+  /* Flash dynamique au changement de thème */
+  #theme-flash { position:fixed; inset:0; z-index:8000; pointer-events:none; opacity:0; }
+  #theme-flash.go { animation: themeFlash .6s ease; }
+  @keyframes themeFlash { 0%{opacity:0;} 28%{opacity:.45;} 100%{opacity:0;} }
+
+  /* Couleur d'accent personnalisée */
+  .tp-accent { margin-top:14px; border-top:1px solid rgba(255,255,255,0.08); padding-top:12px; }
+  .tp-accent-label { font-size:11px; font-weight:700; color:rgba(255,255,255,0.5); text-transform:uppercase; letter-spacing:.4px; margin-bottom:9px; }
+  .tp-swatches { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+  .tp-sw { width:26px; height:26px; border-radius:50%; cursor:pointer; border:2px solid rgba(255,255,255,0.15); transition:transform .12s, border-color .12s; }
+  .tp-sw:hover { transform:scale(1.15); }
+  .tp-sw.tp-sw-pick { background:conic-gradient(from 0deg,#ff0080,#ff8a00,#ffe600,#33ff57,#00e0ff,#7a5cff,#ff0080); position:relative; overflow:hidden; }
+  .tp-sw-pick input { position:absolute; inset:-6px; opacity:0; cursor:pointer; }
+  .tp-sw-reset { width:auto; height:26px; border-radius:13px; padding:0 10px; font-size:10px; font-weight:700; color:rgba(255,255,255,0.6); background:rgba(255,255,255,0.06); display:flex; align-items:center; }
 
   /* Bouton thème dans la barre des tâches */
   #tb-theme-btn {
@@ -3240,13 +3328,14 @@
     </div>
   </div>
 
-  <!-- Sauvegarde GitHub (discret) -->
-  <div id="tb-github" class="tb-pod tb-pod-gh" title="Historique des sauvegardes (Ctrl+S)" onclick="ghOpenHistoryPanel()">
-    <div id="tb-gh-dot" class="off"></div>
-    <div class="tb-gh-info">
-      <span id="tb-gh-label">Sync</span>
+  <!-- Sauvegarde -->
+  <div id="tb-github" class="tb-pod tb-pod-gh" title="Sauvegarde">
+    <button id="tb-gh-save" class="tb-gh-savebtn" onclick="ghQuickSave()" title="Sauvegarder maintenant (Ctrl+S)">💾</button>
+    <div class="tb-gh-info" onclick="ghOpenHistoryPanel()" title="Historique des sauvegardes" style="cursor:pointer;">
+      <span id="tb-gh-label">Sauvegarde</span>
       <div class="tb-gh-bar-wrap"><div class="tb-gh-bar-fill" id="tb-gh-bar"></div></div>
     </div>
+    <div id="tb-gh-dot" class="off"></div>
   </div>
 
   <!-- Étincelle + interrupteur -->
@@ -3261,7 +3350,7 @@
   <div class="tp-hdr">
     <div>
       <div class="tp-title">🎨 Thème du bureau</div>
-      <div class="tp-sub">7 ambiances disponibles</div>
+      <div class="tp-sub">11 ambiances + couleur libre</div>
     </div>
     <button class="tp-close" onclick="themeClosePicker()">✕</button>
   </div>
@@ -3287,6 +3376,24 @@
     <button class="tp-btn" data-tptheme="sakura"    onclick="themeApply('sakura')">
       <div class="tp-preview"></div><div class="tp-label">Sakura</div>
     </button>
+    <button class="tp-btn" data-tptheme="graphite"  onclick="themeApply('graphite')">
+      <div class="tp-preview"></div><div class="tp-label">Graphite</div>
+    </button>
+    <button class="tp-btn" data-tptheme="rubis"     onclick="themeApply('rubis')">
+      <div class="tp-preview"></div><div class="tp-label">Rubis</div>
+    </button>
+    <button class="tp-btn" data-tptheme="amethyste" onclick="themeApply('amethyste')">
+      <div class="tp-preview"></div><div class="tp-label">Améthyste</div>
+    </button>
+    <button class="tp-btn" data-tptheme="vapor"     onclick="themeApply('vapor')">
+      <div class="tp-preview"></div><div class="tp-label">Vaporwave</div>
+    </button>
+  </div>
+
+  <!-- Couleur d'accent personnalisée -->
+  <div class="tp-accent">
+    <div class="tp-accent-label">🎨 Couleur d'accent personnalisée</div>
+    <div class="tp-swatches" id="tp-swatches"></div>
   </div>
 </div>
 
@@ -5296,21 +5403,73 @@
 
   // ====== SYSTÈME DE THÈMES ======
   let _currentTheme = 'cosmos';
+  let _themeReady = false;
+  const TP_SWATCHES = ['#667eea','#ec4899','#ef4444','#f59e0b','#22c55e','#10b981','#06b6d4','#3b82f6','#a855f7','#f43f5e','#14b8a6','#eab308'];
+
+  // ── Effet visuel dynamique au changement ──
+  function themeFlash() {
+    if (!_themeReady) return;
+    let f = document.getElementById('theme-flash');
+    if (!f) { f = document.createElement('div'); f.id = 'theme-flash'; document.body.appendChild(f); }
+    f.style.background = 'radial-gradient(circle at 50% 60%, var(--t-aglow), transparent 72%)';
+    f.classList.remove('go'); void f.offsetWidth; f.classList.add('go');
+  }
+
+  // ── Helpers couleur ──
+  function _hx(h){ h=h.replace('#',''); if(h.length===3)h=h[0]+h[0]+h[1]+h[1]+h[2]+h[2]; return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)]; }
+  function _rgba(hex,a){ var c=_hx(hex); return 'rgba('+c[0]+','+c[1]+','+c[2]+','+a+')'; }
+  function _shade(hex,p){ var c=_hx(hex); var f=p<0?0:255, t=Math.abs(p)/100;
+    return '#'+c.map(function(x){ return Math.round((f-x)*t+x).toString(16).padStart(2,'0'); }).join(''); }
 
   function themeApply(name) {
     _currentTheme = name;
-    // Apply data-theme on <html> so CSS [data-theme] selectors fire
     if (name === 'cosmos') document.documentElement.removeAttribute('data-theme');
     else document.documentElement.setAttribute('data-theme', name);
-    // Persist
     localStorage.setItem('vd_theme', name);
-    // Update picker buttons
+    // Choisir un thème prédéfini efface l'accent personnalisé (sauf pendant l'init)
+    if (_themeReady) { themeClearAccent(); }
     document.querySelectorAll('.tp-btn').forEach(b => {
       b.classList.toggle('tp-active', b.dataset.tptheme === name);
     });
-    // Update taskbar button glow
     const tbBtn = document.getElementById('tb-theme-btn');
     if (tbBtn) tbBtn.classList.toggle('t-active', name !== 'cosmos');
+    themeFlash();
+  }
+
+  // ── Accent personnalisé (n'importe quelle couleur) ──
+  function themeSetAccent(hex) {
+    var s = document.documentElement.style;
+    var h2 = _shade(hex, -22);
+    s.setProperty('--t-a1', hex);
+    s.setProperty('--t-a2', h2);
+    s.setProperty('--t-agrad', 'linear-gradient(135deg,'+hex+' 0%,'+h2+' 100%)');
+    s.setProperty('--t-aglow', _rgba(hex,0.55));
+    s.setProperty('--t-asub', _rgba(hex,0.12));
+    s.setProperty('--t-asub-h', _rgba(hex,0.25));
+    s.setProperty('--t-active', _rgba(hex,0.3));
+    localStorage.setItem('vd_theme_accent', hex);
+    var tbBtn = document.getElementById('tb-theme-btn'); if (tbBtn) tbBtn.classList.add('t-active');
+    renderThemeSwatches();
+    themeFlash();
+  }
+  function themeClearAccent() {
+    var s = document.documentElement.style;
+    ['--t-a1','--t-a2','--t-agrad','--t-aglow','--t-asub','--t-asub-h','--t-active'].forEach(function(v){ s.removeProperty(v); });
+    localStorage.removeItem('vd_theme_accent');
+    renderThemeSwatches();
+  }
+  window.themeSetAccent = themeSetAccent;
+  window.themeClearAccent = themeClearAccent;
+
+  function renderThemeSwatches() {
+    var box = document.getElementById('tp-swatches'); if (!box) return;
+    var cur = localStorage.getItem('vd_theme_accent') || '';
+    var html = TP_SWATCHES.map(function(c){
+      return '<div class="tp-sw" style="background:'+c+(c.toLowerCase()===cur.toLowerCase()?';border-color:#fff':'')+'" onclick="themeSetAccent(\''+c+'\')" title="'+c+'"></div>';
+    }).join('');
+    html += '<div class="tp-sw tp-sw-pick" title="Couleur libre"><input type="color" value="'+(cur||'#667eea')+'" oninput="themeSetAccent(this.value)"></div>';
+    if (cur) html += '<div class="tp-sw tp-sw-reset" onclick="themeClearAccent()" title="Revenir à la couleur du thème">↺ Défaut</div>';
+    box.innerHTML = html;
   }
 
   function themeTogglePicker() {
@@ -5329,8 +5488,19 @@
   }
 
   function themeInit() {
+    _themeReady = false;
     const saved = localStorage.getItem('vd_theme') || 'cosmos';
     themeApply(saved);
+    var acc = localStorage.getItem('vd_theme_accent');
+    if (acc) {
+      var s = document.documentElement.style, h2 = _shade(acc,-22);
+      s.setProperty('--t-a1',acc); s.setProperty('--t-a2',h2);
+      s.setProperty('--t-agrad','linear-gradient(135deg,'+acc+' 0%,'+h2+' 100%)');
+      s.setProperty('--t-aglow',_rgba(acc,0.55)); s.setProperty('--t-asub',_rgba(acc,0.12));
+      s.setProperty('--t-asub-h',_rgba(acc,0.25)); s.setProperty('--t-active',_rgba(acc,0.3));
+    }
+    renderThemeSwatches();
+    _themeReady = true;
   }
 
   // Close picker on outside click
@@ -5424,6 +5594,7 @@
     localStorage.setItem('vd_tb_opacity', val);
     const slider = document.getElementById('tb-opacity-slider');
     if (slider && slider.value != val) slider.value = val;
+    if (typeof ghMarkDirty === 'function') ghMarkDirty();
   }
 
   function setIconSize(val) {
@@ -5432,6 +5603,7 @@
     localStorage.setItem('vd_icon_size', val);
     const slider = document.getElementById('icon-size-slider');
     if (slider && slider.value != val) slider.value = val;
+    if (typeof ghMarkDirty === 'function') ghMarkDirty();
   }
 
   function restoreAppearanceSettings() {
@@ -5469,7 +5641,7 @@
       document.documentElement.style.setProperty('--tb-desktop-bottom', '72px');
     }
 
-    if (!silent) localStorage.setItem('vd_tb_mode', mode);
+    if (!silent) { localStorage.setItem('vd_tb_mode', mode); if (typeof ghMarkDirty === 'function') ghMarkDirty(); }
 
     /* Update settings buttons */
     document.querySelectorAll('.tbm-btn').forEach(function(b){ b.classList.remove('active'); });
@@ -8120,14 +8292,51 @@
   }
 
   // ── Taskbar status dot ───────────────────────────────
+  // Temps relatif depuis la dernière sauvegarde
+  function ghTimeAgo(iso) {
+    if (!iso) return null;
+    var diff = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+    if (diff < 0) diff = 0;
+    if (diff < 10)   return "à l'instant";
+    if (diff < 60)   return 'il y a ' + diff + ' s';
+    if (diff < 3600) return 'il y a ' + Math.floor(diff/60) + ' min';
+    if (diff < 86400)return 'il y a ' + Math.floor(diff/3600) + ' h';
+    try { return 'le ' + new Date(iso).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'}) + ' ' + new Date(iso).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}); } catch(e){ return 'ancienne'; }
+  }
+
   function ghSetStatus(state, label) {
     // state: 'off' | 'syncing' | 'synced' | 'error'
     const dot = document.getElementById('tb-gh-dot');
     const lbl = document.getElementById('tb-gh-label');
-    if (!dot) return;
-    dot.className = state;
-    if (lbl) lbl.textContent = label || 'GitHub';
+    if (dot) dot.className = state;
+    if (lbl) {
+      if (state === 'syncing')      lbl.textContent = 'Sauvegarde…';
+      else if (state === 'error')   lbl.textContent = '⚠ Échec';
+      else if (ghConfig && ghConfig.lastSync) lbl.textContent = ghTimeAgo(ghConfig.lastSync);
+      else                          lbl.textContent = label || 'Sauvegarde';
+    }
   }
+
+  // Rafraîchit l'étiquette « il y a X » périodiquement
+  function ghRefreshTaskbarLabel() {
+    const dot = document.getElementById('tb-gh-dot');
+    if (dot && (dot.className === 'syncing' || dot.className === 'error')) return; // ne pas écraser un état actif
+    const lbl = document.getElementById('tb-gh-label');
+    if (lbl && ghConfig && ghConfig.lastSync) lbl.textContent = ghTimeAgo(ghConfig.lastSync);
+  }
+  setInterval(ghRefreshTaskbarLabel, 30000);
+
+  // Bouton « Sauvegarder maintenant » de la barre des tâches
+  window.ghQuickSave = function() {
+    if (ghConfig && ghConfig.token && ghConfig.owner && ghConfig.repo) {
+      ghSetStatus('syncing', 'Sauvegarde…');
+      ghManualSave();
+    } else {
+      // GitHub non configuré → sauvegarde locale (téléchargement .json)
+      if (typeof exportBackup === 'function') exportBackup();
+      if (typeof notify === 'function') notify('💾 Sauvegarde locale exportée — configurez GitHub dans ⚙️ Paramètres pour la sauvegarde cloud automatique');
+    }
+  };
 
   // ── Settings panel feedback ──────────────────────────
   function ghSetPanelStatus(msg, type) {
@@ -9531,7 +9740,7 @@
 
   const PROFILES_KEY       = 'vd_profiles';
   const ACTIVE_PROFILE_KEY = 'vd_active_profile';
-  const PROFILE_DATA_KEYS  = ['vd_modules','vd_notes_v2','vd_agenda','vd_filesystem','vd_icon_positions','vd_icon_size','vd_tasks','vd_contacts','vd_wallpaper','vd_wallpaper_imgs','vd_hidden_icons','vd_widgets','vd_calc_hist','vd_tb_mode','vd_tb_opacity','vd_theme','fin_tx','fin_inst','fin_cfg','fin_goals'];
+  const PROFILE_DATA_KEYS  = ['vd_modules','vd_notes_v2','vd_agenda','vd_filesystem','vd_icon_positions','vd_icon_size','vd_tasks','vd_contacts','vd_wallpaper','vd_wallpaper_imgs','vd_hidden_icons','vd_widgets','vd_calc_hist','vd_tb_mode','vd_tb_opacity','vd_theme','vd_theme_accent','fin_tx','fin_inst','fin_cfg','fin_goals'];
   const PCM_AVATARS = ['👤','👨','👩','🧑','👨‍💼','👩‍💼','🧑‍💻','👨‍🎨','👩‍🎨','🦸','🧙','🤖','😎','🐱','🐸','🦊','🌟','🏆','⚡','🔥'];
   const PCM_COLORS  = ['#667eea','#ec4899','#f97316','#44d17a','#06b6d4','#f5c542','#a855f7','#f5574f','#64748b','#0ea5e9'];
 
@@ -9546,6 +9755,7 @@
 
   function saveProfiles() {
     localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles));
+    if (typeof ghMarkDirty === 'function') ghMarkDirty();
   }
 
   /* ── Cloisonnement physique actif (voir <head>) ──
@@ -9918,6 +10128,7 @@
 
   function setFullscreenDefault(enabled) {
     localStorage.setItem(FS_PREF_KEY, enabled ? '1' : '0');
+    if (typeof ghMarkDirty === 'function') ghMarkDirty();
     fsPrefActive = enabled;
     if (enabled) {
       document.documentElement.requestFullscreen().catch(() => {
@@ -10674,9 +10885,17 @@ select.fin-input {
 .fin-rav-sub   { font-size:10px; color:rgba(255,255,255,0.32); margin-top:4px; }
 .fin-inst-card {
   background:rgba(255,255,255,0.025); border:1px solid rgba(255,255,255,0.07);
-  border-radius:12px; margin-bottom:10px; overflow:hidden; transition:border-color .15s;
+  border-radius:14px; margin-bottom:10px; overflow:hidden; transition:border-color .15s, background .15s;
+  padding:12px 14px;
 }
-.fin-inst-card:hover { border-color:rgba(255,255,255,0.12); }
+.fin-inst-card:hover { border-color:rgba(255,255,255,0.14); background:rgba(255,255,255,0.04); }
+.fin-inst-card.open { border-color:rgba(102,126,234,0.35); }
+.fin-inst-hdr { display:flex; align-items:center; gap:10px; cursor:pointer; }
+.fin-inst-hdr:hover .fin-inst-label { color:#fff; }
+.fin-inst-chevron { color:rgba(255,255,255,0.4); font-size:14px; flex-shrink:0; transition:transform .25s; }
+.fin-inst-card.open .fin-inst-chevron { transform:rotate(90deg); color:var(--t-a1,#8aa0ff); }
+.fin-inst-details { max-height:0; overflow:hidden; opacity:0; transition:max-height .4s ease, opacity .25s ease, margin-top .25s ease; }
+.fin-inst-card.open .fin-inst-details { max-height:4000px; opacity:1; margin-top:4px; }
 .fin-inst-head { display:flex; align-items:flex-start; padding:12px 14px; gap:10px; border-bottom:1px solid rgba(255,255,255,0.04); }
 .fin-inst-label { flex:1; font-size:13px; font-weight:700; color:#f0f0f8; }
 .fin-inst-meta  { font-size:10px; color:rgba(255,255,255,0.30); margin-top:3px; }
@@ -12465,6 +12684,12 @@ function ctExportCsv() {
   /* ══ ONGLET ÉCHÉANCES — état ══ */
   var finMensuelView    = 'list'; /* 'list' | 'add' | 'edit' */
   var finMensuelEditPid = null;   /* parentTx id en cours d'édition */
+  var finMensuelExpanded = {};    /* pid -> déplié */
+  window.finMensuelToggle = function(pid){
+    finMensuelExpanded[pid] = !finMensuelExpanded[pid];
+    var card = document.getElementById('fin-inst-' + pid);
+    if (card) card.classList.toggle('open', finMensuelExpanded[pid]);
+  };
 
   window.finMensuelGoAdd  = function()   { finMensuelView='add';  finMensuelEditPid=null; finRender(); };
   window.finMensuelGoList = function()   { finMensuelView='list'; finMensuelEditPid=null; finRender(); };
@@ -12537,21 +12762,27 @@ function ctExportCsv() {
       var col         = CAT_COLORS[(tx&&tx.category)||'Autre'] || COL_PAYMENT;
       var lbl         = finEsc((tx&&tx.label)||(tx&&tx.category)||'Paiement');
 
-      html += '<div class="fin-inst-card">'
-        /* En-tête */
-        + '<div class="fin-inst-hdr">'
+      var open = !!finMensuelExpanded[pid];
+      var nextDue = sorted.filter(function(i){ return !i.paid; })[0];
+      html += '<div class="fin-inst-card'+(open?' open':'')+'" id="fin-inst-'+pid+'">'
+        /* En-tête cliquable (résumé toujours visible) */
+        + '<div class="fin-inst-hdr" onclick="finMensuelToggle(\''+pid+'\')">'
         +   '<div class="fin-tx-avatar" style="background:'+col+';width:36px;height:36px;font-size:14px;flex-shrink:0;">'+(lbl.charAt(0))+'</div>'
         +   '<div style="flex:1;min-width:0;">'
         +     '<div class="fin-inst-label">'+lbl+'</div>'
-        +     '<div class="fin-inst-meta" style="font-size:10px;margin-top:2px;">'+finEur(perMonth)+'/mois × '+totalMths+' mois</div>'
+        +     '<div class="fin-inst-meta" style="font-size:10px;margin-top:2px;">'+finEur(perMonth)+'/mois × '+totalMths+' · '+paidCount+'/'+totalMths+' payées'+(nextDue?' · prochaine '+finFmtDate(nextDue.dueDate):'')+'</div>'
         +   '</div>'
         +   '<div style="text-align:right;flex-shrink:0;">'
-        +     '<div class="fin-inst-total">'+finEur(totalAmt)+'</div>'
-        +     '<button class="fin-tx-btn" style="margin-top:4px;font-size:10px;" onclick="finMensuelGoEdit(\''+pid+'\')">✏️ Modifier</button>'
+        +     '<div class="fin-inst-total">'+finEur(remainAmt)+'</div>'
+        +     '<div style="font-size:9px;color:rgba(255,255,255,0.4);">restant</div>'
         +   '</div>'
+        +   '<span class="fin-inst-chevron">▸</span>'
         + '</div>'
-        /* Barre progression */
-        + '<div class="fin-inst-progress" style="margin:10px 0 8px;"><div class="fin-inst-bar" style="width:'+pct+'%"></div></div>'
+        /* Barre progression (toujours visible) */
+        + '<div class="fin-inst-progress" style="margin:9px 0 0;"><div class="fin-inst-bar" style="width:'+pct+'%"></div></div>'
+        /* Détails repliables */
+        + '<div class="fin-inst-details">'
+        + '<div style="display:flex;justify-content:flex-end;margin:10px 0 4px;"><button class="fin-tx-btn" style="font-size:10px;" onclick="finMensuelGoEdit(\''+pid+'\')">✏️ Modifier le plan</button></div>'
         /* Stats */
         + '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:10px;">'
         +   '<div style="background:rgba(16,185,129,0.10);border:1px solid rgba(16,185,129,0.25);border-radius:10px;padding:8px;text-align:center;">'
@@ -12589,7 +12820,7 @@ function ctExportCsv() {
             : '<button class="fin-pay-btn" onclick="finPayInst(\''+i.id+'\')">Payer</button>')
           + '</div>';
       });
-      html += '</div></div>';
+      html += '</div></div></div>';
     });
 
     return html;
@@ -14118,6 +14349,7 @@ ctLoad();
   window.tbToggleLabels=function(on){
     var tb=document.getElementById('taskbar'); if(tb) tb.classList.toggle('tb-nolabels',!on);
     try{ localStorage.setItem('vd_tb_labels', on?'1':'0'); }catch(e){}
+    if(typeof window.ghMarkDirty==='function') window.ghMarkDirty();
   };
 
   function init(){
