@@ -3203,6 +3203,23 @@
   }
   #win-snap-preview.show { opacity: 1; }
 
+  /* ── Dialogue de paiement d'échéance (partiel/total) ── */
+  .fpd-panel {
+    background: linear-gradient(145deg, rgba(18,22,40,0.98), rgba(16,28,24,0.98));
+    border: 1px solid rgba(16,185,129,0.35); border-radius: 18px;
+    width: min(380px, 92vw); overflow: hidden; color: #fff;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.7);
+  }
+  .fpd-head { display: flex; align-items: center; justify-content: space-between; padding: 15px 18px; font-size: 15px; font-weight: 800; border-bottom: 1px solid rgba(255,255,255,0.07); }
+  .fpd-body { padding: 16px 18px; }
+  .fpd-info { font-size: 13px; line-height: 1.6; color: rgba(255,255,255,0.8); margin-bottom: 14px; }
+  .fpd-label { display: block; font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: .4px; margin-bottom: 5px; }
+  .fpd-actions { display: flex; gap: 10px; padding: 0 18px 18px; }
+  .fpd-btn { flex: 1; padding: 11px; border: none; border-radius: 11px; font-size: 13px; font-weight: 700; cursor: pointer; background: rgba(255,255,255,0.08); color: #fff; }
+  .fpd-btn:hover { background: rgba(255,255,255,0.16); }
+  .fpd-btn.prim { background: linear-gradient(135deg, #10b981, #43d17a); color: #062417; }
+  .fpd-btn.prim:hover { filter: brightness(1.1); }
+
   /* ── Sélecteur d'icône (emoji) ── */
   #icon-picker {
     position: fixed; inset: 0; z-index: 10450;
@@ -12198,6 +12215,17 @@ function ctExportCsv() {
     var monthly= (tx.monthly != null) ? tx.monthly : (months>0 ? total/months : (tx.amount||0));
     return { monthly: Math.round(monthly*100)/100, months: months, total: Math.round(total*100)/100 };
   }
+  /* ── Fréquence des paiements ── */
+  var FIN_FREQ = {
+    month: { days:30,  per:'/mois',   name:'Mensuel',    unit:'mois' },
+    sem:   { days:182, per:'/6 mois', name:'Semestriel', unit:'semestres' },
+    year:  { days:365, per:'/an',     name:'Annuel',     unit:'ans' }
+  };
+  function finFreqInfo(f) { return FIN_FREQ[f] || FIN_FREQ.month; }
+  function finPerLabel(tx) { return finFreqInfo(tx && tx.freq).per; }
+  /* Montant déjà payé d'une échéance (gère le partiel) */
+  function finInstPaid(i) { return i.paid ? i.amount : (+i.paidAmount || 0); }
+  function finInstRemaining(i) { return Math.round((i.amount - finInstPaid(i)) * 100) / 100; }
   /* Somme des échéances dont le mois (YYYY-MM) correspond */
   function finInstSumMonth(ym) {
     var s=0; finInst.forEach(function(i){ if(i.dueDate && i.dueDate.slice(0,7)===ym) s+=i.amount; });
@@ -12349,13 +12377,20 @@ function ctExportCsv() {
     var instHtml = '';
     if (showInst) {
       instHtml =
-        '<div class="fin-add-row" style="margin-bottom:6px;">'
-        + '<label class="fin-add-label">Nombre de mois</label>'
-        + '<div style="display:flex;gap:8px;align-items:center;">'
-        +   '<input class="fin-input" id="fin-f-months" type="number" min="1" max="360" value="'+finNbMonths+'" style="width:90px;" oninput="finUpdatePayPreview()">'
-        +   '<span style="font-size:11px;color:rgba(255,255,255,0.45);">échéances mensuelles (~30 j)</span>'
+        '<div class="fin-add-row2" style="margin-bottom:6px;">'
+        + '<div>'
+        +   '<label class="fin-add-label">Fréquence</label>'
+        +   '<select class="fin-input" id="fin-f-freq" onchange="finUpdatePayPreview()">'
+        +     '<option value="month">Tous les mois</option>'
+        +     '<option value="sem">Tous les 6 mois</option>'
+        +     '<option value="year">Tous les ans</option>'
+        +   '</select>'
         + '</div>'
-        + '<div id="fin-pay-preview" style="margin-top:8px;font-size:12px;color:var(--t-a1);font-weight:600;"></div>'
+        + '<div>'
+        +   '<label class="fin-add-label">Nombre d\'échéances</label>'
+        +   '<input class="fin-input" id="fin-f-months" type="number" min="1" max="360" value="'+finNbMonths+'" oninput="finUpdatePayPreview()">'
+        + '</div>'
+        + '<div id="fin-pay-preview" style="grid-column:1 / -1;margin-top:6px;font-size:12px;color:var(--t-a1);font-weight:600;"></div>'
         + '</div>';
     }
 
@@ -12376,7 +12411,7 @@ function ctExportCsv() {
       + '</div>'
       + '<div class="fin-add-row2">'
       +   '<div>'
-      +     '<label class="fin-add-label">'+(showInst?'Montant / mois':'Montant')+'</label>'
+      +     '<label class="fin-add-label">'+(showInst?'Montant / échéance':'Montant')+'</label>'
       +     '<input class="fin-input" id="fin-f-amount" type="number" step="0.01" min="0.01" placeholder="0,00"'+(showInst?' oninput="finUpdatePayPreview()"':'')+'>'
       +   '</div>'
       +   '<div>'
@@ -12442,10 +12477,12 @@ function ctExportCsv() {
     if (!prev) return;
     var monthly = parseFloat((document.getElementById('fin-f-amount')||{}).value) || 0;
     var months  = parseInt((document.getElementById('fin-f-months')||{}).value) || 0;
+    var freq    = (document.getElementById('fin-f-freq')||{}).value || 'month';
+    var fi      = finFreqInfo(freq);
     if (monthly>0 && months>0) {
       var total = Math.round(monthly*months*100)/100;
-      var perYear = Math.round(monthly*12*100)/100;
-      prev.innerHTML = '💳 ' + finEur(monthly) + '/mois × ' + months + ' mois = <strong>' + finEur(total) + '</strong>'
+      var perYear = Math.round(monthly*(365/fi.days)*100)/100; /* équivalent annuel selon la fréquence */
+      prev.innerHTML = '💳 ' + finEur(monthly) + fi.per + ' × ' + months + ' = <strong>' + finEur(total) + '</strong>'
         + ' <span style="color:rgba(255,255,255,0.45);font-weight:400;">(≈ ' + finEur(perYear) + '/an)</span>';
     } else {
       prev.textContent = '';
@@ -12500,19 +12537,23 @@ function ctExportCsv() {
       var monthsEl = document.getElementById('fin-f-months');
       var months   = monthsEl ? (parseInt(monthsEl.value) || 1) : 1;
       finNbMonths  = months;
-      /* Le montant saisi est la MENSUALITÉ. On enregistre la mensualité,
-         le nombre de mois et le total sur la transaction. */
+      var freqEl   = document.getElementById('fin-f-freq');
+      var freq     = freqEl ? freqEl.value : 'month';
+      var fdays    = finFreqInfo(freq).days;
+      /* Le montant saisi est la MENSUALITÉ/échéance. On enregistre le montant par échéance,
+         le nombre d'échéances, le total et la fréquence sur la transaction. */
       var monthly  = Math.round(amount * 100) / 100;
       tx.amount  = monthly;
       tx.monthly = monthly;
       tx.months  = months;
+      tx.freq    = freq;
       tx.total   = Math.round(monthly * months * 100) / 100;
       for (var i = 0; i < months; i++) {
         finInst.push({
           id: finId(), parentTx: tx.id,
           label: tx.label, category: tx.category,
           amount: monthly, image: image,   /* l'image s'applique à toutes les échéances */
-          dueDate: finAddDays(date, i * 30), paid: false
+          dueDate: finAddDays(date, i * fdays), paid: false, paidAmount: 0
         });
       }
       finSaveInst();
@@ -12694,8 +12735,8 @@ function ctExportCsv() {
     var amtHtml, catLine;
     if (isPay) {
       var p = finPayInfo(t);
-      amtHtml = sign+finEur(p.monthly)+'<span style="font-size:9px;font-weight:600;opacity:.7;">/mois</span>';
-      catLine = finEsc(t.category||'')+'&nbsp;·&nbsp;Total '+finEur(p.total)+' · '+p.months+' mois';
+      amtHtml = sign+finEur(p.monthly)+'<span style="font-size:9px;font-weight:600;opacity:.7;">'+finPerLabel(t)+'</span>';
+      catLine = finEsc(t.category||'')+'&nbsp;·&nbsp;Total '+finEur(p.total)+' · '+p.months+'× '+finFreqInfo(t.freq).name.toLowerCase();
     } else {
       amtHtml = sign+finEur(t.amount);
       catLine = finEsc(t.category||'')+'&nbsp;·&nbsp;'+finFmtDate(t.date);
@@ -12793,11 +12834,12 @@ function ctExportCsv() {
       var paidN = finInst.filter(function(i){ return i.parentTx===t.id && i.paid; }).length;
       var amtBlock =
           '<div class="fin-tx-right-block">'
-        +   '<div class="fin-tx-amount" style="color:'+amtCol+'">'+sign+finEur(p.monthly)+'<span style="font-size:10px;font-weight:600;opacity:.7;">/mois</span></div>'
+        +   '<div class="fin-tx-amount" style="color:'+amtCol+'">'+sign+finEur(p.monthly)+'<span style="font-size:10px;font-weight:600;opacity:.7;">'+finPerLabel(t)+'</span></div>'
         +   '<span class="fin-tx-status '+stCls+'">'+stLbl+'</span>'
         + '</div>';
-      var metaExtra = ' &nbsp;·&nbsp; Total ' + finEur(p.total) + ' sur ' + p.months + ' mois'
-        + ' &nbsp;·&nbsp; ≈ ' + finEur(Math.round(p.monthly*12*100)/100) + '/an'
+      var fi = finFreqInfo(t.freq);
+      var metaExtra = ' &nbsp;·&nbsp; Total ' + finEur(p.total) + ' sur ' + p.months + ' × ' + fi.name.toLowerCase()
+        + ' &nbsp;·&nbsp; ≈ ' + finEur(Math.round(p.monthly*(365/fi.days)*100)/100) + '/an'
         + (paidN>0 ? ' &nbsp;·&nbsp; '+paidN+'/'+p.months+' payée'+(paidN>1?'s':'') : '');
       return '<div class="fin-tx-item">'
         + avatar
@@ -12902,13 +12944,14 @@ function ctExportCsv() {
       var paidIns = finInst.filter(function(i){ return i.parentTx===tx.id && i.paid; });
       var others  = finInst.filter(function(i){ return i.parentTx!==tx.id; });
       var slots   = Math.max(months, paidIns.length);
+      var fdays   = finFreqInfo(tx.freq).days;
       var rebuilt = [];
       for (var k=0; k<slots; k++) {
         if (k < paidIns.length) {
           var pi = paidIns[k]; pi.label=label; pi.category=cat; pi.image=tx.image; rebuilt.push(pi);
         } else {
           rebuilt.push({ id:finId(), parentTx:tx.id, label:label, category:cat,
-            amount:monthly, image:tx.image, dueDate:finAddDays(start, k*30), paid:false });
+            amount:monthly, image:tx.image, dueDate:finAddDays(start, k*fdays), paid:false, paidAmount:0 });
         }
       }
       finInst = others.concat(rebuilt);
@@ -13013,15 +13056,14 @@ function ctExportCsv() {
       var items  = byParent[pid];
       var tx     = null; for(var j=0;j<finTx.length;j++){if(finTx[j].id===pid){tx=finTx[j];break;}}
       var sorted = items.slice().sort(function(a,b){ return (a.dueDate||'').localeCompare(b.dueDate||''); });
-      var paidItems   = items.filter(function(i){ return i.paid; });
-      var paidCount   = paidItems.length;
+      var paidCount   = items.filter(function(i){ return i.paid; }).length;
       var totalMths   = items.length;
       var totalAmt    = items.reduce(function(s,i){ return s+i.amount; }, 0);
-      var paidAmt     = paidItems.reduce(function(s,i){ return s+i.amount; }, 0);
-      var remainAmt   = totalAmt - paidAmt;
+      var paidAmt     = Math.round(items.reduce(function(s,i){ return s+finInstPaid(i); }, 0)*100)/100; /* inclut les paiements partiels */
+      var remainAmt   = Math.round((totalAmt - paidAmt)*100)/100;
       var remainCount = totalMths - paidCount;
       var perMonth    = totalMths>0 ? totalAmt/totalMths : 0;
-      var pct         = totalMths>0 ? Math.round(paidCount/totalMths*100) : 0;
+      var pct         = totalAmt>0 ? Math.round(paidAmt/totalAmt*100) : 0; /* progression basée sur le montant */
       var col         = CAT_COLORS[(tx&&tx.category)||'Autre'] || COL_PAYMENT;
       var lbl         = finEsc((tx&&tx.label)||(tx&&tx.category)||'Paiement');
 
@@ -13037,7 +13079,7 @@ function ctExportCsv() {
         +   planAvatar
         +   '<div style="flex:1;min-width:0;">'
         +     '<div class="fin-inst-label">'+lbl+'</div>'
-        +     '<div class="fin-inst-meta" style="font-size:10px;margin-top:2px;">'+finEur(perMonth)+'/mois × '+totalMths+' · '+paidCount+'/'+totalMths+' payées'+(nextDue?' · prochaine '+finFmtDate(nextDue.dueDate):'')+'</div>'
+        +     '<div class="fin-inst-meta" style="font-size:10px;margin-top:2px;">'+finEur(perMonth)+finPerLabel(tx)+' × '+totalMths+' ('+finFreqInfo(tx&&tx.freq).name+') · '+paidCount+'/'+totalMths+' payées'+(nextDue?' · prochaine '+finFmtDate(nextDue.dueDate):'')+'</div>'
         +   '</div>'
         +   '<div style="text-align:right;flex-shrink:0;">'
         +     '<div class="fin-inst-total">'+finEur(remainAmt)+'</div>'
@@ -13072,19 +13114,23 @@ function ctExportCsv() {
         + '<div>';
 
       sorted.forEach(function(i){
+        var partial = !i.paid && (+i.paidAmount||0) > 0;
         var overdue = !i.paid && i.dueDate < today;
-        var iCol = i.paid?'#10b981':overdue?'#f5574f':'rgba(255,255,255,0.7)';
-        var badge = i.paid?'✅':overdue?'⚠️':'🔵';
+        var iCol = i.paid?'#10b981':partial?'#f5b14f':overdue?'#f5574f':'rgba(255,255,255,0.7)';
+        var badge = i.paid?'✅':partial?'🟡':overdue?'⚠️':'🔵';
+        var sub = i.paid&&i.paidDate ? '<div style="font-size:9px;color:rgba(255,255,255,0.3);">Payé le '+finFmtDate(i.paidDate)+'</div>'
+                : partial ? '<div style="font-size:9px;color:#f5b14f;">Payé '+finEur(i.paidAmount)+' · reste '+finEur(finInstRemaining(i))+'</div>'
+                : '';
         html += '<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,0.05);">'
           + '<span style="font-size:12px;">'+badge+'</span>'
           + '<div style="flex:1;">'
           +   '<div style="font-size:11px;font-weight:600;color:'+iCol+';">'+finFmtDate(i.dueDate)+'</div>'
-          +   (i.paid&&i.paidDate?'<div style="font-size:9px;color:rgba(255,255,255,0.3);">Payé le '+finFmtDate(i.paidDate)+'</div>':'')
+          +   sub
           + '</div>'
           + '<div style="font-size:13px;font-weight:700;color:'+iCol+';margin-right:6px;">'+finEur(i.amount)+'</div>'
           + (i.paid
             ? '<button class="fin-pay-btn" style="background:rgba(16,185,129,0.12);color:#10b981;border-color:rgba(16,185,129,0.3);cursor:default;font-size:10px;" disabled>Payé ✓</button>'
-            : '<button class="fin-pay-btn" onclick="finPayInst(\''+i.id+'\')">Payer</button>')
+            : '<button class="fin-pay-btn" onclick="finPayInst(\''+i.id+'\')">'+(partial?'Compléter':'Payer')+'</button>')
           + '</div>';
       });
       html += '</div></div></div>';
@@ -13232,13 +13278,47 @@ function ctExportCsv() {
     finMensuelView='list'; finRender();
   };
 
+  function finApplyPayment(id, amt) {
+    var inst=null;
+    for(var i=0;i<finInst.length;i++){ if(finInst[i].id===id){ inst=finInst[i]; break; } }
+    if (!inst || inst.paid) return;
+    var remaining = finInstRemaining(inst);
+    amt = Math.min(Math.max(0, Math.round((amt||0)*100)/100), remaining);
+    if (amt<=0) { finNotify('⚠️ Montant invalide'); return; }
+    inst.paidAmount = Math.round(((+inst.paidAmount||0)+amt)*100)/100;
+    if (inst.paidAmount >= inst.amount - 0.005) { inst.paid=true; inst.paidDate=finToday(); inst.paidAmount=inst.amount; }
+    finSaveInst(); finRender(); finUpdateBalance();
+    finNotify(inst.paid ? '✅ Échéance soldée ('+finEur(inst.amount)+')'
+                        : '💰 Paiement partiel de '+finEur(amt)+' — reste '+finEur(finInstRemaining(inst)));
+  }
+
   window.finPayInst = function(id) {
     var inst=null;
-    for(var i=0;i<finInst.length;i++){if(finInst[i].id===id){inst=finInst[i];break;}}
-    if (!inst||inst.paid) return;
-    inst.paid=true; inst.paidDate=finToday();
-    finSaveInst(); finRender();
-    finNotify('✅ Mensualité de '+finEur(inst.amount)+' payée');
+    for(var i=0;i<finInst.length;i++){ if(finInst[i].id===id){ inst=finInst[i]; break; } }
+    if (!inst || inst.paid) return;
+    var remaining = finInstRemaining(inst);
+    var already = +inst.paidAmount || 0;
+    var ov = document.getElementById('fin-pay-dialog');
+    if (!ov) { ov = document.createElement('div'); ov.id='fin-pay-dialog'; ov.className='wg-modal';
+      ov.onclick = function(e){ if(e.target.id==='fin-pay-dialog') ov.classList.remove('open'); };
+      document.body.appendChild(ov); }
+    ov.innerHTML = '<div class="fpd-panel">'
+      + '<div class="fpd-head">💳 Payer l\'échéance<button class="wg-x" id="fpd-x">✕</button></div>'
+      + '<div class="fpd-body">'
+      +   '<div class="fpd-info">Échéance du <b>'+finFmtDate(inst.dueDate)+'</b><br>Montant : <b>'+finEur(inst.amount)+'</b>'
+      +     (already>0 ? ' · déjà payé '+finEur(already) : '') + '<br>Restant à payer : <b style="color:#f5b14f">'+finEur(remaining)+'</b></div>'
+      +   '<label class="fpd-label">Montant à payer</label>'
+      +   '<input class="fin-input" id="fpd-amt" type="number" step="0.01" min="0.01" max="'+remaining+'" value="'+remaining.toFixed(2)+'">'
+      + '</div>'
+      + '<div class="fpd-actions">'
+      +   '<button class="fpd-btn" id="fpd-part">Payer ce montant</button>'
+      +   '<button class="fpd-btn prim" id="fpd-full">✓ Tout payer ('+finEur(remaining)+')</button>'
+      + '</div></div>';
+    ov.classList.add('open');
+    ov.querySelector('#fpd-x').onclick    = function(){ ov.classList.remove('open'); };
+    ov.querySelector('#fpd-full').onclick = function(){ ov.classList.remove('open'); finApplyPayment(id, remaining); };
+    ov.querySelector('#fpd-part').onclick = function(){ var v=parseFloat((document.getElementById('fpd-amt')||{}).value)||0; ov.classList.remove('open'); finApplyPayment(id, v); };
+    setTimeout(function(){ var a=document.getElementById('fpd-amt'); if(a){ a.focus(); a.select(); } }, 60);
   };
 
   window.finDeleteInst = function(id) {
