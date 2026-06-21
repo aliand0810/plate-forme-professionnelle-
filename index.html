@@ -12700,8 +12700,11 @@ function ctExportCsv() {
       amtHtml = sign+finEur(t.amount);
       catLine = finEsc(t.category||'')+'&nbsp;·&nbsp;'+finFmtDate(t.date);
     }
+    var avatar = t.image
+      ? '<div class="fin-tx-avatar fin-tx-avatar-img" title="Voir l\'image" onclick="event.stopPropagation();finImgView(\''+finEsc(t.image)+'\')"><img src="'+finEsc(t.image)+'" alt="" onerror="var d=this.parentElement;d.classList.remove(\'fin-tx-avatar-img\');d.onclick=null;d.style.background=\''+col+'\';d.textContent=\''+init+'\';"></div>'
+      : '<div class="fin-tx-avatar" style="background:'+col+'">'+init+'</div>';
     return '<div class="fin-home-tx-item">'
-      + '<div class="fin-tx-avatar" style="background:'+col+'">'+init+'</div>'
+      + avatar
       + '<div class="fin-home-tx-info"><div class="fin-home-tx-name">'+finEsc(t.label||t.category||'—')+'</div><div class="fin-home-tx-cat">'+catLine+'</div></div>'
       + '<div class="fin-home-tx-right"><div class="fin-home-tx-amt" style="color:'+amtCol+'">'+amtHtml+'</div><span class="fin-tx-status '+stCls+'">'+stLbl+'</span></div>'
       + '</div>';
