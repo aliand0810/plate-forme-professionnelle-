@@ -9265,8 +9265,25 @@
       const filePath = '/repos/' + ghConfig.owner + '/' + ghConfig.repo
                      + '/contents/' + ghConfig.filepath + '?ref=' + ghConfig.branch;
       const file = await ghApiGet(filePath);
-      const raw  = decodeURIComponent(escape(atob(file.content.replace(/\n/g,''))));
-      const obj  = JSON.parse(raw);
+      let b64 = (file.content || '').replace(/\s/g, '');
+      // L'API "contents" ne renvoie PAS le contenu des fichiers > 1 Mo (champ vide).
+      // On bascule alors sur l'API "blobs" via le SHA pour récupérer la sauvegarde complète.
+      if (!b64 && file.sha) {
+        const blob = await ghApiGet('/repos/' + ghConfig.owner + '/' + ghConfig.repo + '/git/blobs/' + file.sha);
+        b64 = (blob.content || '').replace(/\s/g, '');
+      }
+      let raw = '';
+      try { raw = b64 ? decodeURIComponent(escape(atob(b64))) : ''; } catch(e) { raw = ''; }
+      if (!raw.trim()) {
+        ghSetPanelStatus('❌ La sauvegarde GitHub est vide. Cliquez sur « Sauvegarder maintenant » pour en créer une, puis réessayez.', 'err');
+        return;
+      }
+      let obj;
+      try { obj = JSON.parse(raw); }
+      catch(e) {
+        ghSetPanelStatus('❌ Sauvegarde illisible (JSON incomplet/corrompu). Refaites une « Sauvegarder maintenant », puis réessayez.', 'err');
+        return;
+      }
       confirmDialog(
         '⬇️ Restaurer depuis GitHub',
         'Cela remplacera vos données locales par la sauvegarde GitHub.\n\nDate de la sauvegarde : ' + (obj.exported || 'inconnue') + '\n\nContinuer ?',
