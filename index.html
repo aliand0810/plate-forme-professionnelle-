@@ -3351,6 +3351,13 @@
   .vd-m2-ok { background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; }
   .vd-m2-ok:hover { filter: brightness(1.1); }
   .vd-m2-pw input:focus { border-color: rgba(102,126,234,0.7); }
+  /* Champ mot de passe avec bouton afficher/masquer */
+  .vd-pw-wrap { position: relative; display: flex; align-items: center; }
+  .vd-pw-wrap > input { flex: 1; width: 100%; padding-right: 42px !important; }
+  .vd-pw-eye { position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+    background: none; border: none; cursor: pointer; font-size: 15px; line-height: 1;
+    padding: 4px; opacity: .65; border-radius: 6px; }
+  .vd-pw-eye:hover { opacity: 1; background: rgba(255,255,255,0.1); }
 
 </style>
 </head>
@@ -3802,8 +3809,11 @@
   <div class="psc-pw-block" id="psc-pw-block">
     <div class="psc-pw-label" id="psc-pw-label">🔒 Mot de passe requis</div>
     <div class="psc-pw-row">
-      <input type="password" class="psc-pw-input" id="psc-pw-input" placeholder="Mot de passe…"
-        onkeydown="if(event.key==='Enter')pscSubmitPassword()">
+      <div class="vd-pw-wrap" style="flex:1;">
+        <input type="password" class="psc-pw-input" id="psc-pw-input" placeholder="Mot de passe…"
+          onkeydown="if(event.key==='Enter')pscSubmitPassword()">
+        <button type="button" class="vd-pw-eye" onclick="vdTogglePw(this)" title="Afficher">👁️</button>
+      </div>
       <button class="psc-pw-submit" onclick="pscSubmitPassword()">→</button>
     </div>
     <div class="psc-pw-error" id="psc-pw-error"></div>
@@ -3838,8 +3848,8 @@
     <div class="pcm-section">
       <div class="pcm-label">Mot de passe (optionnel)</div>
       <div class="pcm-pw-row">
-        <input type="password" class="pcm-input" id="pcm-password"  placeholder="Nouveau mot de passe">
-        <input type="password" class="pcm-input" id="pcm-password2" placeholder="Confirmer">
+        <div class="vd-pw-wrap" style="flex:1;"><input type="password" class="pcm-input" id="pcm-password"  placeholder="Nouveau mot de passe"><button type="button" class="vd-pw-eye" onclick="vdTogglePw(this)" title="Afficher">👁️</button></div>
+        <div class="vd-pw-wrap" style="flex:1;"><input type="password" class="pcm-input" id="pcm-password2" placeholder="Confirmer"><button type="button" class="vd-pw-eye" onclick="vdTogglePw(this)" title="Afficher">👁️</button></div>
       </div>
       <div class="pcm-pw-hint">Si défini, sera demandé à chaque changement de profil.</div>
     </div>
@@ -10501,6 +10511,17 @@
     }).join('');
   }
 
+  // Affiche / masque un champ mot de passe (bouton 👁️ à l'intérieur du champ)
+  function vdTogglePw(btn) {
+    const wrap = btn.closest('.vd-pw-wrap');
+    const inp = wrap ? wrap.querySelector('input') : null;
+    if (!inp) return;
+    if (inp.type === 'password') { inp.type = 'text';  btn.textContent = '🙈'; btn.title = 'Masquer'; }
+    else                         { inp.type = 'password'; btn.textContent = '👁️'; btn.title = 'Afficher'; }
+    inp.focus();
+  }
+  window.vdTogglePw = vdTogglePw;
+
   // Gestion du mot de passe d'un profil : ajouter / modifier / désactiver
   function manageProfilePassword(id) {
     const p = profiles.find(x => x.id === id);
@@ -10520,12 +10541,12 @@
       +   (has
             ? '<div class="vd-m2-note">🔒 Ce profil est protégé. Saisissez le mot de passe actuel pour le modifier ou le désactiver.</div>'
               + '<div class="vd-m2-pw"><label>Mot de passe actuel</label>'
-              + '<input type="password" id="pwmgr-cur" placeholder="••••••••" autocomplete="off"></div>'
+              + '<div class="vd-pw-wrap"><input type="password" id="pwmgr-cur" placeholder="••••••••" autocomplete="off"><button type="button" class="vd-pw-eye" onclick="vdTogglePw(this)" title="Afficher">👁️</button></div></div>'
             : '<div class="vd-m2-note">🔓 Ce profil n\'a pas de mot de passe. Définissez-en un ci-dessous.</div>')
       +   '<div class="vd-m2-pw"><label>' + (has ? 'Nouveau mot de passe' : 'Mot de passe') + '</label>'
-      +     '<input type="password" id="pwmgr-new" placeholder="••••••••" autocomplete="off"></div>'
+      +     '<div class="vd-pw-wrap"><input type="password" id="pwmgr-new" placeholder="••••••••" autocomplete="off"><button type="button" class="vd-pw-eye" onclick="vdTogglePw(this)" title="Afficher">👁️</button></div></div>'
       +   '<div class="vd-m2-pw"><label>Confirmer</label>'
-      +     '<input type="password" id="pwmgr-new2" placeholder="••••••••" autocomplete="off"></div>'
+      +     '<div class="vd-pw-wrap"><input type="password" id="pwmgr-new2" placeholder="••••••••" autocomplete="off"><button type="button" class="vd-pw-eye" onclick="vdTogglePw(this)" title="Afficher">👁️</button></div></div>'
       +   '<div class="vd-m2-err" id="pwmgr-err"></div>'
       + '</div>'
       + '<div class="vd-m2-actions">'
@@ -10589,7 +10610,7 @@
       +   '(applications, finances, notes, agenda, tâches, widgets…) seront <b>définitivement supprimés</b>. Action irréversible.'
       +   (needPw
             ? '<div class="vd-m2-pw"><label>🔒 Mot de passe du profil</label>'
-              + '<input type="password" id="vd-delprof-pw" placeholder="••••••••" autocomplete="off"></div>'
+              + '<div class="vd-pw-wrap"><input type="password" id="vd-delprof-pw" placeholder="••••••••" autocomplete="off"><button type="button" class="vd-pw-eye" onclick="vdTogglePw(this)" title="Afficher">👁️</button></div></div>'
               + '<div class="vd-m2-err" id="vd-delprof-err"></div>'
             : '<div class="vd-m2-note">Ce profil n\'a pas de mot de passe.</div>')
       + '</div>'
