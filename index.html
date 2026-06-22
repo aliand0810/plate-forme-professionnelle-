@@ -13938,6 +13938,7 @@ ctLoad();
     notes:  {icon:'🗒️', name:'Notes',        desc:'Vos notes récentes',               w:250,h:200, tick:30000},
     launch: {icon:'🚀', name:'Accès rapide', desc:'Lancer vos applications',          w:256,h:170, tick:60000},
     weather:{icon:'🌤️', name:'Météo',        desc:'Météo (ville/CP) + prévisions 7 j', w:300,h:252, tick:900000},
+    sales:  {icon:'🛒', name:'Ventes du jour', desc:'CA du jour + objectif (clic = détail)', w:300,h:148, tick:15000},
     sticky: {icon:'📌', name:'Pense-bête',   desc:'Note collante éditable',           w:230,h:200, tick:0}
   };
 
@@ -14014,6 +14015,24 @@ ctLoad();
               +'<div class="wg-fin-bal '+(remaining>=0?'wg-pos':'wg-neg')+'">'+esc(eur(remaining))+'</div>'
               +'<div class="wg-fin-flows"><span class="wg-neg">Payé/mois '+esc(eur(payMonth))+'</span><span class="wg-pos">Rev. '+esc(eur(incMonth))+'</span></div>'
               +'<div class="wg-row-sub" style="text-align:center;color:var(--t-a1,#8aa0ff);font-weight:600;">Voir le détail →</div>'
+              +'</div>';
+      }
+      case 'sales': {
+        var sdat=salesData(w);
+        var sales=sdat.total;
+        var goal=+w.goal||(+sdat.goal||150);
+        var pct=goal>0?Math.min(100,Math.round(sales/goal*100)):0;
+        var srcBadge = sdat.live
+          ? '<span class="wg-sales-src ok" title="Connecté à Covo Pro (même domaine)">🟢 Covo Pro</span>'
+          : (w.apiUrl
+              ? (sdat.error ? '<span class="wg-sales-src err" title="'+esc(sdat.error)+'">⚠ Covo Pro</span>'
+                            : (w._apiLoading ? '<span class="wg-sales-src">⏳ Covo Pro…</span>' : '<span class="wg-sales-src ok">🔗 Covo Pro</span>'))
+              : '<span class="wg-sales-src">Finance</span>');
+        return '<div data-sales="1" style="cursor:pointer;display:flex;flex-direction:column;gap:6px;height:100%;justify-content:center;">'
+              +'<div class="wg-sales-top"><span class="wg-sales-goal">🎯 '+esc(eur(goal))+'</span>'+srcBadge
+              +'<span class="wg-sales-val">'+esc(eur(sales))+' · '+pct+'%</span></div>'
+              +'<div class="wg-sales-barbg"><div class="wg-sales-bar" style="width:'+pct+'%"></div></div>'
+              +'<div class="wg-row-sub" style="text-align:center;color:var(--t-a1,#8aa0ff);font-weight:600;">Voir le détail des ventes →</div>'
               +'</div>';
       }
       case 'notes': {
@@ -14097,6 +14116,13 @@ ctLoad();
     }
     if(w.type==='finance'){
       var ft=b.querySelector('[data-fin]'); if(ft) ft.onclick=function(){ financeDetail(); };
+    }
+    if(w.type==='sales'){
+      var sb=b.querySelector('[data-sales]'); if(sb) sb.onclick=function(){ salesDetail(w); };
+      /* Récupération auto depuis l'API Covo Pro (toutes les ~2 min) */
+      if(w.apiUrl && !w._apiLoading && (!w._apiSales || Date.now()-(w._apiSales.time||0) > 120000)){
+        salesFetch(w, !!w._apiSales);
+      }
     }
     w._last=Date.now();
   }
@@ -14185,6 +14211,144 @@ ctLoad();
     ov.querySelector('#wgfd-close').onclick=function(){ ov.classList.remove('open'); };
     var of=ov.querySelector('#wgfd-open-fin');
     if(of) of.onclick=function(){ ov.classList.remove('open'); if(window.finOpen) window.finOpen(); };
+    ov.classList.add('open');
+  }
+
+  /* ── Source des ventes : API Covo Pro (si configurée) sinon revenus Finance ── */
+  function salesParse(json){
+    var arr = Array.isArray(json) ? json
+            : (json && (json.sales||json.ventes||json.items||json.data||json.results||json.orders)) || [];
+    if(!Array.isArray(arr)) arr=[];
+    var today = todayStr(); var items=[];
+    arr.forEach(function(o){
+      if(o==null || typeof o!=='object') return;
+      var amt  = +(o.amount!=null?o.amount : o.montant!=null?o.montant : o.total!=null?o.total
+               : o.price!=null?o.price : o.prix!=null?o.prix : o.value!=null?o.value : 0) || 0;
+      var date = String(o.date||o.day||o.jour||o.created_at||o.createdAt||o.datetime||o.timestamp||'').slice(0,10);
+      var label= o.label||o.libelle||o.name||o.nom||o.title||o.titre||o.produit||o.product||o.item||'Vente';
+      if(date && date!==today) return;            /* ne garder que le jour */
+      items.push({ label:String(label), amount:amt, date:date||today, note:o.note||o.client||o.customer||o.categorie||o.category||'' });
+    });
+    var total = items.reduce(function(s,i){return s+i.amount;},0);
+    if(!items.length && json && (json.total!=null||json.totalDuJour!=null||json.dayTotal!=null)){
+      total = +(json.total||json.totalDuJour||json.dayTotal) || 0;
+    }
+    return { items:items, total:Math.round(total*100)/100 };
+  }
+  function salesFetch(w, silent){
+    if(!w.apiUrl) return;
+    if(!silent) w._apiLoading=true;
+    fetch(w.apiUrl, {cache:'no-store'})
+      .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+      .then(function(j){ var p=salesParse(j); w._apiSales={items:p.items,total:p.total,time:Date.now(),error:null}; w._apiLoading=false; fill(w); })
+      .catch(function(e){
+        w._apiSales = w._apiSales || {items:[],total:0};
+        w._apiSales.time=Date.now(); w._apiSales.error=String((e&&e.message)||e); w._apiLoading=false; fill(w);
+      });
+  }
+  /* Lecture DIRECTE de Covo Pro — possible uniquement si le Bureau et Covo Pro
+     sont servis depuis le MÊME domaine (ex. aliand0810.github.io), car le
+     navigateur partage alors le stockage local entre les deux applications. */
+  function salesCovoLocal(){
+    var raw;
+    try{ raw = window.localStorage.getItem('covo_sales_history'); }catch(e){ return null; }
+    if(!raw) return null;
+    var arr; try{ arr = JSON.parse(raw); }catch(e){ return null; }
+    if(!Array.isArray(arr)) return null;
+    function loc(d){ d=new Date(d); return isNaN(d)?'':(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')); }
+    var ts=loc(new Date());
+    var PM={cash:'Espèces',cb:'Carte',mixed:'Mixte',credit:'Crédit',ticket:'Ticket resto'};
+    var items=[];
+    arr.forEach(function(s){
+      if(!s || s.cancelled) return;                 /* exclure les tickets annulés */
+      if(loc(s.date)!==ts) return;                   /* uniquement aujourd'hui (heure locale) */
+      var names=(s.items||[]).map(function(it){
+        var q=(+it.quantity||1);
+        var qs=(it.unitType==='kg')?(q+'kg'):(q>1?('×'+q):'');
+        return (it.name||'Article')+(qs?(' '+qs):'');
+      });
+      var label = names.length ? (names.length>2 ? names.slice(0,2).join(', ')+' +'+(names.length-2) : names.join(', '))
+                               : ('Ticket #'+(s.ticketNum||''));
+      var t=new Date(s.date); var hh=isNaN(t)?'':t.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+      var pm=PM[s.method]||s.method||'';
+      items.push({ label:label, amount:+s.total||0, note:[hh,pm].filter(Boolean).join(' · ') });
+    });
+    var total=items.reduce(function(a,i){return a+i.amount;},0);
+    var goal; try{ goal=parseFloat(window.localStorage.getItem('covo_delivery_goal')); }catch(e){}
+    return { total:Math.round(total*100)/100, items:items, source:'Covo Pro', error:null,
+             goal:(isNaN(goal)?null:goal), live:true, count:items.length };
+  }
+  function salesData(w){
+    /* 1) URL d'API explicite (Covo Pro distant) */
+    if(w.apiUrl && w._apiSales){
+      return { total:w._apiSales.total, items:w._apiSales.items||[], source:'Covo Pro', error:w._apiSales.error };
+    }
+    /* 2) Covo Pro sur le même domaine (lecture directe, automatique) */
+    var local=salesCovoLocal();
+    if(local) return local;
+    /* 3) Repli : revenus du jour saisis dans Finance */
+    var tx=rj('fin_tx',[])||[]; var today=todayStr();
+    var items=tx.filter(function(t){return t.type==='income'&&(t.date||'')===today;})
+                .map(function(t){ return {label:t.label||t.category||'Vente', amount:+t.amount||0, note:t.category||t.note||''}; });
+    var total=items.reduce(function(s,i){return s+i.amount;},0);
+    return { total:Math.round(total*100)/100, items:items, source:'Finance', error:null };
+  }
+
+  /* ── Détail des ventes du jour (clic sur le widget Ventes) ── */
+  function salesDetail(w){
+    var today=todayStr();
+    var sdat=salesData(w);
+    var items=(sdat.items||[]).slice().sort(function(a,b){ return (b.amount||0)-(a.amount||0); });
+    var total=sdat.total;
+    var goal=+w.goal||(+sdat.goal||150);
+    var pct=goal>0?Math.min(100,Math.round(total/goal*100)):0;
+    var rows = items.length ? items.map(function(t){
+      return '<div class="wgfd-row"><div class="wgfd-info"><div class="wgfd-lbl">'+esc(t.label||'Vente')+'</div>'
+        +(t.note?'<div class="wgfd-sub">'+esc(t.note)+'</div>':'')+'</div>'
+        +'<div class="wgfd-amt" style="color:#43E97B">+'+esc(eur(+t.amount||0))+'</div></div>';
+    }).join('') : '<div class="wg-empty" style="padding:24px 0;">Aucune vente aujourd\'hui</div>';
+    var dLbl=new Date(today+'T12:00').toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+    var srcLine = sdat.live
+      ? '<div class="wgsd-status ok">🟢 Connecté à Covo Pro — lecture directe (même domaine), '+sdat.count+' vente'+(sdat.count>1?'s':'')+' du jour</div>'
+      : (w.apiUrl
+          ? (sdat.error ? '<div class="wgsd-status err">⚠ Covo Pro : '+esc(sdat.error)+' — repli possible sur Finance</div>'
+                        : '<div class="wgsd-status ok">🔗 Connecté à Covo Pro'+(w._apiSales&&w._apiSales.time?' · maj '+new Date(w._apiSales.time).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}):'')+'</div>')
+          : '<div class="wgsd-status">Source : revenus Finance (non connecté). Astuce : héberge le Bureau sur le même domaine que Covo Pro pour une connexion automatique.</div>');
+
+    var ov=document.getElementById('wg-sales-detail');
+    if(!ov){ ov=document.createElement('div'); ov.id='wg-sales-detail'; ov.className='wg-modal';
+      ov.onclick=function(e){ if(e.target.id==='wg-sales-detail') ov.classList.remove('open'); };
+      document.body.appendChild(ov); }
+    ov.innerHTML='<div class="wgfd-panel">'
+      +'<div class="wgfd-head">🛒 Ventes — '+esc(dLbl)+'<button class="wg-x" id="wgsd-close">✕</button></div>'
+      +'<div class="wgfd-totals">'
+      +  '<div class="wgfd-total-big"><span>Ventes du jour</span><strong style="color:#43E97B">'+esc(eur(total))+'</strong></div>'
+      +  '<div class="wgfd-split"><span>🎯 Objectif '+esc(eur(goal))+'</span><span>'+pct+'% atteint</span></div>'
+      +  '<div class="wgsd-bar-wrap"><div class="wgsd-bar" style="width:'+pct+'%"></div></div>'
+      +  '<div class="wgsd-goalrow"><label>Objectif du jour (€)</label>'
+      +    '<input id="wgsd-goal" type="number" min="0" step="10" value="'+goal+'"><button id="wgsd-save" class="wgfd-open">OK</button></div>'
+      +'</div>'
+      +'<div class="wgsd-api">'
+      +  '<label>🔗 URL de l\'API Covo Pro (JSON)</label>'
+      +  '<div style="display:flex;gap:6px;"><input id="wgsd-api" type="text" placeholder="https://… renvoie les ventes du jour" value="'+esc(w.apiUrl||'')+'" autocomplete="off" spellcheck="false">'
+      +  '<button id="wgsd-connect" class="wgfd-open">Connecter</button></div>'
+      +  srcLine
+      +'</div>'
+      +'<div class="wgfd-list">'+rows+'</div>'
+      +'<div class="wgfd-foot"><span class="wgfd-count">'+items.length+' vente'+(items.length>1?'s':'')+'</span>'
+      +  '<button class="wgfd-open" id="wgsd-refresh">↻ Actualiser</button></div>'
+      +'</div>';
+    ov.querySelector('#wgsd-close').onclick=function(){ ov.classList.remove('open'); };
+    var gi=ov.querySelector('#wgsd-goal'), gs=ov.querySelector('#wgsd-save');
+    function applyGoal(){ var v=parseFloat(gi.value); if(!isNaN(v)&&v>=0){ w.goal=v; save(); fill(w); salesDetail(w); } }
+    if(gs) gs.onclick=applyGoal;
+    if(gi) gi.onkeydown=function(e){ if(e.key==='Enter') applyGoal(); };
+    var ai=ov.querySelector('#wgsd-api'), ac=ov.querySelector('#wgsd-connect');
+    function applyApi(){ var u=(ai.value||'').trim(); w.apiUrl=u; w._apiSales=null; save(); if(u) salesFetch(w,false); fill(w); setTimeout(function(){ salesDetail(w); },120); }
+    if(ac) ac.onclick=applyApi;
+    if(ai) ai.onkeydown=function(e){ if(e.key==='Enter') applyApi(); };
+    var rf=ov.querySelector('#wgsd-refresh');
+    if(rf) rf.onclick=function(){ if(w.apiUrl){ salesFetch(w,false); setTimeout(function(){ salesDetail(w); },120); } else { salesDetail(w); } };
     ov.classList.add('open');
   }
 
@@ -14428,6 +14592,24 @@ ctLoad();
   +'.wg-fin-label{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:rgba(255,255,255,0.45);text-align:center;}'
   +'.wg-fin-bal{font-size:26px;font-weight:800;text-align:center;}'
   +'.wg-fin-flows{display:flex;justify-content:space-around;font-size:12px;font-weight:700;margin-top:2px;}'
+  +'.wg-sales-top{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;}'
+  +'.wg-sales-goal{font-weight:700;color:rgba(255,255,255,0.8);}'
+  +'.wg-sales-val{font-weight:800;color:#43E97B;}'
+  +'.wg-sales-barbg{height:12px;border-radius:7px;background:rgba(255,255,255,0.1);overflow:hidden;}'
+  +'.wg-sales-bar{height:100%;border-radius:7px;background:linear-gradient(90deg,#f59e0b,#f97316);box-shadow:0 0 10px rgba(245,158,11,0.5);transition:width .5s cubic-bezier(.34,1.2,.64,1);}'
+  +'.wgsd-bar-wrap{height:10px;border-radius:6px;background:rgba(255,255,255,0.1);overflow:hidden;margin-top:10px;}'
+  +'.wgsd-bar{height:100%;border-radius:6px;background:linear-gradient(90deg,#f59e0b,#43E97B);transition:width .5s;}'
+  +'.wgsd-goalrow{display:flex;gap:8px;align-items:center;margin-top:10px;}'
+  +'.wgsd-goalrow label{font-size:11px;color:rgba(255,255,255,0.55);flex:1;}'
+  +'.wgsd-goalrow input{width:90px;padding:7px 9px;border-radius:9px;border:1px solid rgba(255,255,255,0.14);background:rgba(0,0,0,0.25);color:#fff;font-size:13px;outline:none;}'
+  +'.wg-sales-src{font-size:8.5px;font-weight:700;color:rgba(255,255,255,0.5);background:rgba(255,255,255,0.07);border-radius:6px;padding:1px 6px;}'
+  +'.wg-sales-src.ok{color:#7fe0ff;background:rgba(63,208,255,0.15);}'
+  +'.wg-sales-src.err{color:#ff8b85;background:rgba(245,87,79,0.15);}'
+  +'.wgsd-api{padding:12px 18px;border-bottom:1px solid rgba(255,255,255,0.07);}'
+  +'.wgsd-api label{display:block;font-size:10px;font-weight:700;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;}'
+  +'.wgsd-api input{flex:1;min-width:0;padding:8px 10px;border-radius:9px;border:1px solid rgba(255,255,255,0.14);background:rgba(0,0,0,0.25);color:#fff;font-size:12px;outline:none;}'
+  +'.wgsd-status{font-size:11px;margin-top:8px;color:rgba(255,255,255,0.5);}'
+  +'.wgsd-status.ok{color:#7fe0ff;} .wgsd-status.err{color:#ff8b85;}'
   +'.wg-pos{color:#4fd18b;}.wg-neg{color:#f5574f;}'
   +'.wg-note{border-left:2px solid rgba(102,126,234,0.6);padding-left:7px;}'
   +'.wg-note-t{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}'
