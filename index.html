@@ -12258,7 +12258,8 @@ function ctExportCsv() {
     pill.className   = 'fin-balance-pill ' + (net>=0 ? 'fin-balance-pos' : 'fin-balance-neg');
 
     /* Montant restant sur les comptes = solde réalisé global
-       (tous revenus − toutes dépenses simples − échéances déjà échues) */
+       (tous revenus − dépenses simples − échéances RÉELLEMENT payées).
+       Une échéance non réglée (ou partielle) n'est PAS déduite tant qu'elle n'est pas payée. */
     var totalPill = document.getElementById('fin-balance-total');
     if (totalPill) {
       var tInc = 0, tExp = 0;
@@ -12267,7 +12268,8 @@ function ctExportCsv() {
         else if (t.type==='payment') { /* via échéances */ }
         else                         tExp += t.amount;
       });
-      var remaining = tInc - tExp - finInstSumUpTo(finToday());
+      var paidInst = finInst.reduce(function(s,i){ return s + finInstPaid(i); }, 0);
+      var remaining = Math.round((tInc - tExp - paidInst) * 100) / 100;
       totalPill.textContent = finBalanceHidden ? '••••••' : finEur(remaining);
       totalPill.className   = 'fin-balance-pill ' + (remaining>=0 ? 'fin-balance-pos' : 'fin-balance-neg');
     }
@@ -14005,7 +14007,7 @@ ctLoad();
         /* Montant restant sur les comptes = tous revenus − dépenses simples − échéances échues */
         var inc=0,exp=0;
         tx.forEach(function(t){ var a=+t.amount||0; if(t.type==='income')inc+=a; else if(t.type!=='payment')exp+=a; });
-        var paid=inst.filter(function(i){return i.dueDate&&i.dueDate<=today;}).reduce(function(s,i){return s+(+i.amount||0);},0);
+        var paid=inst.reduce(function(s,i){return s+(i.paid?(+i.amount||0):(+i.paidAmount||0));},0);
         var remaining=inc-exp-paid;
         return '<div data-fin="1" style="cursor:pointer;display:flex;flex-direction:column;gap:3px;height:100%;">'
               +'<div class="wg-fin-label">Restant sur les comptes</div>'
@@ -14738,8 +14740,7 @@ ctLoad();
       var inst=JSON.parse(localStorage.getItem('fin_inst')||'[]');
       var cfg=JSON.parse(localStorage.getItem('fin_cfg')||'{}');
       var inc=0,exp=0; tx.forEach(function(t){ var a=+t.amount||0; if(t.type==='income')inc+=a; else if(t.type!=='payment')exp+=a; });
-      var today=new Date().toISOString().slice(0,10);
-      var paid=inst.filter(function(i){return i.dueDate&&i.dueDate<=today;}).reduce(function(s,i){return s+(+i.amount||0);},0);
+      var paid=inst.reduce(function(s,i){return s+(i.paid?(+i.amount||0):(+i.paidAmount||0));},0);
       el.textContent='Portefeuille '+(cfg.currency||'EUR')+' '+compact(inc-exp-paid);
     }catch(e){ el.textContent='Portefeuille —'; }
   };
