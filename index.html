@@ -1879,6 +1879,33 @@
     line-height: 1.5;
   }
 
+  /* Sauvegardes restaurables (max 3) */
+  .vd-bk-box { margin-top:16px; padding:14px; border-radius:12px;
+    background:rgba(127,160,255,0.07); border:1px solid rgba(127,160,255,0.18); }
+  .vd-bk-head { display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;
+    font-size:13px; font-weight:700; color:var(--t-txt,#e8ecff); }
+  .vd-bk-max { font-size:10px; font-weight:700; color:#7fa0ff; background:rgba(127,160,255,0.16);
+    border-radius:6px; padding:1px 7px; margin-left:4px; }
+  .vd-bk-create { border:none; cursor:pointer; font-size:12px; font-weight:600; color:#fff;
+    background:linear-gradient(135deg,#667eea,#764ba2); border-radius:8px; padding:7px 12px; }
+  .vd-bk-create:hover { filter:brightness(1.08); }
+  .vd-bk-hint { color:#7c84a8; font-size:11px; margin:8px 0 10px; line-height:1.5; }
+  .vd-bk-list { display:flex; flex-direction:column; gap:8px; }
+  .vd-bk-empty { color:#7c84a8; font-size:12px; font-style:italic; padding:6px 2px; }
+  .vd-bk-entry { display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:9px 11px; border-radius:10px; background:rgba(255,255,255,0.05);
+    border:1px solid rgba(255,255,255,0.08); }
+  .vd-bk-meta { min-width:0; }
+  .vd-bk-when { font-size:12.5px; font-weight:600; color:var(--t-txt,#e8ecff); display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+  .vd-bk-badge { font-size:9px; font-weight:700; color:#43E97B; background:rgba(67,233,123,0.15); border-radius:5px; padding:1px 6px; }
+  .vd-bk-sub { font-size:10.5px; color:#7c84a8; margin-top:2px; }
+  .vd-bk-actions { display:flex; gap:6px; flex-shrink:0; }
+  .vd-bk-btn { border:1px solid rgba(255,255,255,0.14); background:rgba(0,0,0,0.2); color:#e8ecff;
+    border-radius:8px; padding:6px 9px; font-size:11.5px; font-weight:600; cursor:pointer; white-space:nowrap; }
+  .vd-bk-btn.restore { color:#7fe0ff; border-color:rgba(63,208,255,0.3); background:rgba(63,208,255,0.12); }
+  .vd-bk-btn.del { color:#ff8b85; border-color:rgba(245,87,79,0.3); background:rgba(245,87,79,0.1); }
+  .vd-bk-btn:hover { filter:brightness(1.15); }
+
   ::-webkit-scrollbar { width: 5px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 3px; }
@@ -5354,6 +5381,15 @@
               Exporte vos modules, dossiers et notes dans un fichier .json.<br>
               Pour restaurer, importez ce même fichier.
             </div>
+
+            <div class="vd-bk-box">
+              <div class="vd-bk-head">
+                <span>🕘 Sauvegardes restaurables <span class="vd-bk-max">3 max</span></span>
+                <button class="vd-bk-create" onclick="vdSnapshotCreate()">＋ Créer une sauvegarde</button>
+              </div>
+              <div class="vd-bk-hint">Les 3 dernières sont conservées. Cliquez sur « Restaurer » pour revenir à l'état correspondant.</div>
+              <div id="vd-bk-list" class="vd-bk-list"><div class="vd-bk-empty">Aucune sauvegarde restaurable pour le moment.</div></div>
+            </div>
           </div>
 
           <div class="gh-settings-block">
@@ -5658,6 +5694,8 @@
     ghFillForm();
     // Populate profile list
     renderSettingsProfiles();
+    // Populate restorable backups list
+    try { if (window.vdSnapshotRender) window.vdSnapshotRender(); } catch(e){}
     // Sync fullscreen toggle
     const fsToggle = document.getElementById('fs-default-toggle');
     if (fsToggle) fsToggle.checked = localStorage.getItem(FS_PREF_KEY) === '1';
@@ -7675,7 +7713,7 @@
   // ====================================================
   //  IMPORT / EXPORT SAUVEGARDE
   // ====================================================
-  function exportBackup() {
+  function vdBuildBackupPayload() {
     saveCurrentNote(true);
     // Snapshot the current profile before exporting
     saveCurrentProfileData();
@@ -7687,7 +7725,7 @@
       if (raw) { try { profilesData[p.id] = JSON.parse(raw); } catch(e) {} }
     });
 
-    const data = {
+    return {
       version:      '3.2',
       app:          'Bureau Virtuel Pro',
       exportDate:   new Date().toISOString(),
@@ -7712,12 +7750,260 @@
         profilesData: profilesData
       }
     };
+  }
 
+  // Applique une sauvegarde (objet payload) et renvoie la liste des changements.
+  function vdApplyBackupPayload(data) {
+    const changes = [];
+
+    // ── Restauration générique (finances, widgets, futurs projets…) ──
+    if (data.allData) { vdRestoreAllData(data.allData); changes.push('données complètes'); }
+
+    // ── Modules ──
+    if (data.modules && Array.isArray(data.modules)) {
+      data.modules.forEach(m => {
+        if (!apps.find(a => a.id === m.id)) { apps.push(m); changes.push(`module "${m.name}"`); }
+      });
+      saveModules();
+    }
+
+    // ── Notes ──
+    if (data.notes) {
+      notesData = data.notes;
+      if (!notesData.folders) notesData.folders = [];
+      if (!notesData.notes)   notesData.notes   = [];
+      saveNotesData();
+      changes.push(`${notesData.notes.length} note(s) / ${notesData.folders.length} dossier(s)`);
+    }
+
+    // ── Fond d'écran ──
+    if (data.wallpaper) {
+      document.getElementById('desktop').style.background = data.wallpaper;
+      try { localStorage.setItem('vd_wallpaper', data.wallpaper); } catch(e) {}
+    }
+
+    // ── Agenda ──
+    if (data.agenda && Array.isArray(data.agenda)) {
+      localStorage.setItem('vd_agenda', JSON.stringify(data.agenda));
+      changes.push(`${data.agenda.length} événement(s) agenda`);
+    }
+
+    // ── Tâches ──
+    if (data.tasks && Array.isArray(data.tasks)) {
+      localStorage.setItem('vd_tasks', JSON.stringify(data.tasks));
+      if (typeof tkLoad === 'function') { tkLoad(); if (openWindows['tasks']) tkRender(); }
+      changes.push(`${data.tasks.length} tâche(s)`);
+    }
+
+    // ── Contacts ──
+    if (data.contacts && Array.isArray(data.contacts)) {
+      localStorage.setItem('vd_contacts', JSON.stringify(data.contacts));
+      if (typeof ctLoad === 'function') { ctLoad(); if (openWindows['contacts']) ctRender(); }
+      changes.push(`${data.contacts.length} contact(s)`);
+    }
+
+    // ── Icônes masquées ──
+    if (data.hiddenIcons && typeof data.hiddenIcons === 'object') {
+      localStorage.setItem('vd_hidden_icons', JSON.stringify(data.hiddenIcons));
+      hiddenApps = data.hiddenIcons;
+      renderDesktopIcons();
+    }
+
+    // ── Filesystem ──
+    if (data.filesystem && typeof data.filesystem === 'object') {
+      localStorage.setItem('vd_filesystem', JSON.stringify(data.filesystem));
+      const count = Object.keys(data.filesystem).length;
+      changes.push(`${count} fichier(s)`);
+    }
+
+    // ── Positions des icônes ──
+    if (data.iconPositions && typeof data.iconPositions === 'object') {
+      localStorage.setItem('vd_icon_positions', JSON.stringify(data.iconPositions));
+    }
+
+    // ── Plein écran par défaut ──
+    if (typeof data.fullscreenDefault === 'boolean') {
+      localStorage.setItem(FS_PREF_KEY, data.fullscreenDefault ? '1' : '0');
+    }
+
+    // ── Profils ──
+    if (data.profiles && data.profiles.list && Array.isArray(data.profiles.list)) {
+      const importedProfiles = data.profiles.list;
+      let added = 0;
+      importedProfiles.forEach(p => {
+        if (!profiles.find(x => x.id === p.id)) { profiles.push(p); added++; }
+      });
+      if (added > 0) { saveProfiles(); changes.push(`${added} profil(s)`); }
+      if (data.profiles.profilesData) {
+        Object.entries(data.profiles.profilesData).forEach(([id, snap]) => {
+          localStorage.setItem('vd_profile_data_' + id, JSON.stringify(snap));
+        });
+      }
+      if (data.profiles.activeId && !activeProfileId) {
+        activeProfileId = data.profiles.activeId;
+        localStorage.setItem(ACTIVE_PROFILE_KEY, activeProfileId);
+      }
+      updateSmProfileBadge();
+      const sl = document.getElementById('settings-profiles-list');
+      if (sl) renderSettingsProfiles();
+    }
+
+    // ── Rechargement UI ──
+    renderDesktopIcons();
+    renderStartMenu();
+    loadIconPositions();
+    try { if (typeof window.finInit === 'function') window.finInit(); } catch(e){}
+    try { if (typeof window.vdWidgetsReload === 'function') window.vdWidgetsReload(); } catch(e){}
+
+    if (openWindows['notes']) {
+      const body = document.getElementById('winbody-notes');
+      if (body) { body.innerHTML = getBuiltinContent('notes'); initNotes(); }
+    }
+
+    return changes;
+  }
+
+  function exportBackup() {
+    const data = vdBuildBackupPayload();
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     downloadBlob(blob, `bureau-virtuel-sauvegarde-${new Date().toISOString().split('T')[0]}.json`);
+    try { vdSnapshotPush('Export manuel'); } catch(e) {}
     closeContextMenu();
     notify('💾 Sauvegarde complète exportée !');
   }
+
+  // ============================================================
+  //  HISTORIQUE DE SAUVEGARDES RESTAURABLES (max 3) — IndexedDB
+  //  Stocké dans IndexedDB (et non localStorage) pour ne jamais
+  //  saturer le quota, même avec des données volumineuses.
+  // ============================================================
+  const VDB_DB = 'vd_backups_db', VDB_STORE = 'snapshots', VDB_MAX = 3;
+  function vdbOpen() {
+    return new Promise((resolve, reject) => {
+      let req;
+      try { req = indexedDB.open(VDB_DB, 1); } catch(e) { reject(e); return; }
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        if (!db.objectStoreNames.contains(VDB_STORE)) db.createObjectStore(VDB_STORE, { keyPath: 'ts' });
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror   = () => reject(req.error);
+    });
+  }
+  async function vdbAll() {
+    const db = await vdbOpen();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(VDB_STORE, 'readonly');
+      const rq = tx.objectStore(VDB_STORE).getAll();
+      rq.onsuccess = () => resolve((rq.result || []).sort((a, b) => b.ts - a.ts));
+      rq.onerror   = () => reject(rq.error);
+    });
+  }
+  async function vdbPut(rec) {
+    const db = await vdbOpen();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(VDB_STORE, 'readwrite');
+      tx.objectStore(VDB_STORE).put(rec);
+      tx.oncomplete = () => resolve();
+      tx.onerror    = () => reject(tx.error);
+    });
+  }
+  async function vdbDelete(ts) {
+    const db = await vdbOpen();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(VDB_STORE, 'readwrite');
+      tx.objectStore(VDB_STORE).delete(ts);
+      tx.oncomplete = () => resolve();
+      tx.onerror    = () => reject(tx.error);
+    });
+  }
+
+  // Crée une sauvegarde restaurable et ne conserve que les VDB_MAX plus récentes.
+  async function vdSnapshotPush(label) {
+    try {
+      const payload = vdBuildBackupPayload();
+      const json    = JSON.stringify(payload);
+      const rec = { ts: Date.now(), label: label || 'Sauvegarde', size: json.length, payload };
+      await vdbPut(rec);
+      const all = await vdbAll();                       // déjà triées (récent → ancien)
+      for (let i = VDB_MAX; i < all.length; i++) { await vdbDelete(all[i].ts); }
+      if (document.getElementById('vd-bk-list')) vdSnapshotRender();
+    } catch (e) { console.warn('vdSnapshotPush', e); }
+  }
+
+  function vdFmtSize(n) {
+    if (!n) return '';
+    return n > 1048576 ? (n/1048576).toFixed(1)+' Mo' : Math.max(1, Math.round(n/1024))+' Ko';
+  }
+
+  async function vdSnapshotRender() {
+    const list = document.getElementById('vd-bk-list');
+    if (!list) return;
+    let all = [];
+    try { all = await vdbAll(); } catch(e) {}
+    if (!all.length) {
+      list.innerHTML = '<div class="vd-bk-empty">Aucune sauvegarde restaurable pour le moment.</div>';
+      return;
+    }
+    list.innerHTML = all.map((h, i) => {
+      const d = new Date(h.ts);
+      const when = d.toLocaleDateString('fr-FR', { day:'numeric', month:'short' }) + ' à ' +
+                   d.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
+      return '<div class="vd-bk-entry">'
+        + '<div class="vd-bk-meta">'
+        +   '<div class="vd-bk-when">' + (i===0 ? '<span class="vd-bk-badge">Plus récente</span> ' : '') + when + '</div>'
+        +   '<div class="vd-bk-sub">' + escHtml(h.label||'Sauvegarde') + (h.size ? ' · ' + vdFmtSize(h.size) : '') + '</div>'
+        + '</div>'
+        + '<div class="vd-bk-actions">'
+        +   '<button class="vd-bk-btn restore" onclick="vdSnapshotRestore(' + h.ts + ')" title="Restaurer cette sauvegarde">↩️ Restaurer</button>'
+        +   '<button class="vd-bk-btn dl" onclick="vdSnapshotDownload(' + h.ts + ')" title="Télécharger en .json">⬇️</button>'
+        +   '<button class="vd-bk-btn del" onclick="vdSnapshotDelete(' + h.ts + ')" title="Supprimer">🗑️</button>'
+        + '</div>'
+        + '</div>';
+    }).join('');
+  }
+
+  async function vdSnapshotRestore(ts) {
+    let rec;
+    try { rec = (await vdbAll()).find(r => r.ts === ts); } catch(e) {}
+    if (!rec) { notify('❌ Sauvegarde introuvable'); return; }
+    const when = new Date(ts).toLocaleString('fr-FR');
+    if (!confirm('Restaurer la sauvegarde du ' + when + ' ?\n\n⚠️ Vos données actuelles seront remplacées par celles de cette sauvegarde.')) return;
+    try {
+      const changes = vdApplyBackupPayload(rec.payload);
+      notify('✅ Sauvegarde restaurée : ' + (changes.join(' · ') || 'aucune donnée'));
+    } catch (e) {
+      notify('❌ Erreur de restauration : ' + (e.message || e));
+    }
+  }
+
+  async function vdSnapshotDownload(ts) {
+    let rec;
+    try { rec = (await vdbAll()).find(r => r.ts === ts); } catch(e) {}
+    if (!rec) return;
+    const blob = new Blob([JSON.stringify(rec.payload, null, 2)], { type: 'application/json' });
+    downloadBlob(blob, 'bureau-virtuel-sauvegarde-' + new Date(ts).toISOString().split('T')[0] + '.json');
+  }
+
+  async function vdSnapshotDelete(ts) {
+    if (!confirm('Supprimer cette sauvegarde de l\'historique ?')) return;
+    try { await vdbDelete(ts); } catch(e) {}
+    vdSnapshotRender();
+  }
+
+  async function vdSnapshotCreate() {
+    await vdSnapshotPush('Point de restauration');
+    notify('💾 Point de restauration créé');
+    vdSnapshotRender();
+  }
+
+  // Exposé global pour les boutons inline + modules séparés
+  window.vdSnapshotPush     = vdSnapshotPush;
+  window.vdSnapshotRestore  = vdSnapshotRestore;
+  window.vdSnapshotDownload = vdSnapshotDownload;
+  window.vdSnapshotDelete   = vdSnapshotDelete;
+  window.vdSnapshotCreate   = vdSnapshotCreate;
+  window.vdSnapshotRender   = vdSnapshotRender;
 
   function importBackup() {
     const input  = document.createElement('input');
@@ -7734,119 +8020,7 @@
             notify('❌ Fichier de sauvegarde invalide');
             return;
           }
-          const changes = [];
-
-          // ── Restauration générique (finances, widgets, futurs projets…) ──
-          if (data.allData) { vdRestoreAllData(data.allData); changes.push('données complètes'); }
-
-          // ── Modules ──
-          if (data.modules && Array.isArray(data.modules)) {
-            data.modules.forEach(m => {
-              if (!apps.find(a => a.id === m.id)) { apps.push(m); changes.push(`module "${m.name}"`); }
-            });
-            saveModules();
-          }
-
-          // ── Notes ──
-          if (data.notes) {
-            notesData = data.notes;
-            if (!notesData.folders) notesData.folders = [];
-            if (!notesData.notes)   notesData.notes   = [];
-            saveNotesData();
-            changes.push(`${notesData.notes.length} note(s) / ${notesData.folders.length} dossier(s)`);
-          }
-
-          // ── Fond d'écran ──
-          if (data.wallpaper) {
-            document.getElementById('desktop').style.background = data.wallpaper;
-            try { localStorage.setItem('vd_wallpaper', data.wallpaper); } catch(e) {}
-          }
-
-          // ── Agenda ──
-          if (data.agenda && Array.isArray(data.agenda)) {
-            localStorage.setItem('vd_agenda', JSON.stringify(data.agenda));
-            changes.push(`${data.agenda.length} événement(s) agenda`);
-          }
-
-          // ── Tâches ──
-          if (data.tasks && Array.isArray(data.tasks)) {
-            localStorage.setItem('vd_tasks', JSON.stringify(data.tasks));
-            if (typeof tkLoad === 'function') { tkLoad(); if (openWindows['tasks']) tkRender(); }
-            changes.push(`${data.tasks.length} tâche(s)`);
-          }
-
-          // ── Contacts ──
-          if (data.contacts && Array.isArray(data.contacts)) {
-            localStorage.setItem('vd_contacts', JSON.stringify(data.contacts));
-            if (typeof ctLoad === 'function') { ctLoad(); if (openWindows['contacts']) ctRender(); }
-            changes.push(`${data.contacts.length} contact(s)`);
-          }
-
-          // ── Icônes masquées ──
-          if (data.hiddenIcons && typeof data.hiddenIcons === 'object') {
-            localStorage.setItem('vd_hidden_icons', JSON.stringify(data.hiddenIcons));
-            hiddenApps = data.hiddenIcons;
-            renderDesktopIcons();
-          }
-
-          // ── Filesystem ──
-          if (data.filesystem && typeof data.filesystem === 'object') {
-            localStorage.setItem('vd_filesystem', JSON.stringify(data.filesystem));
-            const count = Object.keys(data.filesystem).length;
-            changes.push(`${count} fichier(s)`);
-          }
-
-          // ── Positions des icônes ──
-          if (data.iconPositions && typeof data.iconPositions === 'object') {
-            localStorage.setItem('vd_icon_positions', JSON.stringify(data.iconPositions));
-          }
-
-          // ── Plein écran par défaut ──
-          if (typeof data.fullscreenDefault === 'boolean') {
-            localStorage.setItem(FS_PREF_KEY, data.fullscreenDefault ? '1' : '0');
-          }
-
-          // ── Profils ──
-          if (data.profiles && data.profiles.list && Array.isArray(data.profiles.list)) {
-            const importedProfiles = data.profiles.list;
-            // Merge: add profiles not already present (matched by id)
-            let added = 0;
-            importedProfiles.forEach(p => {
-              if (!profiles.find(x => x.id === p.id)) { profiles.push(p); added++; }
-            });
-            if (added > 0) {
-              saveProfiles();
-              changes.push(`${added} profil(s)`);
-            }
-            // Restore per-profile data snapshots
-            if (data.profiles.profilesData) {
-              Object.entries(data.profiles.profilesData).forEach(([id, snap]) => {
-                localStorage.setItem('vd_profile_data_' + id, JSON.stringify(snap));
-              });
-            }
-            // Restore active profile if none set
-            if (data.profiles.activeId && !activeProfileId) {
-              activeProfileId = data.profiles.activeId;
-              localStorage.setItem(ACTIVE_PROFILE_KEY, activeProfileId);
-            }
-            updateSmProfileBadge();
-            const sl = document.getElementById('settings-profiles-list');
-            if (sl) renderSettingsProfiles();
-          }
-
-          // ── Rechargement UI ──
-          renderDesktopIcons();
-          renderStartMenu();
-          loadIconPositions();
-          // Rafraîchir finances + widgets
-          try { if (typeof window.finInit === 'function') window.finInit(); } catch(e){}
-          try { if (typeof window.vdWidgetsReload === 'function') window.vdWidgetsReload(); } catch(e){}
-
-          if (openWindows['notes']) {
-            const body = document.getElementById('winbody-notes');
-            if (body) { body.innerHTML = getBuiltinContent('notes'); initNotes(); }
-          }
-
+          const changes = vdApplyBackupPayload(data);
           notify(`✅ Importé : ${changes.join(' · ') || 'aucune donnée'}`);
         } catch(err) {
           notify('❌ Erreur lors de l\'import : ' + (err.message || 'fichier invalide'));
@@ -9190,6 +9364,7 @@
     const btn = document.getElementById('ghp-save-btn');
     if (btn) { btn.disabled = true; btn.style.opacity = '.6'; }
     await ghSyncToGitHub(false);
+    try { if (window.vdSnapshotPush) await window.vdSnapshotPush('Sauvegarde GitHub'); } catch(e){}
     if (btn) { btn.disabled = false; btn.style.opacity = ''; }
     ghRenderHistory();
   }
@@ -13939,6 +14114,7 @@ ctLoad();
     launch: {icon:'🚀', name:'Accès rapide', desc:'Lancer vos applications',          w:256,h:170, tick:60000},
     weather:{icon:'🌤️', name:'Météo',        desc:'Météo (ville/CP) + prévisions 7 j', w:300,h:252, tick:900000},
     sales:  {icon:'🛒', name:'Ventes du jour', desc:'CA du jour + objectif (clic = détail)', w:300,h:148, tick:15000},
+    debts:  {icon:'📕', name:'Dettes Covo Pro', desc:'Dettes non soldées (fournisseurs, clients) — clic = détail', w:300,h:170, tick:60000},
     sticky: {icon:'📌', name:'Pense-bête',   desc:'Note collante éditable',           w:230,h:200, tick:0}
   };
 
@@ -14035,6 +14211,28 @@ ctLoad();
               +'<div class="wg-row-sub" style="text-align:center;color:var(--t-a1,#8aa0ff);font-weight:600;">Voir le détail des ventes →</div>'
               +'</div>';
       }
+      case 'debts': {
+        var ddat=debtsData();
+        if(!ddat.live){
+          return '<div data-debts="1" style="cursor:pointer;display:flex;flex-direction:column;gap:6px;height:100%;justify-content:center;text-align:center;">'
+            +'<div class="wg-debt-tot" style="color:#9aa3c0">—</div>'
+            +'<div class="wg-row-sub" style="color:#7c84a8;line-height:1.45;">Covo Pro non détecté.<br>Ouvre le Bureau depuis le même domaine que Covo Pro.</div>'
+            +'</div>';
+        }
+        var g=ddat.groups;
+        var max=Math.max(g.fourn,g.client,g.dette,1);
+        function bar(lbl,val,cls){ var p=Math.round(val/max*100); return '<div class="wg-debt-row"><span class="wg-debt-lbl '+cls+'">'+lbl+'</span>'
+          +'<span class="wg-debt-barbg"><span class="wg-debt-bar '+cls+'" style="width:'+p+'%"></span></span>'
+          +'<span class="wg-debt-val">'+esc(eur(val))+'</span></div>'; }
+        return '<div data-debts="1" style="cursor:pointer;display:flex;flex-direction:column;gap:5px;height:100%;justify-content:center;">'
+          +'<div class="wg-debt-head"><span>📕 Dettes non soldées</span><span class="wg-sales-src ok" title="Lecture directe Covo Pro">🟢 Covo Pro</span></div>'
+          +'<div class="wg-debt-tot">'+esc(eur(ddat.total))+'</div>'
+          +bar('Fournisseurs',g.fourn,'f')
+          +bar('Clients',g.client,'c')
+          +(g.dette>0?bar('Autres',g.dette,'d'):'')
+          +'<div class="wg-row-sub" style="text-align:center;color:var(--t-a1,#8aa0ff);font-weight:600;">'+ddat.count+' dette'+(ddat.count>1?'s':'')+' · voir le détail →</div>'
+          +'</div>';
+      }
       case 'notes': {
         var nd=rj('vd_notes_v2',{})||{}; var ns=(nd.notes||[]).slice();
         ns.sort(function(a,b){return (b.updatedAt||0)-(a.updatedAt||0);});
@@ -14123,6 +14321,9 @@ ctLoad();
       if(w.apiUrl && !w._apiLoading && (!w._apiSales || Date.now()-(w._apiSales.time||0) > 120000)){
         salesFetch(w, !!w._apiSales);
       }
+    }
+    if(w.type==='debts'){
+      var db=b.querySelector('[data-debts]'); if(db) db.onclick=function(){ debtsDetail(w); };
     }
     w._last=Date.now();
   }
@@ -14349,6 +14550,92 @@ ctLoad();
     if(ai) ai.onkeydown=function(e){ if(e.key==='Enter') applyApi(); };
     var rf=ov.querySelector('#wgsd-refresh');
     if(rf) rf.onclick=function(){ if(w.apiUrl){ salesFetch(w,false); setTimeout(function(){ salesDetail(w); },120); } else { salesDetail(w); } };
+    ov.classList.add('open');
+  }
+
+  /* ── Dettes Covo Pro non soldées (fournisseurs + crédits clients + liste dédiée) ──
+     Lecture directe du stockage Covo Pro (même domaine github.io). */
+  function debtsData(){
+    var has=false;
+    try{ has = window.localStorage.getItem('covo_approvisionnements')!=null
+              || window.localStorage.getItem('covo_sales_history')!=null
+              || window.localStorage.getItem('covo_dettes')!=null; }catch(e){}
+    if(!has) return { total:0, items:[], live:false, groups:{fourn:0,client:0,dette:0}, count:0 };
+    function rjk(k,d){ try{ var v=window.localStorage.getItem(k); return v?JSON.parse(v):d; }catch(e){ return d; } }
+    var items=[];
+    /* 1) Dettes fournisseurs : achats à crédit avec reste dû et non soldés */
+    var appro=rjk('covo_approvisionnements',[]); if(!Array.isArray(appro)) appro=[];
+    appro.forEach(function(a){
+      var reste=+a.resteADoit||0;
+      if(reste>0 && !a.soldeAt){
+        var nom=a.fournisseur||a.desc||'Fournisseur';
+        items.push({ kind:'fourn', label:nom, sub:(a.fournisseur&&a.desc?a.desc:(a.note||'')),
+                     amount:Math.round(reste*100)/100, due:a.echeance||'', montant:+a.montant||0 });
+      }
+    });
+    /* 2) Crédits clients : ventes à crédit non remboursées (regroupées par client) */
+    var sales=rjk('covo_sales_history',[]); if(!Array.isArray(sales)) sales=[];
+    var byClient={};
+    sales.forEach(function(s){ if(s && !s.cancelled && +s._creditDue>0){ var n=s._creditName||'Client'; byClient[n]=(byClient[n]||0)+(+s._creditDue||0); } });
+    Object.keys(byClient).forEach(function(n){
+      items.push({ kind:'client', label:n, sub:'Crédit client', amount:Math.round(byClient[n]*100)/100, due:'' });
+    });
+    /* 3) Liste dédiée covo_dettes (format générique) */
+    var ded=rjk('covo_dettes',[]); if(!Array.isArray(ded)) ded=[];
+    ded.forEach(function(x){
+      if(!x || typeof x!=='object') return;
+      var paid = x.paid||x.regle||x.solde||x.soldeAt||x.paye;
+      var amt = +(x.reste!=null?x.reste : x.resteADoit!=null?x.resteADoit : x.montant!=null?x.montant : x.amount!=null?x.amount : x.total||0)||0;
+      if(amt>0 && !paid){
+        items.push({ kind:'dette', label:(x.label||x.nom||x.creancier||x.desc||x.name||'Dette'),
+                     sub:(x.note||x.categorie||x.category||''), amount:Math.round(amt*100)/100, due:x.echeance||x.date||'' });
+      }
+    });
+    function sumK(k){ return Math.round(items.filter(function(i){return i.kind===k;}).reduce(function(a,i){return a+i.amount;},0)*100)/100; }
+    var groups={ fourn:sumK('fourn'), client:sumK('client'), dette:sumK('dette') };
+    var total=Math.round((groups.fourn+groups.client+groups.dette)*100)/100;
+    items.sort(function(a,b){ return b.amount-a.amount; });
+    return { total:total, items:items, live:true, groups:groups, count:items.length };
+  }
+
+  function debtsDetail(w){
+    var dd=debtsData();
+    var KINDS={ fourn:{ico:'🏭',name:'Fournisseur',col:'#f5994f'}, client:{ico:'👤',name:'Client',col:'#43E97B'}, dette:{ico:'📌',name:'Autre',col:'#8aa0ff'} };
+    function dueLbl(s){ if(!s) return ''; var d=new Date(s); if(isNaN(d)) return esc(s);
+      var today=new Date(); today.setHours(0,0,0,0); var diff=Math.round((d-today)/86400000);
+      var t=d.toLocaleDateString('fr-FR',{day:'numeric',month:'short'});
+      if(diff<0) return '<span style="color:#ff8b85">⚠ échue '+t+'</span>';
+      if(diff<=7) return '<span style="color:#f5994f">échéance '+t+'</span>';
+      return 'échéance '+t; }
+    var rows = dd.items.length ? dd.items.map(function(it){
+      var k=KINDS[it.kind]||KINDS.dette;
+      return '<div class="wgfd-row"><div class="wgfd-info">'
+        +'<div class="wgfd-lbl">'+k.ico+' '+esc(it.label)+'</div>'
+        +'<div class="wgfd-sub">'+esc(k.name)+(it.sub?' · '+esc(it.sub):'')+(it.due?' · '+dueLbl(it.due):'')+'</div></div>'
+        +'<div class="wgfd-amt" style="color:'+k.col+'">'+esc(eur(it.amount))+'</div></div>';
+    }).join('') : '<div class="wg-empty" style="padding:24px 0;">Aucune dette non soldée 🎉</div>';
+
+    var g=dd.groups;
+    var ov=document.getElementById('wg-debts-detail');
+    if(!ov){ ov=document.createElement('div'); ov.id='wg-debts-detail'; ov.className='wg-modal';
+      ov.onclick=function(e){ if(e.target.id==='wg-debts-detail') ov.classList.remove('open'); };
+      document.body.appendChild(ov); }
+    ov.innerHTML='<div class="wgfd-panel">'
+      +'<div class="wgfd-head">📕 Dettes non soldées — Covo Pro<button class="wg-x" id="wgdd-close">✕</button></div>'
+      +'<div class="wgfd-totals">'
+      +  '<div class="wgfd-total-big"><span>Total non soldé</span><strong style="color:#ff8b85">'+esc(eur(dd.total))+'</strong></div>'
+      +  '<div class="wgdd-groups">'
+      +    '<div class="wgdd-g"><span class="wgdd-dot f"></span>Fournisseurs (à payer)<b>'+esc(eur(g.fourn))+'</b></div>'
+      +    '<div class="wgdd-g"><span class="wgdd-dot c"></span>Clients (à recevoir)<b>'+esc(eur(g.client))+'</b></div>'
+      +    (g.dette>0?'<div class="wgdd-g"><span class="wgdd-dot d"></span>Autres dettes<b>'+esc(eur(g.dette))+'</b></div>':'')
+      +  '</div>'
+      +'</div>'
+      +'<div class="wgfd-list">'+rows+'</div>'
+      +'<div class="wgfd-foot"><span class="wgfd-count">'+dd.count+' dette'+(dd.count>1?'s':'')+'</span>'
+      +  '<button class="wgfd-open" id="wgdd-refresh">↻ Actualiser</button></div>'
+      +'</div>';
+    ov.querySelector('#wgdd-close').onclick=function(){ ov.classList.remove('open'); };
+    var rf=ov.querySelector('#wgdd-refresh'); if(rf) rf.onclick=function(){ debtsDetail(w); };
     ov.classList.add('open');
   }
 
@@ -14610,6 +14897,23 @@ ctLoad();
   +'.wgsd-api input{flex:1;min-width:0;padding:8px 10px;border-radius:9px;border:1px solid rgba(255,255,255,0.14);background:rgba(0,0,0,0.25);color:#fff;font-size:12px;outline:none;}'
   +'.wgsd-status{font-size:11px;margin-top:8px;color:rgba(255,255,255,0.5);}'
   +'.wgsd-status.ok{color:#7fe0ff;} .wgsd-status.err{color:#ff8b85;}'
+  /* Widget Dettes Covo Pro */
+  +'.wg-debt-head{display:flex;align-items:center;justify-content:space-between;gap:6px;font-size:11px;font-weight:700;color:rgba(255,255,255,0.75);}'
+  +'.wg-debt-tot{font-size:22px;font-weight:800;color:#ff8b85;line-height:1.1;letter-spacing:-.5px;}'
+  +'.wg-debt-row{display:flex;align-items:center;gap:6px;font-size:10.5px;}'
+  +'.wg-debt-lbl{width:74px;flex-shrink:0;font-weight:600;color:rgba(255,255,255,0.7);}'
+  +'.wg-debt-lbl.f{color:#f5994f;}.wg-debt-lbl.c{color:#43E97B;}.wg-debt-lbl.d{color:#8aa0ff;}'
+  +'.wg-debt-barbg{flex:1;height:7px;border-radius:5px;background:rgba(255,255,255,0.1);overflow:hidden;}'
+  +'.wg-debt-bar{display:block;height:100%;border-radius:5px;}'
+  +'.wg-debt-bar.f{background:linear-gradient(90deg,#f5994f,#f5574f);}'
+  +'.wg-debt-bar.c{background:linear-gradient(90deg,#43E97B,#38c46b);}'
+  +'.wg-debt-bar.d{background:linear-gradient(90deg,#8aa0ff,#667eea);}'
+  +'.wg-debt-val{width:62px;flex-shrink:0;text-align:right;font-weight:700;color:rgba(255,255,255,0.85);}'
+  +'.wgdd-groups{display:flex;flex-direction:column;gap:5px;margin-top:8px;}'
+  +'.wgdd-g{display:flex;align-items:center;gap:7px;font-size:12px;color:rgba(255,255,255,0.7);}'
+  +'.wgdd-g b{margin-left:auto;color:#fff;font-weight:700;}'
+  +'.wgdd-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}'
+  +'.wgdd-dot.f{background:#f5994f;}.wgdd-dot.c{background:#43E97B;}.wgdd-dot.d{background:#8aa0ff;}'
   +'.wg-pos{color:#4fd18b;}.wg-neg{color:#f5574f;}'
   +'.wg-note{border-left:2px solid rgba(102,126,234,0.6);padding-left:7px;}'
   +'.wg-note-t{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}'
