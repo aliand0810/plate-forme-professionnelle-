@@ -14558,6 +14558,7 @@ ctLoad();
   function debtsData(){
     var has=false;
     try{ has = window.localStorage.getItem('covo_approvisionnements')!=null
+              || window.localStorage.getItem('covo_loyalty')!=null
               || window.localStorage.getItem('covo_sales_history')!=null
               || window.localStorage.getItem('covo_dettes')!=null; }catch(e){}
     if(!has) return { total:0, items:[], live:false, groups:{fourn:0,client:0,dette:0}, count:0 };
@@ -14573,12 +14574,17 @@ ctLoad();
                      amount:Math.round(reste*100)/100, due:a.echeance||'', montant:+a.montant||0 });
       }
     });
-    /* 2) Crédits clients : ventes à crédit non remboursées (regroupées par client) */
-    var sales=rjk('covo_sales_history',[]); if(!Array.isArray(sales)) sales=[];
-    var byClient={};
-    sales.forEach(function(s){ if(s && !s.cancelled && +s._creditDue>0){ var n=s._creditName||'Client'; byClient[n]=(byClient[n]||0)+(+s._creditDue||0); } });
-    Object.keys(byClient).forEach(function(n){
-      items.push({ kind:'client', label:n, sub:'Crédit client', amount:Math.round(byClient[n]*100)/100, due:'' });
+    /* 2) Crédits clients : SOLDE RÉEL dû par chaque client (covo_loyalty.customers[].credit).
+       NB : on n'additionne PAS _creditDue des ventes — ce champ est un solde courant
+       cumulé, pas un montant par ticket, donc le sommer fausserait le total. */
+    var L=rjk('covo_loyalty',{}); var cust=(L&&L.customers)||[]; if(!Array.isArray(cust)) cust=[];
+    cust.forEach(function(c){
+      var bal=+c.credit||0;
+      if(bal>0){
+        items.push({ kind:'client', label:c.name||'Client',
+          sub:'Crédit client'+(c.creditLimit?' · limite '+c.creditLimit+'€':''),
+          amount:Math.round(bal*100)/100, due:'' });
+      }
     });
     /* 3) Liste dédiée covo_dettes (format générique) */
     var ded=rjk('covo_dettes',[]); if(!Array.isArray(ded)) ded=[];
