@@ -5450,11 +5450,25 @@
           <div class="gh-settings-block">
             <label>🐙 Intégration GitHub — Sauvegarde automatique</label>
             <div class="gh-row" style="align-items:center;">
-              <input type="password" id="gh-token" class="gh-inp"
-                placeholder="Personal Access Token (ghp_...)" autocomplete="off">
+              <div class="vd-pw-wrap" style="flex:1;">
+                <input type="password" id="gh-token" class="gh-inp"
+                  placeholder="Personal Access Token (ghp_...)" autocomplete="off">
+                <button type="button" class="vd-pw-eye" onclick="vdTogglePw(this)" title="Afficher le token">👁️</button>
+              </div>
               <button class="gh-btn gh-btn-test" style="white-space:nowrap;flex-shrink:0;padding:8px 14px"
                 onclick="ghDetectUser()" title="Détecter automatiquement votre nom d'utilisateur depuis le token">
                 🔍 Détecter l'utilisateur
+              </button>
+            </div>
+            <div class="gh-row" style="align-items:center;gap:8px;flex-wrap:wrap;">
+              <span style="color:#888;font-size:12px;">🔒 Fichier token sécurisé :</span>
+              <button class="gh-btn" style="white-space:nowrap;flex-shrink:0;padding:8px 12px"
+                onclick="ghGenerateTokenFile()" title="Chiffrer le token dans un fichier protégé par mot de passe">
+                🔐 Générer
+              </button>
+              <button class="gh-btn" style="white-space:nowrap;flex-shrink:0;padding:8px 12px"
+                onclick="ghImportTokenFile()" title="Importer un fichier token (chiffré, ou .txt simple)">
+                📂 Importer
               </button>
             </div>
             <div class="gh-row">
@@ -5473,6 +5487,12 @@
               </select>
               <span style="color:#888;font-size:12px;">— Fichier :</span>
               <input type="text" id="gh-filepath" class="gh-inp" placeholder="bureau-virtuel/backup.json" style="max-width:220px">
+            </div>
+            <div class="gh-row" style="align-items:center;">
+              <label style="display:flex;align-items:center;gap:8px;color:#bbb;font-size:12px;cursor:pointer;">
+                <input type="checkbox" id="gh-autorestore" onchange="ghToggleAutoRestore(this.checked)" style="width:16px;height:16px;cursor:pointer;flex-shrink:0;">
+                ⚡ Restaurer automatiquement la dernière sauvegarde à l'ouverture
+              </label>
             </div>
             <div class="gh-btn-row">
               <button class="gh-btn gh-btn-test" onclick="ghTestConnection()">🔌 Tester la connexion</button>
@@ -7881,21 +7901,22 @@
       localStorage.setItem(FS_PREF_KEY, data.fullscreenDefault ? '1' : '0');
     }
 
-    // ── Profils ──
-    if (data.profiles && data.profiles.list && Array.isArray(data.profiles.list)) {
-      const importedProfiles = data.profiles.list;
-      let added = 0;
-      importedProfiles.forEach(p => {
-        if (!profiles.find(x => x.id === p.id)) { profiles.push(p); added++; }
-      });
-      if (added > 0) { saveProfiles(); changes.push(`${added} profil(s)`); }
+    // ── Profils (RESTAURATION = remplacement complet, comme la restauration GitHub) ──
+    if (data.profiles && Array.isArray(data.profiles.list) && data.profiles.list.length) {
+      profiles = data.profiles.list;
+      saveProfiles();
+      changes.push(`${profiles.length} profil(s)`);
+      // Anciens instantanés par profil (format hérité), si présents
       if (data.profiles.profilesData) {
         Object.entries(data.profiles.profilesData).forEach(([id, snap]) => {
-          localStorage.setItem('vd_profile_data_' + id, JSON.stringify(snap));
+          try { localStorage.setItem('vd_profile_data_' + id, JSON.stringify(snap)); } catch(e) {}
         });
       }
-      if (data.profiles.activeId && !activeProfileId) {
+      if (data.profiles.activeId) {
         activeProfileId = data.profiles.activeId;
+        localStorage.setItem(ACTIVE_PROFILE_KEY, activeProfileId);
+      } else if (!profiles.find(p => p.id === activeProfileId)) {
+        activeProfileId = profiles[0].id;
         localStorage.setItem(ACTIVE_PROFILE_KEY, activeProfileId);
       }
       updateSmProfileBadge();
@@ -8026,7 +8047,8 @@
     if (!confirm('Restaurer la sauvegarde du ' + when + ' ?\n\n⚠️ Vos données actuelles seront remplacées par celles de cette sauvegarde.')) return;
     try {
       const changes = vdApplyBackupPayload(rec.payload);
-      notify('✅ Sauvegarde restaurée : ' + (changes.join(' · ') || 'aucune donnée'));
+      notify('✅ Sauvegarde restaurée : ' + (changes.join(' · ') || 'aucune donnée') + ' — rechargement…');
+      setTimeout(() => location.reload(), 1300);
     } catch (e) {
       notify('❌ Erreur de restauration : ' + (e.message || e));
     }
@@ -8076,7 +8098,8 @@
             return;
           }
           const changes = vdApplyBackupPayload(data);
-          notify(`✅ Importé : ${changes.join(' · ') || 'aucune donnée'}`);
+          notify(`✅ Importé : ${changes.join(' · ') || 'aucune donnée'} — rechargement…`);
+          setTimeout(() => location.reload(), 1300);
         } catch(err) {
           notify('❌ Erreur lors de l\'import : ' + (err.message || 'fichier invalide'));
         }
@@ -8745,6 +8768,7 @@
     token: '', owner: '', repo: '', branch: 'main',
     filepath: 'bureau-virtuel/backup.json',
     interval: 10,   // minutes (0 = disabled)
+    autoRestore: false,  // restaurer automatiquement la dernière sauvegarde au démarrage
     lastSync: null, lastSha: null
   };
   let ghAutoTimer  = null;
@@ -8862,8 +8886,18 @@
     if (bra) bra.value = ghConfig.branch   || 'main';
     if (itv) itv.value = String(ghConfig.interval ?? 10);
     if (fp)  fp.value  = ghConfig.filepath || 'bureau-virtuel/backup.json';
+    const ar = document.getElementById('gh-autorestore');
+    if (ar) ar.checked = !!ghConfig.autoRestore;
     ghUpdateLastSyncLabel();
   }
+  function ghToggleAutoRestore(checked) {
+    ghConfig.autoRestore = !!checked;
+    ghSaveConfig();
+    if (typeof notify === 'function') notify(checked
+      ? '⚡ Restauration automatique activée'
+      : '⚡ Restauration automatique désactivée');
+  }
+  window.ghToggleAutoRestore = ghToggleAutoRestore;
 
   // ── Capture / restauration GÉNÉRIQUE de toutes les données ───────────
   // Capture automatiquement TOUTES les clés applicatives (préfixes vd_ / fin_),
@@ -9253,7 +9287,26 @@
     }
   }
 
-  // ── Pull from GitHub ──────────────────────────────────
+  // ── Récupère + parse la sauvegarde GitHub (gère les fichiers > 1 Mo via l'API blobs) ──
+  // Renvoie { obj, sha } ; lève 'EMPTY' / 'CORRUPT' / message réseau sinon.
+  async function ghFetchBackupObject() {
+    const filePath = '/repos/' + ghConfig.owner + '/' + ghConfig.repo
+                   + '/contents/' + ghConfig.filepath + '?ref=' + ghConfig.branch;
+    const file = await ghApiGet(filePath);
+    let b64 = (file.content || '').replace(/\s/g, '');
+    if (!b64 && file.sha) {
+      const blob = await ghApiGet('/repos/' + ghConfig.owner + '/' + ghConfig.repo + '/git/blobs/' + file.sha);
+      b64 = (blob.content || '').replace(/\s/g, '');
+    }
+    let raw = '';
+    try { raw = b64 ? decodeURIComponent(escape(atob(b64))) : ''; } catch(e) { raw = ''; }
+    if (!raw.trim()) throw new Error('EMPTY');
+    let obj;
+    try { obj = JSON.parse(raw); } catch(e) { throw new Error('CORRUPT'); }
+    return { obj: obj, sha: file.sha };
+  }
+
+  // ── Pull from GitHub (bouton « Restaurer depuis GitHub ») ──
   async function ghPullFromGitHub() {
     ghReadForm();
     if (!ghConfig.token || !ghConfig.owner || !ghConfig.repo) {
@@ -9261,47 +9314,160 @@
       return;
     }
     ghSetPanelStatus('⬇️ Récupération depuis GitHub…', 'inf');
-    try {
-      const filePath = '/repos/' + ghConfig.owner + '/' + ghConfig.repo
-                     + '/contents/' + ghConfig.filepath + '?ref=' + ghConfig.branch;
-      const file = await ghApiGet(filePath);
-      let b64 = (file.content || '').replace(/\s/g, '');
-      // L'API "contents" ne renvoie PAS le contenu des fichiers > 1 Mo (champ vide).
-      // On bascule alors sur l'API "blobs" via le SHA pour récupérer la sauvegarde complète.
-      if (!b64 && file.sha) {
-        const blob = await ghApiGet('/repos/' + ghConfig.owner + '/' + ghConfig.repo + '/git/blobs/' + file.sha);
-        b64 = (blob.content || '').replace(/\s/g, '');
-      }
-      let raw = '';
-      try { raw = b64 ? decodeURIComponent(escape(atob(b64))) : ''; } catch(e) { raw = ''; }
-      if (!raw.trim()) {
-        ghSetPanelStatus('❌ La sauvegarde GitHub est vide. Cliquez sur « Sauvegarder maintenant » pour en créer une, puis réessayez.', 'err');
-        return;
-      }
-      let obj;
-      try { obj = JSON.parse(raw); }
-      catch(e) {
-        ghSetPanelStatus('❌ Sauvegarde illisible (JSON incomplet/corrompu). Refaites une « Sauvegarder maintenant », puis réessayez.', 'err');
-        return;
-      }
-      confirmDialog(
-        '⬇️ Restaurer depuis GitHub',
-        'Cela remplacera vos données locales par la sauvegarde GitHub.\n\nDate de la sauvegarde : ' + (obj.exported || 'inconnue') + '\n\nContinuer ?',
-        () => {
-          ghApplyPayload(obj);
-          ghConfig.lastSha  = file.sha;
-          ghConfig.lastSync = new Date().toISOString();
-          ghSaveConfig();
-          ghSetStatus('synced', 'Synced');
-          ghSetPanelStatus('✅ Données restaurées ! Rechargement…', 'ok');
-          setTimeout(() => location.reload(), 1500);
-        },
-        '⬇️', 'Restaurer', 'danger-btn'
-      );
-    } catch(e) {
-      ghSetPanelStatus('❌ Erreur : ' + e.message, 'err');
+    let res;
+    try { res = await ghFetchBackupObject(); }
+    catch(e) {
+      if (e.message === 'EMPTY')   { ghSetPanelStatus('❌ La sauvegarde GitHub est vide. Cliquez sur « Sauvegarder maintenant » pour en créer une, puis réessayez.', 'err'); return; }
+      if (e.message === 'CORRUPT') { ghSetPanelStatus('❌ Sauvegarde illisible (JSON incomplet/corrompu). Refaites une « Sauvegarder maintenant », puis réessayez.', 'err'); return; }
+      ghSetPanelStatus('❌ Erreur : ' + e.message, 'err'); return;
     }
+    const obj = res.obj;
+    confirmDialog(
+      '⬇️ Restaurer depuis GitHub',
+      'Cela remplacera vos données locales par la sauvegarde GitHub.\n\nDate de la sauvegarde : ' + (obj.exported || 'inconnue') + '\n\nContinuer ?',
+      () => {
+        ghApplyPayload(obj);
+        ghConfig.lastSha  = res.sha;
+        ghConfig.lastSync = new Date().toISOString();
+        ghSaveConfig();
+        ghSetStatus('synced', 'Synced');
+        ghSetPanelStatus('✅ Données restaurées ! Rechargement…', 'ok');
+        setTimeout(() => location.reload(), 1500);
+      },
+      '⬇️', 'Restaurer', 'danger-btn'
+    );
   }
+
+  // ── Restauration AUTOMATIQUE de la dernière sauvegarde au démarrage (option) ──
+  async function ghAutoRestore() {
+    if (!ghConfig.autoRestore) return;
+    if (!ghConfig.token || !ghConfig.owner || !ghConfig.repo) return;
+    if (sessionStorage.getItem('vd_autorestore_done') === '1') return; // une seule fois par session → pas de boucle
+    let res;
+    try { res = await ghFetchBackupObject(); }
+    catch(e) { sessionStorage.setItem('vd_autorestore_done', '1'); return; } // pas de sauvegarde / hors-ligne : on n'insiste pas
+    sessionStorage.setItem('vd_autorestore_done', '1');
+    ghApplyPayload(res.obj);
+    ghConfig.lastSha = res.sha;
+    ghConfig.lastSync = new Date().toISOString();
+    ghSaveConfig();
+    if (typeof notify === 'function') notify('⚡ Dernière sauvegarde restaurée — rechargement…');
+    setTimeout(() => location.reload(), 1200);
+  }
+  window.ghAutoRestore = ghAutoRestore;
+
+  // ── Fichier token SÉCURISÉ (chiffré AES-GCM, clé dérivée par PBKDF2) ──
+  function _b64FromBuf(buf){ return btoa(String.fromCharCode.apply(null, new Uint8Array(buf))); }
+  function _bufFromB64(b64){ return Uint8Array.from(atob(b64), function(c){ return c.charCodeAt(0); }); }
+  async function _vdDeriveKey(pass, salt){
+    const enc = new TextEncoder();
+    const mat = await crypto.subtle.importKey('raw', enc.encode(pass), 'PBKDF2', false, ['deriveKey']);
+    return crypto.subtle.deriveKey(
+      { name:'PBKDF2', salt: salt, iterations: 150000, hash:'SHA-256' },
+      mat, { name:'AES-GCM', length:256 }, false, ['encrypt','decrypt']);
+  }
+
+  // Petite fenêtre de saisie de mot de passe (avec confirmation optionnelle)
+  function vdPassphrasePrompt(title, withConfirm, cb){
+    let ov = document.getElementById('vd-pass-overlay');
+    if (!ov){ ov = document.createElement('div'); ov.id = 'vd-pass-overlay'; ov.className = 'vd-modal2';
+      ov.onclick = function(e){ if (e.target.id === 'vd-pass-overlay') ov.classList.remove('open'); };
+      document.body.appendChild(ov); }
+    ov.innerHTML = '<div class="vd-m2-panel">'
+      + '<div class="vd-m2-head">' + title + '</div>'
+      + '<div class="vd-m2-body">'
+      +   '<div class="vd-m2-note">' + (withConfirm
+            ? 'Choisissez un mot de passe pour chiffrer le fichier. Il sera demandé pour l\'importer — il n\'est récupérable nulle part, ne l\'oubliez pas.'
+            : 'Saisissez le mot de passe qui protège ce fichier.') + '</div>'
+      +   '<div class="vd-m2-pw"><label>Mot de passe</label><div class="vd-pw-wrap"><input type="password" id="vd-pass-1" autocomplete="off"><button type="button" class="vd-pw-eye" onclick="vdTogglePw(this)" title="Afficher">👁️</button></div></div>'
+      +   (withConfirm ? '<div class="vd-m2-pw"><label>Confirmer</label><div class="vd-pw-wrap"><input type="password" id="vd-pass-2" autocomplete="off"><button type="button" class="vd-pw-eye" onclick="vdTogglePw(this)" title="Afficher">👁️</button></div></div>' : '')
+      +   '<div class="vd-m2-err" id="vd-pass-err"></div>'
+      + '</div>'
+      + '<div class="vd-m2-actions"><button class="vd-m2-cancel" id="vd-pass-cancel">Annuler</button><button class="vd-m2-ok" id="vd-pass-ok">Valider</button></div>'
+      + '</div>';
+    ov.classList.add('open');
+    setTimeout(function(){ var i = document.getElementById('vd-pass-1'); if (i) i.focus(); }, 60);
+    document.getElementById('vd-pass-cancel').onclick = function(){ ov.classList.remove('open'); };
+    function go(){
+      var p1 = (document.getElementById('vd-pass-1')||{}).value || '';
+      var err = document.getElementById('vd-pass-err');
+      if (!p1){ err.textContent = '❌ Saisissez un mot de passe'; return; }
+      if (withConfirm){
+        var p2 = (document.getElementById('vd-pass-2')||{}).value || '';
+        if (p1.length < 4){ err.textContent = '❌ Au moins 4 caractères'; return; }
+        if (p1 !== p2){ err.textContent = '❌ Les mots de passe ne correspondent pas'; return; }
+      }
+      ov.classList.remove('open');
+      cb(p1);
+    }
+    document.getElementById('vd-pass-ok').onclick = go;
+    var last = document.getElementById(withConfirm ? 'vd-pass-2' : 'vd-pass-1');
+    if (last) last.onkeydown = function(e){ if (e.key === 'Enter') go(); };
+  }
+  window.vdPassphrasePrompt = vdPassphrasePrompt;
+
+  // Génère un fichier token chiffré, protégé par mot de passe
+  function ghGenerateTokenFile(){
+    ghReadForm();
+    const token = ((ghConfig.token || '') || ((document.getElementById('gh-token')||{}).value || '')).trim();
+    if (!token){ if (typeof notify === 'function') notify('❌ Collez d\'abord votre token, puis générez le fichier.'); return; }
+    vdPassphrasePrompt('🔐 Protéger le token par mot de passe', true, async function(pass){
+      try {
+        const salt = crypto.getRandomValues(new Uint8Array(16));
+        const iv   = crypto.getRandomValues(new Uint8Array(12));
+        const key  = await _vdDeriveKey(pass, salt);
+        const ct   = await crypto.subtle.encrypt({ name:'AES-GCM', iv: iv }, key, new TextEncoder().encode(token));
+        const fileObj = { app:'Bureau Virtuel Pro', type:'gh-token-enc', v:1, alg:'AES-GCM', kdf:'PBKDF2-SHA256', iter:150000,
+          salt:_b64FromBuf(salt), iv:_b64FromBuf(iv), data:_b64FromBuf(ct), created:new Date().toISOString() };
+        const blob = new Blob([JSON.stringify(fileObj, null, 2)], { type:'application/json' });
+        downloadBlob(blob, 'github-token-securise.vdtoken.json');
+        if (typeof notify === 'function') notify('🔐 Fichier token sécurisé généré ✓');
+      } catch(e){ if (typeof notify === 'function') notify('❌ Chiffrement impossible : ' + (e.message || e)); }
+    });
+  }
+  window.ghGenerateTokenFile = ghGenerateTokenFile;
+
+  // Importe un fichier token : déchiffre s'il est chiffré, sinon accepte un .txt simple
+  function ghImportTokenFile() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json,.vdtoken,.txt,text/plain,application/json';
+    input.onchange = (e) => {
+      const f = e.target.files[0];
+      if (!f) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const txt = String(ev.target.result || '');
+        let parsed = null; try { parsed = JSON.parse(txt); } catch(_) {}
+        if (parsed && parsed.type === 'gh-token-enc') {
+          // Fichier chiffré → demander le mot de passe et déchiffrer
+          vdPassphrasePrompt('🔓 Déverrouiller le fichier token', false, async function(pass){
+            try {
+              const salt = _bufFromB64(parsed.salt), iv = _bufFromB64(parsed.iv), data = _bufFromB64(parsed.data);
+              const key  = await _vdDeriveKey(pass, salt);
+              const pt   = await crypto.subtle.decrypt({ name:'AES-GCM', iv: iv }, key, data);
+              const token = new TextDecoder().decode(pt).trim();
+              const inp = document.getElementById('gh-token'); if (inp) inp.value = token;
+              ghReadForm();
+              if (typeof notify === 'function') notify('🔓 Token déchiffré et importé ✓');
+            } catch(err){ if (typeof notify === 'function') notify('❌ Mot de passe incorrect ou fichier altéré'); }
+          });
+        } else {
+          // Fichier texte simple (compatibilité)
+          const tok = (txt.split(/\r?\n/).map(s => s.trim()).filter(Boolean)[0] || '').trim();
+          if (!tok) { if (typeof notify === 'function') notify('❌ Fichier vide : aucun token trouvé'); return; }
+          const inp = document.getElementById('gh-token'); if (inp) inp.value = tok;
+          ghReadForm();
+          if (typeof notify === 'function') notify('🔑 Token importé ✓ (astuce : utilisez « 🔐 Générer » pour un fichier chiffré)');
+        }
+      };
+      reader.readAsText(f);
+    };
+    document.body.appendChild(input);
+    input.click();
+    document.body.removeChild(input);
+  }
+  window.ghImportTokenFile = ghImportTokenFile;
 
   // ── Manual sync button ────────────────────────────────
   async function ghSyncNow() {
@@ -10821,6 +10987,8 @@
   ghStartAutoSync();
   initProfiles();
   initFullscreenPref();
+  // Restauration automatique de la dernière sauvegarde (si l'option est activée)
+  try { ghAutoRestore(); } catch(e) {}
 
   // ── Ctrl+S / Ctrl+R / F11 ─────────────────────────────────────────────
   document.addEventListener('keydown', e => {
@@ -14449,6 +14617,24 @@ ctLoad();
     return '';
   }
 
+  /* Actualisation manuelle d'un widget (bouton ↻ de l'en-tête) */
+  function refreshWidget(w){
+    if(!w) return;
+    if(w.type==='weather'){
+      if(w.loc && w.loc.lat!=null) fetchWeatherCoords(w, w.loc.lat, w.loc.lon, w.loc.name);
+      else fill(w);
+    } else if(w.type==='sales'){
+      if(w.apiUrl){ salesFetch(w,false); } else { fill(w); }
+    } else {
+      fill(w);            /* finance, dettes, ventes (local), agenda, tâches, notes, accès rapide… : relit les données */
+    }
+    /* Retour visuel : rotation brève de l'icône + toast de confirmation */
+    var card=document.getElementById('wg-card-'+w.id);
+    var btn=card?card.querySelector('.wg-rfr'):null;
+    if(btn){ btn.classList.remove('spin'); void btn.offsetWidth; btn.classList.add('spin'); setTimeout(function(){ btn.classList.remove('spin'); },650); }
+    if(typeof notify==='function') notify('🔄 '+((WG[w.type]&&WG[w.type].name)||'Widget')+' actualisé'+(w._wxLoad?'…':' ✓'));
+  }
+
   function fill(w){
     var b=document.getElementById('wg-body-'+w.id); if(!b)return;
     if(w.type==='sticky') return; /* géré séparément, ne pas écraser la saisie */
@@ -14702,7 +14888,7 @@ ctLoad();
     if(ac) ac.onclick=applyApi;
     if(ai) ai.onkeydown=function(e){ if(e.key==='Enter') applyApi(); };
     var rf=ov.querySelector('#wgsd-refresh');
-    if(rf) rf.onclick=function(){ if(w.apiUrl){ salesFetch(w,false); setTimeout(function(){ salesDetail(w); },120); } else { salesDetail(w); } };
+    if(rf) rf.onclick=function(){ if(typeof notify==='function') notify('🔄 Ventes actualisées ✓'); if(w.apiUrl){ salesFetch(w,false); setTimeout(function(){ salesDetail(w); },120); } else { fill(w); salesDetail(w); } };
     ov.classList.add('open');
   }
 
@@ -14794,7 +14980,7 @@ ctLoad();
       +  '<button class="wgfd-open" id="wgdd-refresh">↻ Actualiser</button></div>'
       +'</div>';
     ov.querySelector('#wgdd-close').onclick=function(){ ov.classList.remove('open'); };
-    var rf=ov.querySelector('#wgdd-refresh'); if(rf) rf.onclick=function(){ debtsDetail(w); };
+    var rf=ov.querySelector('#wgdd-refresh'); if(rf) rf.onclick=function(){ if(typeof notify==='function') notify('🔄 Dettes actualisées ✓'); fill(w); debtsDetail(w); };
     ov.classList.add('open');
   }
 
@@ -14882,12 +15068,15 @@ ctLoad();
     card.id='wg-card-'+w.id;
     card.style.left=(w.x||20)+'px'; card.style.top=(w.y||20)+'px';
     card.style.width=meta.w+'px'; card.style.height=meta.h+'px';
+    var rfrBtnHtml = (w.type==='sticky') ? '' : '<button class="wg-rfr" title="Actualiser">↻</button>';
     card.innerHTML='<div class="wg-head" id="wg-head-'+w.id+'">'
         +'<span class="wg-head-t">'+meta.icon+' '+esc(meta.name)+'</span>'
-        +'<button class="wg-x" title="Retirer">✕</button></div>'
+        +'<div class="wg-head-btns">'+rfrBtnHtml+'<button class="wg-x" title="Retirer">✕</button></div></div>'
         +'<div class="wg-body" id="wg-body-'+w.id+'"></div>';
     lay.appendChild(card);
     card.querySelector('.wg-x').onclick=function(e){ e.stopPropagation(); removeWidget(w.id); };
+    var rfrBtn=card.querySelector('.wg-rfr');
+    if(rfrBtn) rfrBtn.onclick=function(e){ e.stopPropagation(); refreshWidget(w); };
     if(w.type==='sticky'){
       var b=card.querySelector('.wg-body');
       var ta=document.createElement('textarea');
@@ -14907,7 +15096,7 @@ ctLoad();
   /* ── Déplacement ── */
   function enableDrag(w,card,handle){
     handle.addEventListener('mousedown',function(e){
-      if(e.button!==0||e.target.classList.contains('wg-x'))return;
+      if(e.button!==0||e.target.classList.contains('wg-x')||e.target.classList.contains('wg-rfr'))return;
       e.preventDefault();
       var lay=layer(); var r=lay.getBoundingClientRect();
       var sx=e.clientX, sy=e.clientY, ox=card.offsetLeft, oy=card.offsetTop;
@@ -15026,6 +15215,12 @@ ctLoad();
   +'.wg-x{width:20px;height:20px;border:none;border-radius:6px;background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.55);'
   +'font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;}'
   +'.wg-x:hover{background:rgba(245,87,79,0.25);color:#f5574f;}'
+  +'.wg-head-btns{display:flex;align-items:center;gap:5px;}'
+  +'.wg-rfr{width:20px;height:20px;border:none;border-radius:6px;background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.6);'
+  +'font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;}'
+  +'.wg-rfr:hover{background:rgba(99,179,237,0.25);color:#7fd0ff;}'
+  +'.wg-rfr.spin{animation:wgRfrSpin .65s ease;}'
+  +'@keyframes wgRfrSpin{from{transform:rotate(0)}to{transform:rotate(360deg)}}'
   +'.wg-body{flex:1;padding:10px 12px;overflow:hidden;display:flex;flex-direction:column;gap:5px;}'
   +'.wg-empty{color:rgba(255,255,255,0.4);font-size:12px;text-align:center;margin:auto;}'
   +'.wg-stat-line{font-size:11px;color:rgba(255,255,255,0.55);margin-bottom:2px;}'
