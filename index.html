@@ -3359,6 +3359,25 @@
     padding: 4px; opacity: .65; border-radius: 6px; }
   .vd-pw-eye:hover { opacity: 1; background: rgba(255,255,255,0.1); }
 
+  /* Lecteur vidéo */
+  .vplayer { display:flex; flex-direction:column; height:100%; background:#0b0a12; }
+  .vplayer-bar { display:flex; align-items:center; gap:10px; padding:9px 12px; background:rgba(255,255,255,0.04); border-bottom:1px solid rgba(255,255,255,0.07); }
+  .vplayer-btn { border:1px solid rgba(255,255,255,0.14); background:rgba(255,255,255,0.06); color:#e8ecff; border-radius:9px; padding:7px 12px; font-size:13px; cursor:pointer; white-space:nowrap; }
+  .vplayer-btn.p { border:none; background:linear-gradient(135deg,#e11d48,#9f1239); color:#fff; font-weight:600; }
+  .vplayer-btn:hover { filter:brightness(1.1); }
+  .vplayer-name { flex:1; min-width:0; font-size:12.5px; color:rgba(255,255,255,0.7); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .vplayer-stage { position:relative; flex:1; display:flex; align-items:center; justify-content:center; background:#000; overflow:hidden; }
+  .vplayer-stage video { width:100%; height:100%; max-height:100%; background:#000; outline:none; }
+  .vplayer-drop { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; text-align:center; color:rgba(255,255,255,0.55); pointer-events:none; }
+  .vplayer-drop-ic { font-size:46px; }
+  .vplayer-drop-t { font-size:16px; font-weight:600; color:rgba(255,255,255,0.8); }
+  .vplayer-drop-s { font-size:12px; line-height:1.6; }
+  .vplayer.vp-dragover .vplayer-stage { outline:2px dashed #e11d48; outline-offset:-8px; }
+  .vplayer-msg { font-size:12px; padding:0 12px; max-height:0; overflow:hidden; transition:max-height .2s, padding .2s; color:rgba(255,255,255,0.6); }
+  .vplayer-msg.show { max-height:80px; padding:9px 12px; }
+  .vplayer-msg.err { color:#ff8b85; background:rgba(245,87,79,0.1); }
+  .vplayer-msg.inf { color:#7fd0ff; }
+
 </style>
 </head>
 <body>
@@ -4164,6 +4183,7 @@
     { id: 'terminal',    name: 'Terminal',    icon: '⬛', color: '#333',    type: 'builtin' },
     { id: 'browser',     name: 'Navigateur',  icon: '🌐', color: '#06b6d4', type: 'builtin' },
     { id: 'calculator',  name: 'Calculatrice',icon: '🧮', color: '#a855f7', type: 'builtin' },
+    { id: 'video',       name: 'Lecteur vidéo',icon: '🎬', color: '#e11d48', type: 'builtin' },
     { id: 'sysmonitor',  name: 'Moniteur',    icon: '📊', color: '#f97316', type: 'builtin' },
     { id: 'settings',    name: 'Paramètres',  icon: '⚙️', color: '#667eea', type: 'builtin' },
     { id: 'agenda',      name: 'Agenda',      icon: '📅', color: '#f5574f', type: 'builtin' },
@@ -4711,6 +4731,11 @@
   function closeWindow(appId) {
     const w = openWindows[appId];
     if (w) {
+      if (appId === 'video') {
+        const vv = document.getElementById('vplayer-video');
+        if (vv) { try { vv.pause(); vv.removeAttribute('src'); vv.load(); } catch(e){} }
+        if (_vpUrl) { try { URL.revokeObjectURL(_vpUrl); } catch(e){} _vpUrl = null; }
+      }
       if (appId === 'notes') {
         saveCurrentNote(true);
         // Close overlay editor if open
@@ -5285,6 +5310,25 @@
           <iframe id="browser-frame" style="flex:1;border-radius:10px;border:1px solid rgba(255,255,255,0.1);background:#fff;" src="about:blank"></iframe>
         </div>`;
 
+      case 'video':
+        return `<div class="vplayer" id="vplayer-root" ondragover="vpDragOver(event)" ondragleave="vpDragLeave(event)" ondrop="vpDrop(event)">
+          <div class="vplayer-bar">
+            <button class="vplayer-btn p" onclick="vpOpenFile()">📂 Ouvrir une vidéo</button>
+            <span class="vplayer-name" id="vplayer-name">Aucun fichier</span>
+            <button class="vplayer-btn conv" id="vplayer-conv" onclick="vpHelpConvert()" title="Le fichier ne se lit pas ? Voir comment le rendre lisible" style="display:none;">❓ Ne se lit pas ?</button>
+            <button class="vplayer-btn" onclick="vpFullscreen()" title="Plein écran">⛶</button>
+          </div>
+          <div class="vplayer-stage" id="vplayer-stage">
+            <video id="vplayer-video" controls playsinline></video>
+            <div class="vplayer-drop" id="vplayer-drop">
+              <div class="vplayer-drop-ic">🎬</div>
+              <div class="vplayer-drop-t">Glissez une vidéo ici</div>
+              <div class="vplayer-drop-s">ou cliquez sur « Ouvrir une vidéo »<br>MP4, WebM, MKV, MOV, AVI…</div>
+            </div>
+          </div>
+          <div class="vplayer-msg" id="vplayer-msg"></div>
+        </div>`;
+
       case 'calculator':
         return `<div class="calc2-root">
           <div class="calc2-modebar">
@@ -5587,6 +5631,96 @@
     if (appId === 'filemanager')  fmInit();
     if (appId === 'tasks')        tkInit();
     if (appId === 'contacts')     ctInit();
+    if (appId === 'video')        initVideoPlayer();
+  }
+
+  // ====================================================
+  //  LECTEUR VIDÉO (lit aussi le MKV via le moteur natif)
+  // ====================================================
+  let _vpUrl = null;        // URL objet courante (révoquée au changement)
+  let _vpCurrentFile = null;// fichier d'origine
+  function initVideoPlayer() {
+    const v = document.getElementById('vplayer-video');
+    if (v) {
+      v.onerror = function() {
+        vpMsg('⚠️ Codec non pris en charge par le navigateur (souvent vidéo HEVC/H.265 ou audio AC3/DTS). '
+            + 'Cliquez sur « ❓ Ne se lit pas ? » pour la solution.', 'err');
+        const cb = document.getElementById('vplayer-conv'); if (cb && _vpCurrentFile) cb.style.display = '';
+      };
+      v.onloadeddata = function() { vpMsg('', ''); };
+    }
+  }
+  function vpMsg(txt, type) {
+    const m = document.getElementById('vplayer-msg');
+    if (!m) return;
+    m.textContent = txt || '';
+    m.className = 'vplayer-msg' + (type ? ' ' + type : '') + (txt ? ' show' : '');
+  }
+  function vpLoadFile(file) {
+    if (!file) return;
+    const v = document.getElementById('vplayer-video');
+    const drop = document.getElementById('vplayer-drop');
+    const nm = document.getElementById('vplayer-name');
+    if (!v) return;
+    _vpCurrentFile = file;
+    if (_vpUrl) { try { URL.revokeObjectURL(_vpUrl); } catch(e){} }
+    _vpUrl = URL.createObjectURL(file);
+    const isMkv = /\.mkv$/i.test(file.name || '');
+    v.removeAttribute('type');
+    v.src = _vpUrl;
+    if (nm) nm.textContent = file.name || 'Vidéo';
+    if (drop) drop.style.display = 'none';
+    // Le bouton « Convertir » reste dispo pour tout fichier (utile si la lecture échoue)
+    const cb = document.getElementById('vplayer-conv'); if (cb) cb.style.display = '';
+    vpMsg(isMkv ? '🎬 MKV chargé — lecture en cours… (si rien ne s\'affiche : « 🛠️ Convertir & lire »)' : '', isMkv ? 'inf' : '');
+    const p = v.play(); if (p && p.catch) p.catch(function(){ /* autoplay éventuellement bloqué : l'utilisateur cliquera ▶ */ });
+    setTimeout(function(){ if (v.readyState >= 2) vpMsg('', ''); }, 1500);
+  }
+
+  // Aide : explique pourquoi un fichier ne se lit pas et comment le rendre lisible.
+  function vpHelpConvert() {
+    let ov = document.getElementById('vp-help-overlay');
+    if (!ov) {
+      ov = document.createElement('div'); ov.id = 'vp-help-overlay'; ov.className = 'vd-modal2';
+      ov.onclick = function(e){ if (e.target.id === 'vp-help-overlay') ov.classList.remove('open'); };
+      document.body.appendChild(ov);
+    }
+    ov.innerHTML = '<div class="vd-m2-panel" style="max-width:520px;">'
+      + '<div class="vd-m2-head">🎬 Ce fichier ne se lit pas ?</div>'
+      + '<div class="vd-m2-body" style="font-size:13px;line-height:1.7;">'
+      +   '<p style="margin-bottom:10px;">Les navigateurs ne décodent qu\'un nombre limité de codecs : ils lisent le '
+      +   '<b>H.264 + AAC</b> (la plupart des MP4 et beaucoup de MKV), mais <b>pas le HEVC/H.265</b> ni l\'audio <b>AC3 / DTS</b>. C\'est une limite du navigateur, pas du lecteur.</p>'
+      +   '<p style="margin-bottom:6px;"><b>Solution : convertir la vidéo en MP4 (H.264/AAC)</b>, puis l\'ouvrir ici.</p>'
+      +   '<p style="margin:0 0 4px 0;">🎬 <b>VLC</b> (gratuit) : <i>Média → Convertir / Enregistrer</i> → ajoutez le fichier → profil <i>« Video – H.264 + MP3 (MP4) »</i> → nom <i>.mp4</i> → <i>Démarrer</i>.</p>'
+      +   '<p style="margin:0 0 10px 0;">🛠️ <b>HandBrake</b> (gratuit) : ouvrez le fichier → preset <i>« Fast 1080p30 »</i> → format <i>MP4</i> → <i>Start</i>.</p>'
+      +   '<p style="color:#9aa3c0;font-size:12px;margin:0;">Une fois en MP4, le fichier se lit ici comme partout ailleurs.</p>'
+      + '</div>'
+      + '<div class="vd-m2-actions"><button class="vd-m2-ok" id="vp-help-ok">J\'ai compris</button></div>'
+      + '</div>';
+    ov.classList.add('open');
+    document.getElementById('vp-help-ok').onclick = function(){ ov.classList.remove('open'); };
+  }
+  window.vpHelpConvert = vpHelpConvert;
+  function vpOpenFile() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'video/*,.mkv,.avi,.mov,.webm,.mp4,.m4v,.ogv';
+    input.onchange = function(e){ const f = e.target.files[0]; if (f) vpLoadFile(f); };
+    document.body.appendChild(input); input.click(); document.body.removeChild(input);
+  }
+  function vpFullscreen() {
+    const v = document.getElementById('vplayer-video');
+    if (!v) return;
+    if (v.requestFullscreen) v.requestFullscreen();
+    else if (v.webkitRequestFullscreen) v.webkitRequestFullscreen();
+  }
+  function vpDragOver(e){ e.preventDefault(); const r=document.getElementById('vplayer-root'); if(r) r.classList.add('vp-dragover'); }
+  function vpDragLeave(e){ const r=document.getElementById('vplayer-root'); if(r) r.classList.remove('vp-dragover'); }
+  function vpDrop(e){
+    e.preventDefault();
+    const r=document.getElementById('vplayer-root'); if(r) r.classList.remove('vp-dragover');
+    const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    if (f) vpLoadFile(f);
   }
 
   function initCalculator() {
