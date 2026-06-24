@@ -9382,22 +9382,28 @@
     try {
       const filePath = '/repos/' + ghConfig.owner + '/' + ghConfig.repo
                      + '/contents/' + ghConfig.filepath;
-      // GET current SHA if file exists
-      let sha = ghConfig.lastSha || null;
-      if (!sha) {
-        try {
-          const existing = await ghApiGet(filePath + '?ref=' + ghConfig.branch);
-          sha = existing.sha;
-          ghConfig.lastSha = sha;
-        } catch(e) { /* file doesn't exist yet — create it */ }
-      }
+      // TOUJOURS récupérer le SHA actuel juste avant l'envoi (évite les conflits « does not match »)
+      let sha = null;
+      try {
+        const existing = await ghApiGet(filePath + '?ref=' + ghConfig.branch);
+        sha = existing.sha || null;
+      } catch(e) { /* le fichier n'existe pas encore → création */ }
       const content = btoa(unescape(encodeURIComponent(ghBuildPayload())));
       const body = {
         message: '🖥️ Bureau Virtuel — auto-backup ' + new Date().toLocaleString('fr-FR'),
         content, branch: ghConfig.branch
       };
       if (sha) body.sha = sha;
-      const result = await ghApiPut(filePath, body);
+      let result;
+      try {
+        result = await ghApiPut(filePath, body);
+      } catch(e) {
+        // Conflit de SHA (fichier modifié entre-temps) → re-synchroniser le SHA et réessayer une fois
+        if (/does not match|409|409\b|sha/i.test(e.message || '')) {
+          try { const ex2 = await ghApiGet(filePath + '?ref=' + ghConfig.branch); if (ex2 && ex2.sha) body.sha = ex2.sha; } catch(_){}
+          result = await ghApiPut(filePath, body);
+        } else { throw e; }
+      }
       ghConfig.lastSha  = result.content.sha;
       ghConfig.lastSync = new Date().toISOString();
       ghDirty = false;
