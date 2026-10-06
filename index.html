@@ -15859,5 +15859,212 @@ ctLoad();
   </div>
 </div>
 
+
+<!-- ═══════════════════════════════════════════════════════════════
+     AFFICHAGE v4 — couche de refonte visuelle (non destructive)
+     Désactivable : localStorage.setItem('bvx_off','1') puis recharger
+     ═══════════════════════════════════════════════════════════════ -->
+<style id="bvx-style">
+/* ── 1. Fond : profondeur douce qui suit l'accent du thème ── */
+body.bvx #desktop::before{
+  content:'';position:absolute;inset:0;pointer-events:none;z-index:0;
+  background:
+    radial-gradient(42vw 42vw at 78% 18%, color-mix(in srgb, var(--t-a1,#667eea) 22%, transparent), transparent 70%),
+    radial-gradient(38vw 38vw at 12% 92%, color-mix(in srgb, var(--t-a2,#764ba2) 18%, transparent), transparent 70%);
+  filter:blur(10px);opacity:.9;
+}
+body.bvx #desktop::after{
+  content:'';position:absolute;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(ellipse at 50% 40%, transparent 55%, rgba(0,0,0,.35) 100%);
+}
+body.bvx #desktop-icons{z-index:1;}
+
+/* ── 2. Icônes : survol plus net, libellés lisibles sans « pastille » lourde ── */
+body.bvx .desktop-icon{border-radius:16px;transition:background .18s,transform .18s;}
+body.bvx .desktop-icon:hover{background:rgba(255,255,255,.08);transform:translateY(-2px);}
+body.bvx .desktop-icon:hover .icon-img{box-shadow:0 8px 22px rgba(0,0,0,.45),0 0 0 2px color-mix(in srgb,var(--t-a1,#8aa0ff) 55%,transparent),inset 0 1px 0 rgba(255,255,255,.2)!important;}
+body.bvx .desktop-icon .icon-label{background:transparent;backdrop-filter:none;padding:1px 4px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+/* ── 3. Accueil (horloge + salutation + raccourcis) ── */
+#bvx-glance{position:absolute;z-index:2;top:9vh;left:50%;transform:translateX(-50%);
+  text-align:center;color:#fff;pointer-events:none;user-select:none;width:min(560px,80vw);
+  animation:bvxIn .6s ease both;}
+#bvx-glance .g-hello{font-size:15px;font-weight:500;color:rgba(255,255,255,.72);letter-spacing:.2px;}
+#bvx-glance .g-time{font-size:clamp(56px,8vw,96px);font-weight:200;line-height:1;letter-spacing:-2px;margin:6px 0 4px;
+  font-variant-numeric:tabular-nums;text-shadow:0 4px 30px rgba(0,0,0,.35);}
+#bvx-glance .g-date{font-size:14px;color:rgba(255,255,255,.6);text-transform:capitalize;}
+#bvx-glance .g-actions{display:flex;gap:8px;justify-content:center;margin-top:22px;flex-wrap:wrap;}
+#bvx-glance .g-btn{pointer-events:auto;cursor:pointer;border:1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.07);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  color:#fff;font:inherit;font-size:12.5px;padding:8px 14px;border-radius:999px;transition:background .15s,border-color .15s;}
+#bvx-glance .g-btn:hover{background:color-mix(in srgb,var(--t-a1,#667eea) 30%,transparent);border-color:color-mix(in srgb,var(--t-a1,#667eea) 60%,transparent);}
+#bvx-glance .g-btn kbd{font:inherit;font-size:10.5px;opacity:.55;margin-left:6px;}
+#bvx-glance .g-x{pointer-events:auto;position:absolute;top:-6px;right:0;width:24px;height:24px;border-radius:50%;
+  border:none;background:transparent;color:rgba(255,255,255,.35);cursor:pointer;font-size:13px;opacity:0;transition:opacity .2s;}
+#bvx-glance:hover .g-x{opacity:1;}
+#bvx-glance .g-x:hover{color:#fff;background:rgba(255,255,255,.1);}
+@keyframes bvxIn{from{opacity:0;transform:translate(-50%,8px)}to{opacity:1;transform:translate(-50%,0)}}
+
+/* ── 4. Notifications : en bas à droite, compactes, accent du thème ── */
+body.bvx #notification-area{top:auto;bottom:calc(var(--tb-desktop-bottom,72px) + 14px);right:16px;gap:8px;align-items:flex-end;}
+body.bvx .notification{padding:11px 16px;border-radius:12px;font-size:12.5px;max-width:340px;
+  border-left:3px solid var(--t-a1,#667eea);background:var(--t-panel,rgba(22,20,55,.97));
+  animation:bvxToast .28s cubic-bezier(.2,.9,.3,1.2);}
+@keyframes bvxToast{from{transform:translateY(12px) scale(.96);opacity:0}to{transform:none;opacity:1}}
+
+/* ── 5. Barre des tâches : une seule barre de verre, segments séparés par des filets ── */
+body.bvx .tb-pro .tb-grp{background:transparent!important;border:none!important;border-radius:12px!important;transition:background .15s;}
+body.bvx .tb-pro .tb-grp:hover{background:rgba(255,255,255,.06)!important;}
+body.bvx .tb-pro>.tb-pod+.tb-pod{position:relative;}
+body.bvx .tb-pro>.tb-grp+.tb-grp::before{content:'';position:absolute;left:-4px;top:22%;bottom:22%;width:1px;background:rgba(255,255,255,.08);}
+body.bvx #tb-timer-txt{font-size:9px!important;letter-spacing:-.2px;font-variant-numeric:tabular-nums;}
+body.bvx .tb-pro .tb-grp-spaces{min-width:0;flex:1 1 auto!important;flex-shrink:1!important;}
+body.bvx #taskbar-apps{overflow-x:auto;scrollbar-width:none;}
+body.bvx #taskbar-apps::-webkit-scrollbar{display:none;}
+body.bvx .tb-pro .tb-grp-spaces:has(#taskbar-apps:empty)::after{opacity:.6;}
+
+/* Écrans moyens : on allège les libellés secondaires */
+@media (max-width:1500px){
+  body.bvx .tb-theme-cur{display:none!important;}
+}
+@media (max-width:1200px){
+  body.bvx .tb-pro .tb-pod-search{display:none!important;}
+  body.bvx .tb-fin-l{display:none!important;}
+}
+
+/* ── 6. Menu Démarrer : grille de tuiles au lieu d'une longue liste ── */
+body.bvx #start-menu{width:min(520px,calc(100vw - 24px))!important;border-radius:20px!important;}
+body.bvx #start-menu-apps{display:grid!important;grid-template-columns:repeat(4,1fr);gap:6px!important;padding:6px 16px 18px!important;}
+body.bvx .start-menu-item{flex-direction:column;gap:7px!important;padding:12px 4px 10px!important;text-align:center;border-radius:14px!important;}
+body.bvx .start-menu-item .smi-icon{width:46px!important;height:46px!important;border-radius:13px!important;font-size:21px!important;
+  box-shadow:0 4px 12px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.18);}
+body.bvx .start-menu-item .smi-text{font-size:11.5px!important;line-height:1.25;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+body.bvx .start-menu-item .smi-url{display:none!important;}
+body.bvx .start-menu-item[style*="display: none"]{display:none!important;}
+
+/* ── 7. Fenêtres : coins et focus homogènes ── */
+body.bvx .window{border-radius:14px!important;overflow:hidden;}
+body.bvx .window.maximized{border-radius:0!important;}
+
+/* ── 8. Mobile / petite tablette : écran d'accueil façon téléphone ── */
+@media (max-width:760px){
+  body.bvx #desktop-icons{display:grid!important;grid-template-columns:repeat(4,1fr);align-content:start;
+    gap:10px 4px;padding:200px 10px 16px;overflow-y:auto;}
+  body.bvx .desktop-icon{position:relative!important;left:auto!important;top:auto!important;width:auto!important;height:auto!important;padding:6px 2px!important;}
+  body.bvx .desktop-icon .icon-label{max-width:78px!important;font-size:11px!important;}
+  body.bvx #desktop-trash{display:none!important;}
+  #bvx-glance{top:28px;width:calc(100vw - 32px);}
+  #bvx-glance .g-time{font-size:64px;}
+  #bvx-glance .g-actions{margin-top:14px;}
+  #bvx-glance .g-btn kbd{display:none;}
+  #bvx-glance .g-btn[data-a="theme"]{display:none;}
+  #bvx-glance .g-btn{padding:7px 12px;}
+
+  /* Barre : défilement horizontal, éléments secondaires masqués */
+  body.bvx #taskbar.tb-pro{overflow-x:auto!important;overflow-y:hidden;scrollbar-width:none;justify-content:flex-start!important;}
+  body.bvx #taskbar.tb-pro::-webkit-scrollbar{display:none;}
+  body.bvx .tb-pro .tb-pod-search,
+  body.bvx .tb-pro .tb-grp-theme,
+  body.bvx .tb-pro .tb-pod-end,
+  body.bvx .tb-pro .tb-gh-info{display:none!important;}
+  body.bvx .tb-pro .tb-grp::after{display:none!important;}
+  body.bvx .tb-pro .tb-grp-spaces{min-width:120px;}
+
+  body.bvx #notification-area{left:12px;right:12px;align-items:stretch;}
+  body.bvx .notification{max-width:none;}
+}
+</style>
+<script id="bvx-script">
+(function(){
+  try{ if(localStorage.getItem('bvx_off')==='1') return; }catch(e){}
+  document.body.classList.add('bvx');
+
+  /* Libellés de la barre masqués par défaut (tant que l'utilisateur n'a pas choisi) */
+  function labelsDefault(){
+    var done=null; try{ done=localStorage.getItem('bvx_lbl_done'); }catch(e){}
+    if(done) return;
+    var tb=document.getElementById('taskbar'); if(tb) tb.classList.add('tb-nolabels');
+    var cb=document.getElementById('tb-labels-toggle'); if(cb) cb.checked=false;
+    try{ localStorage.setItem('vd_tb_labels','0'); localStorage.setItem('bvx_lbl_done','1'); }catch(e){}
+  }
+
+  /* ── Accueil ── */
+  var KEY='bvx_glance';
+  function glanceOn(){ try{ return localStorage.getItem(KEY)!=='0'; }catch(e){ return true; } }
+  function profileName(){
+    var b=document.querySelector('#sm-profile-badge .sm-profile-name');
+    var t=b?b.textContent.trim():'';
+    return (t && !/^mon bureau$/i.test(t)) ? t : '';
+  }
+  function hello(){
+    var h=new Date().getHours();
+    var s = h<5?'Bonne nuit':h<12?'Bonjour':h<18?'Bon après-midi':'Bonsoir';
+    var n=profileName(); return n? s+', '+n : s;
+  }
+  function tick(){
+    var g=document.getElementById('bvx-glance'); if(!g) return;
+    var d=new Date();
+    g.querySelector('.g-time').textContent=('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);
+    g.querySelector('.g-date').textContent=d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+    g.querySelector('.g-hello').textContent=hello();
+  }
+  function build(){
+    if(document.getElementById('bvx-glance') || !glanceOn()) return;
+    var desk=document.getElementById('desktop'); if(!desk) return;
+    var g=document.createElement('div'); g.id='bvx-glance';
+    g.innerHTML='<button class="g-x" title="Masquer l’accueil">✕</button>'
+      +'<div class="g-hello"></div><div class="g-time">--:--</div><div class="g-date"></div>'
+      +'<div class="g-actions">'
+      +'<button class="g-btn" data-a="search">🔍 Rechercher<kbd>/</kbd></button>'
+      +'<button class="g-btn" data-a="apps">⬡ Applications</button>'
+      +'<button class="g-btn" data-a="widgets">🧩 Widgets</button>'
+      +'<button class="g-btn" data-a="theme">🎨 Thème</button>'
+      +'</div>';
+    desk.appendChild(g);
+    g.addEventListener('click',function(e){
+      var b=e.target.closest('button'); if(!b) return; e.stopPropagation();
+      if(b.classList.contains('g-x')){ try{localStorage.setItem(KEY,'0');}catch(_){} g.remove();
+        if(typeof notify==='function') notify('Accueil masqué — clic droit sur le bureau pour le réafficher'); return; }
+      var a=b.dataset.a;
+      if(a==='search'){ focusSearch(); }
+      else if(a==='apps'  && typeof toggleStartMenu==='function') toggleStartMenu();
+      else if(a==='widgets'&& typeof openWidgetGallery==='function') openWidgetGallery();
+      else if(a==='theme' && typeof themeTogglePicker==='function') themeTogglePicker();
+    });
+    tick();
+  }
+  function focusSearch(){
+    var s=document.getElementById('tb-search');
+    if(s && s.offsetParent!==null){ s.focus(); return; }
+    if(typeof toggleStartMenu==='function'){ toggleStartMenu();
+      setTimeout(function(){ var m=document.getElementById('start-menu-search'); if(m) m.focus(); },60); }
+  }
+  /* Raccourci « / » pour rechercher (hors champs de saisie) */
+  document.addEventListener('keydown',function(e){
+    if(e.key!=='/'||e.ctrlKey||e.metaKey||e.altKey) return;
+    var t=e.target; if(t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+    e.preventDefault(); focusSearch();
+  });
+
+  /* Option dans le menu contextuel du bureau */
+  function ctxItem(){
+    var m=document.getElementById('context-menu'); if(!m || document.getElementById('bvx-ctx')) return;
+    var it=document.createElement('div'); it.className='ctx-item'; it.id='bvx-ctx';
+    it.textContent='🕒 Afficher / masquer l’accueil';
+    it.onclick=function(){
+      var g=document.getElementById('bvx-glance');
+      if(g){ g.remove(); try{localStorage.setItem(KEY,'0');}catch(_){} }
+      else { try{localStorage.setItem(KEY,'1');}catch(_){} build(); }
+      if(typeof closeContextMenu==='function') closeContextMenu();
+    };
+    var sep=m.querySelector('.ctx-separator');
+    m.insertBefore(it, sep ? sep : null);
+  }
+
+  function init(){ labelsDefault(); build(); ctxItem(); setInterval(tick,10000); }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else setTimeout(init,0);
+})();
+</script>
 </body>
 </html>
